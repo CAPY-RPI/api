@@ -1,0 +1,24 @@
+# Build output
+bin/
+*.exe
+
+# Environment
+.env
+.env.local
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Temp
+.tmp/
+
+# Test coverage
+coverage.out
+coverage.html
