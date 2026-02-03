@@ -1,0 +1,130 @@
+package handler_test
+
+import (
+	"bytes"
+	"context"
+	"encoding/json"
+	"net/http"
+	"net/http/httptest"
+	"testing"
+
+	"github.com/capyrpi/api/internal/config"
+	"github.com/capyrpi/api/internal/database"
+	"github.com/capyrpi/api/internal/database/mocks"
+	"github.com/capyrpi/api/internal/dto"
+	"github.com/capyrpi/api/internal/handler"
+	"github.com/capyrpi/api/internal/middleware"
+	"github.com/google/uuid"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
+)
+
+func TestCreateOrganization(t *testing.T) {
+	uid := uuid.New()
+	oid := uuid.New()
+
+	tests := []struct {
+		name           string
+		requestBody    interface{}
+		setupMock      func(*mocks.Querier)
+		setupContext   func() context.Context
+		expectedStatus int
+	}{
+		{
+			name: "Success",
+			requestBody: dto.CreateOrganizationRequest{
+				Name: "Test Org",
+			},
+			setupMock: func(m *mocks.Querier) {
+				// Expect CreateOrganization
+				m.On("CreateOrganization", mock.Anything, "Test Org").Return(database.Organization{
+					Oid:  oid,
+					Name: "Test Org",
+				}, nil)
+
+				// Expect AddOrgMember (admin)
+				m.On("AddOrgMember", mock.Anything, mock.MatchedBy(func(arg database.AddOrgMemberParams) bool {
+					return arg.Oid == oid && arg.Uid == uid && arg.IsAdmin.Bool
+				})).Return(nil) // AddOrgMember returns error only (exec)
+			},
+			setupContext: func() context.Context {
+				// Mock authenticated user
+				ctx := context.Background()
+				claims := &middleware.UserClaims{UserID: uid.String()}
+				return context.WithValue(ctx, middleware.UserClaimsKey, claims)
+			},
+			expectedStatus: http.StatusCreated,
+		},
+		{
+			name:        "InvalidBody",
+			requestBody: "invalid-json",
+			setupMock: func(m *mocks.Querier) {
+			},
+			setupContext: func() context.Context {
+				return context.Background()
+			},
+			expectedStatus: http.StatusBadRequest,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			mockQueries := mocks.NewQuerier(t)
+			tt.setupMock(mockQueries)
+
+			h := handler.New(mockQueries, &config.Config{})
+
+			var body []byte
+			if s, ok := tt.requestBody.(string); ok && s == "invalid-json" {
+				body = []byte(s)
+			} else {
+				body, _ = json.Marshal(tt.requestBody)
+			}
+
+			req := httptest.NewRequest("POST", "/organizations", bytes.NewBuffer(body))
+			req = req.WithContext(tt.setupContext())
+			rr := httptest.NewRecorder()
+
+			http.HandlerFunc(h.CreateOrganization).ServeHTTP(rr, req)
+
+			assert.Equal(t, tt.expectedStatus, rr.Code)
+		})
+	}
+}
+
+func TestListOrganizations(t *testing.T) {
+	tests := []struct {
+		name           string
+		setupMock      func(*mocks.Querier)
+		expectedStatus int
+	}{
+		{
+			name: "Success",
+			setupMock: func(m *mocks.Querier) {
+				m.On("ListOrganizations", mock.Anything, mock.MatchedBy(func(arg database.ListOrganizationsParams) bool {
+					return arg.Limit == 20 && arg.Offset == 0
+				})).Return([]database.Organization{
+					{Name: "Org 1"},
+					{Name: "Org 2"},
+				}, nil)
+			},
+			expectedStatus: http.StatusOK,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			mockQueries := mocks.NewQuerier(t)
+			tt.setupMock(mockQueries)
+
+			h := handler.New(mockQueries, &config.Config{})
+
+			req := httptest.NewRequest("GET", "/organizations", nil) // Defaults to limit 20 offset 0
+			rr := httptest.NewRecorder()
+
+			http.HandlerFunc(h.ListOrganizations).ServeHTTP(rr, req)
+
+			assert.Equal(t, tt.expectedStatus, rr.Code)
+		})
+	}
+}

@@ -2,11 +2,13 @@ package handler
 
 import (
 	"encoding/json"
+	"log/slog"
 	"net/http"
 	"strconv"
 
 	"github.com/capyrpi/api/internal/database"
 	"github.com/capyrpi/api/internal/dto"
+	"github.com/capyrpi/api/internal/middleware"
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgtype"
@@ -72,7 +74,22 @@ func (h *Handler) CreateOrganization(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// TODO: Add creator as admin member
+	// Add creator as admin member
+	claims, ok := middleware.GetUserClaims(r.Context())
+	if ok {
+		uid, err := uuid.Parse(claims.UserID)
+		if err == nil {
+			err = h.queries.AddOrgMember(r.Context(), database.AddOrgMemberParams{
+				Oid:     org.Oid,
+				Uid:     uid,
+				IsAdmin: pgtype.Bool{Bool: true, Valid: true},
+			})
+			if err != nil {
+				// Log error but don't fail the request as the org was created
+				slog.Error("failed to add creator as org member", "error", err)
+			}
+		}
+	}
 
 	h.respondJSON(w, http.StatusCreated, toOrgResponse(org))
 }

@@ -6,6 +6,11 @@ description: Best practices workflow for building the CAPY Go REST API with type
 
 This workflow ensures type-safe, reliable, and production-ready Go code for the CAPY club management API.
 
+> [!IMPORTANT]
+> **NO EMOJIS IN CODE OR COMMITS**
+> Do not use emojis in source code comments, commit messages, or pull request descriptions. Keep professional and clean.
+
+
 ## Prerequisites
 
 Ensure you have the required tools installed:
@@ -204,20 +209,19 @@ func TestCreateUser_Success(t *testing.T) {
 }
 ```
 
-### Step 4.2: Integration Tests
+### Step 4.2: Integration Tests (Testcontainers)
+
+Use `testcontainers-go` for isolated integration testing without managing external Docker Compose services manually.
 
 ```go
 //go:build integration
 
 func TestUserAPI_Integration(t *testing.T) {
-    // Setup real DB connection
-    pool := setupTestDB(t)
+    // Setup ephemeral Postgres via Testcontainers
+    pool := testutils.SetupTestDB(t)
     defer pool.Close()
 
-    // Run migration
-    runMigrations(t, pool)
-
-    // Test CRUD operations
+    // Test CRUD operations logic
     // ...
 }
 ```
@@ -225,11 +229,12 @@ func TestUserAPI_Integration(t *testing.T) {
 ### Step 4.3: Run Tests
 
 ```bash
-# Unit tests only
-go test -v -short ./...
+# Unit tests only (fast)
+go test -v ./...
 
-# All tests including integration
-docker-compose up -d db
+# All tests including integration (slow, requires Docker)
+make test-all
+# OR
 go test -v -tags=integration ./...
 ```
 
@@ -244,7 +249,7 @@ Before deploying any endpoint:
 - [ ] **Authentication**: Endpoint uses `middleware.Authenticator`
 - [ ] **Authorization**: Role check matches API design (faculty, org_admin, etc.)
 - [ ] **Input Validation**: All user input validated with struct tags
-- [ ] **SQL Injection**: Using sqlc (parameterized queries) — automatic ✓
+- [ ] **SQL Injection**: Using sqlc (parameterized queries) — automatic
 - [ ] **Error Handling**: No sensitive info leaked in error messages
 - [ ] **Logging**: Sensitive data (passwords, tokens) never logged
 - [ ] **Rate Limiting**: Consider adding for public endpoints

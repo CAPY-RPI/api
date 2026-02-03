@@ -14,14 +14,14 @@ import (
 
 // Handler holds dependencies for HTTP handlers
 type Handler struct {
-	queries       *database.Queries
+	queries       database.Querier
 	config        *config.Config
 	googleAuth    *oauth.GoogleProvider
 	microsoftAuth *oauth.MicrosoftProvider
 }
 
 // New creates a new Handler with the given dependencies
-func New(queries *database.Queries, cfg *config.Config) *Handler {
+func New(queries database.Querier, cfg *config.Config) *Handler {
 	return &Handler{
 		queries:       queries,
 		config:        cfg,

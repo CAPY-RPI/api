@@ -44,7 +44,7 @@ func main() {
 	h := handler.New(queries, cfg)
 
 	// Setup router
-	r := router.New(h, queries, cfg.JWT.Secret)
+	r := router.New(h, queries, cfg.JWT.Secret, cfg.Server.AllowedOrigins)
 
 	// Create server
 	addr := cfg.Server.Host + ":" + cfg.Server.Port

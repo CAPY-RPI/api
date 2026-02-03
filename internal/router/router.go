@@ -9,14 +9,14 @@ import (
 )
 
 // New creates a new chi router with all routes configured
-func New(h *handler.Handler, queries *database.Queries, jwtSecret string) chi.Router {
+func New(h *handler.Handler, queries database.Querier, jwtSecret string, allowedOrigins []string) chi.Router {
 	r := chi.NewRouter()
 
 	// Global middleware
 	r.Use(chimiddleware.Logger)
 	r.Use(chimiddleware.Recoverer)
 	r.Use(chimiddleware.RequestID)
-	r.Use(middleware.CORS)
+	r.Use(middleware.CORS(allowedOrigins))
 
 	// Health check (public)
 	r.Get("/health", h.Health)

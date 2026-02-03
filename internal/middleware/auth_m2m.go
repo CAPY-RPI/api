@@ -18,7 +18,7 @@ type BotTokenInfo struct {
 }
 
 // M2MAuth middleware validates bot tokens from X-Bot-Token header
-func M2MAuth(queries *database.Queries) func(http.Handler) http.Handler {
+func M2MAuth(queries database.Querier) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			token := r.Header.Get("X-Bot-Token")
