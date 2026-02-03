@@ -1,3 +1,4 @@
+basePath: /v1
 definitions:
   dto.AddMemberRequest:
     properties:
@@ -222,8 +223,19 @@ definitions:
       uid:
         type: string
     type: object
+host: localhost:8080
 info:
-  contact: {}
+  contact:
+    email: support@swagger.io
+    name: API Support
+    url: http://www.swagger.io/support
+  description: API for Capy RPI Club Assistant
+  license:
+    name: Apache 2.0
+    url: http://www.apache.org/licenses/LICENSE-2.0.html
+  termsOfService: http://swagger.io/terms/
+  title: Capy API
+  version: "1.0"
 paths:
   /auth/google:
     get:
@@ -1188,4 +1200,13 @@ paths:
       summary: List user's organizations
       tags:
       - users
+securityDefinitions:
+  BotToken:
+    in: header
+    name: X-Bot-Token
+    type: apiKey
+  CookieAuth:
+    in: cookie
+    name: capy_auth
+    type: apiKey
 swagger: "2.0"
