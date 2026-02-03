@@ -115,7 +115,7 @@ func (h *Handler) GoogleCallback(w http.ResponseWriter, r *http.Request) {
 	}
 
 	h.setAuthCookie(w, token)
-	http.Redirect(w, r, h.config.OAuth.RedirectURL, http.StatusFound)
+	http.Redirect(w, r, h.Config.OAuth.RedirectURL, http.StatusFound)
 }
 
 // MicrosoftAuth initiates Microsoft OAuth flow
@@ -182,7 +182,7 @@ func (h *Handler) MicrosoftCallback(w http.ResponseWriter, r *http.Request) {
 	}
 
 	h.setAuthCookie(w, token)
-	http.Redirect(w, r, h.config.OAuth.RedirectURL, http.StatusFound)
+	http.Redirect(w, r, h.Config.OAuth.RedirectURL, http.StatusFound)
 }
 
 // ============================================================================
@@ -239,9 +239,9 @@ func (h *Handler) Logout(w http.ResponseWriter, r *http.Request) {
 		Name:     "capy_auth",
 		Value:    "",
 		Path:     "/",
-		Domain:   h.config.Cookie.Domain,
+		Domain:   h.Config.Cookie.Domain,
 		MaxAge:   -1,
-		Secure:   h.config.Cookie.Secure,
+		Secure:   h.Config.Cookie.Secure,
 		HttpOnly: true,
 		SameSite: http.SameSiteLaxMode,
 	})
@@ -461,14 +461,14 @@ func (h *Handler) generateJWT(user database.User) (string, error) {
 		Email:  getEmail(user),
 		Role:   string(user.Role.UserRole),
 		RegisteredClaims: jwt.RegisteredClaims{
-			ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Duration(h.config.JWT.ExpiryHours) * time.Hour)),
+			ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Duration(h.Config.JWT.ExpiryHours) * time.Hour)),
 			IssuedAt:  jwt.NewNumericDate(time.Now()),
 			Issuer:    "capy-api",
 		},
 	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	return token.SignedString([]byte(h.config.JWT.Secret))
+	return token.SignedString([]byte(h.Config.JWT.Secret))
 }
 
 func (h *Handler) setAuthCookie(w http.ResponseWriter, token string) {
@@ -476,9 +476,9 @@ func (h *Handler) setAuthCookie(w http.ResponseWriter, token string) {
 		Name:     "capy_auth",
 		Value:    token,
 		Path:     "/",
-		Domain:   h.config.Cookie.Domain,
-		MaxAge:   h.config.JWT.ExpiryHours * 3600,
-		Secure:   h.config.Cookie.Secure,
+		Domain:   h.Config.Cookie.Domain,
+		MaxAge:   h.Config.JWT.ExpiryHours * 3600,
+		Secure:   h.Config.Cookie.Secure,
 		HttpOnly: true,
 		SameSite: http.SameSiteLaxMode,
 	})
@@ -489,9 +489,9 @@ func (h *Handler) setStateCookie(w http.ResponseWriter, state string) {
 		Name:     "oauth_state",
 		Value:    state,
 		Path:     "/v1/auth",
-		Domain:   h.config.Cookie.Domain,
+		Domain:   h.Config.Cookie.Domain,
 		MaxAge:   300, // 5 minutes
-		Secure:   h.config.Cookie.Secure,
+		Secure:   h.Config.Cookie.Secure,
 		HttpOnly: true,
 		SameSite: http.SameSiteLaxMode,
 	})
@@ -507,9 +507,9 @@ func (h *Handler) verifyStateCookie(w http.ResponseWriter, r *http.Request, stat
 		Name:     "oauth_state",
 		Value:    "",
 		Path:     "/v1/auth",
-		Domain:   h.config.Cookie.Domain,
+		Domain:   h.Config.Cookie.Domain,
 		MaxAge:   -1,
-		Secure:   h.config.Cookie.Secure,
+		Secure:   h.Config.Cookie.Secure,
 		HttpOnly: true,
 		SameSite: http.SameSiteLaxMode,
 	})

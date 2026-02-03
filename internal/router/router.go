@@ -23,8 +23,10 @@ func New(h *handler.Handler, queries database.Querier, jwtSecret string, allowed
 	// Health check (public)
 	r.Get("/health", h.Health)
 
-	// Swagger UI (public)
-	r.Get("/swagger/*", httpSwagger.WrapHandler)
+	// Swagger UI (public) - Only in non-production environments
+	if h.Config.Env != "production" {
+		r.Get("/swagger/*", httpSwagger.WrapHandler)
+	}
 
 	// API v1 routes
 	r.Route("/v1", func(r chi.Router) {

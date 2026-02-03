@@ -15,7 +15,7 @@ import (
 // Handler holds dependencies for HTTP handlers
 type Handler struct {
 	queries       database.Querier
-	config        *config.Config
+	Config        *config.Config
 	googleAuth    *oauth.GoogleProvider
 	microsoftAuth *oauth.MicrosoftProvider
 }
@@ -24,7 +24,7 @@ type Handler struct {
 func New(queries database.Querier, cfg *config.Config) *Handler {
 	return &Handler{
 		queries:       queries,
-		config:        cfg,
+		Config:        cfg,
 		googleAuth:    oauth.NewGoogleProvider(cfg.OAuth.Google.ClientID, cfg.OAuth.Google.ClientSecret, cfg.OAuth.Google.RedirectURL),
 		microsoftAuth: oauth.NewMicrosoftProvider(cfg.OAuth.Microsoft.ClientID, cfg.OAuth.Microsoft.ClientSecret, cfg.OAuth.Microsoft.RedirectURL, cfg.OAuth.Microsoft.TenantID),
 	}
