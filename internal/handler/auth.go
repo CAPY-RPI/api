@@ -115,7 +115,7 @@ func (h *Handler) GoogleCallback(w http.ResponseWriter, r *http.Request) {
 	}
 
 	h.setAuthCookie(w, token)
-	http.Redirect(w, r, h.Config.OAuth.RedirectURL, http.StatusFound)
+	h.respondWithCloseWindow(w)
 }
 
 // MicrosoftAuth initiates Microsoft OAuth flow
@@ -182,7 +182,7 @@ func (h *Handler) MicrosoftCallback(w http.ResponseWriter, r *http.Request) {
 	}
 
 	h.setAuthCookie(w, token)
-	http.Redirect(w, r, h.Config.OAuth.RedirectURL, http.StatusFound)
+	h.respondWithCloseWindow(w)
 }
 
 // ============================================================================
@@ -482,6 +482,58 @@ func (h *Handler) setAuthCookie(w http.ResponseWriter, token string) {
 		HttpOnly: true,
 		SameSite: http.SameSiteLaxMode,
 	})
+}
+
+func (h *Handler) respondWithCloseWindow(w http.ResponseWriter) {
+	w.Header().Set("Content-Type", "text/html; charset=utf-8")
+	w.WriteHeader(http.StatusOK)
+	_, _ = w.Write([]byte(`
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Login Successful</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #f4f7f6;
+            color: #333;
+        }
+        .container {
+            text-align: center;
+            padding: 2rem;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        h1 { color: #2ecc71; margin-bottom: 1rem; }
+        p { margin-bottom: 2rem; color: #666; }
+        .close-hint { font-size: 0.875rem; color: #999; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Login Successful!</h1>
+        <p>You have been successfully authenticated.</p>
+        <p class="close-hint">This window should close automatically. If not, you can safely close it now.</p>
+    </div>
+    <script>
+        // Attempt to close the window
+        window.close();
+        
+        // Fallback for some browsers if window.close() is blocked
+        setTimeout(function() {
+            window.close();
+        }, 1000);
+    </script>
+</body>
+</html>
+`))
 }
 
 func (h *Handler) setStateCookie(w http.ResponseWriter, state string) {
