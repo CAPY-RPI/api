@@ -125,6 +125,25 @@ This project uses GitHub Actions for continuous integration.
 
 This project automatically builds and publishes a Docker image to GitHub Container Registry (GHCR) on every push to `main`.
 
+### Authentication (Private Repo)
+If the repository or package is private, you must authenticate before pulling:
+
+1.  **Generate a Token**: Go to [GitHub Developer Settings](https://github.com/settings/tokens) and create a **Classic PAT** with `read:packages` scope.
+    *   *Note: Fine-grained tokens do not yet fully support GitHub Container Registry.*
+2.  **Login**:
+    ```bash
+    export CR_PAT=YOUR_TOKEN
+    echo $CR_PAT | docker login ghcr.io -u YOUR_USERNAME --password-stdin
+    ```
+
+    **Windows (PowerShell):**
+    ```powershell
+    $env:CR_PAT = "YOUR_TOKEN"
+    echo $env:CR_PAT | docker login ghcr.io -u YOUR_USERNAME --password-stdin
+    ```
+
+    > **Note for Organizations**: PATs are attached to your *user account*, not the organization. If your organization uses SAML SSO, you **must authorize the token** for the organization by clicking "Configure SSO" next to the token in your GitHub settings.
+
 ### Pulling the Image
 ```bash
 docker pull ghcr.io/capy-rpi/api:main
@@ -142,6 +161,19 @@ docker run -d \
   -e DATABASE_URL="postgres://user:password@host.docker.internal:5432/capy_db?sslmode=disable" \
   -e JWT_SECRET="your-secret-key" \
   -e ENV=production \
+  ghcr.io/capy-rpi/api:main
+```
+
+**Windows (PowerShell):**
+```powershell
+docker run -d `
+  --name capy-api `
+  -p 8080:8080 `
+  -e SERVER_HOST=0.0.0.0 `
+  -e SERVER_PORT=8080 `
+  -e DATABASE_URL="postgres://user:password@host.docker.internal:5432/capy_db?sslmode=disable" `
+  -e JWT_SECRET="your-secret-key" `
+  -e ENV=production `
   ghcr.io/capy-rpi/api:main
 ```
 
