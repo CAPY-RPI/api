@@ -21,6 +21,16 @@ The backend API for the CAPY club management system. Built with Go (Chi), Postgr
     - [Mockery](https://github.com/vektra/mockery) (Mock generation)
 - **Documentation**: Swagger/OpenAPI (via `swag`)
 
+## API Documentation
+Interactive API documentation is available via Swagger UI.
+
+- **Web UI**: [http://localhost:8080/swagger/index.html](http://localhost:8080/swagger/index.html)
+- **Raw Spec**: `docs/swagger/swagger.json`
+- **Regenerate Docs**:
+    ```bash
+    make docs
+    ```
+
 ## Prerequisites
 - Go 1.25+
 - Docker & Docker Compose (for local DB)
@@ -72,6 +82,21 @@ make test-integration
 ### Run All Tests
 ```bash
 make test-all
+```
+
+## Development Scripts
+Helper scripts are located in the `scripts/` directory.
+
+### Create Development User
+Seeds a user into the DB and generates a valid JWT for testing.
+```bash
+go run scripts/create_dev_user/main.go
+```
+
+### Generate Token
+Manually generates a JWT for an existing user (by email).
+```bash
+go run scripts/generate_token/main.go
 ```
 
 ## Project Structure
