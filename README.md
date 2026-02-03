@@ -180,7 +180,9 @@ docker run -d `
 > **Note**: `host.docker.internal` allows the container to access your host machine's localhost (e.g., if running Postgres locally). On Linux, you may need `--add-host=host.docker.internal:host-gateway`.
 
 ### Running with Docker Compose (Full Stack)
-To run the full stack (API + Postgres) on a separate machine, create a `docker-compose.yml` file:
+To run the full stack (API + Postgres + Cloudflare Tunnel) on a separate machine, create a `docker-compose.yml` file.
+
+> **Note**: You will need a Cloudflare Tunnel Token. Add `TUNNEL_TOKEN=your_token` to your environment variables or `.env` file.
 
 ```yaml
 version: "3.9"
@@ -214,6 +216,15 @@ services:
     depends_on:
       db:
         condition: service_healthy
+
+  tunnel:
+    image: cloudflare/cloudflared:latest
+    restart: unless-stopped
+    command: tunnel run
+    environment:
+      - TUNNEL_TOKEN=${TUNNEL_TOKEN}
+    depends_on:
+      - api
 
 volumes:
   pgdata:
