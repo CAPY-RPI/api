@@ -120,3 +120,29 @@ go run scripts/generate_token/main.go
 This project uses GitHub Actions for continuous integration.
 - **Workflow**: `.github/workflows/ci.yml`
 - **Checks**: Linting (`golangci-lint`), Unit Tests, Integration Tests.
+
+## Deployment / Docker Usage
+
+This project automatically builds and publishes a Docker image to GitHub Container Registry (GHCR) on every push to `main`.
+
+### Pulling the Image
+```bash
+docker pull ghcr.io/capy-rpi/api:main
+```
+
+### Running with Docker
+You can run the API using Docker without installing Go on your machine:
+
+```bash
+docker run -d \
+  --name capy-api \
+  -p 8080:8080 \
+  -e SERVER_HOST=0.0.0.0 \
+  -e SERVER_PORT=8080 \
+  -e DATABASE_URL="postgres://user:password@host.docker.internal:5432/capy_db?sslmode=disable" \
+  -e JWT_SECRET="your-secret-key" \
+  -e ENV=production \
+  ghcr.io/capy-rpi/api:main
+```
+
+> **Note**: `host.docker.internal` allows the container to access your host machine's localhost (e.g., if running Postgres locally). On Linux, you may need `--add-host=host.docker.internal:host-gateway`.
