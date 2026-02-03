@@ -156,11 +156,7 @@ You can run the API using Docker without installing Go on your machine:
 docker run -d \
   --name capy-api \
   -p 8080:8080 \
-  -e SERVER_HOST=0.0.0.0 \
-  -e SERVER_PORT=8080 \
-  -e DATABASE_URL="postgres://user:password@host.docker.internal:5432/capy_db?sslmode=disable" \
-  -e JWT_SECRET="your-secret-key" \
-  -e ENV=production \
+  --env-file .env \
   ghcr.io/capy-rpi/api:main
 ```
 
@@ -169,20 +165,17 @@ docker run -d \
 docker run -d `
   --name capy-api `
   -p 8080:8080 `
-  -e SERVER_HOST=0.0.0.0 `
-  -e SERVER_PORT=8080 `
-  -e DATABASE_URL="postgres://user:password@host.docker.internal:5432/capy_db?sslmode=disable" `
-  -e JWT_SECRET="your-secret-key" `
-  -e ENV=production `
+  --env-file .env `
   ghcr.io/capy-rpi/api:main
 ```
 
 > **Note**: `host.docker.internal` allows the container to access your host machine's localhost (e.g., if running Postgres locally). On Linux, you may need `--add-host=host.docker.internal:host-gateway`.
 
 ### Running with Docker Compose (Full Stack)
-To run the full stack (API + Postgres + Cloudflare Tunnel) on a separate machine, create a `docker-compose.yml` file.
+To run the full stack (API + Postgres + Cloudflare Tunnel), update your `.env` file with the required credentials and use the following `docker-compose.yml`.
 
-> **Note**: You will need a Cloudflare Tunnel Token. Add `TUNNEL_TOKEN=your_token` to your environment variables or `.env` file.
+> [!IMPORTANT]
+> Ensure your `.env` file contains all necessary OAuth credentials (`GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `GOOGLE_REDIRECT_URL`, `MICROSOFT_CLIENT_ID`, `MICROSOFT_CLIENT_SECRET`, `MICROSOFT_REDIRECT_URL`, etc.) and the `TUNNEL_TOKEN`. The `api` service will pull these automatically via the `env_file` directive.
 
 ```yaml
 services:
