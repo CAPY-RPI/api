@@ -556,7 +556,3 @@ func generateSecureToken(length int) (string, error) {
 	}
 	return hex.EncodeToString(bytes), nil
 }
-
-func toPgTimestampFromTime(t time.Time) pgtype.Timestamp {
-	return pgtype.Timestamp{Time: t, Valid: true}
-}

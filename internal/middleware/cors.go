@@ -26,12 +26,6 @@ func CORS(allowedOrigins []string) func(http.Handler) http.Handler {
 
 			if allowed && origin != "" {
 				w.Header().Set("Access-Control-Allow-Origin", origin)
-			} else if allowed && origin == "" {
-				// Non-CORS request (like curl or same-origin)
-				// No specific action needed usually
-			} else {
-				// Not allowed, but we don't necessarily block yet, just don't set CORS headers
-				// Browsers will block the response reading
 			}
 
 			if allowed {

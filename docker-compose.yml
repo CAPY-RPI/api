@@ -14,7 +14,7 @@ services:
       - pgdata:/var/lib/postgresql/data
       - ./schema.sql:/docker-entrypoint-initdb.d/schema.sql
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U capy -d capy_db"]
+      test: [ "CMD-SHELL", "pg_isready -U capy -d capy_db" ]
       interval: 5s
       timeout: 5s
       retries: 5
@@ -23,10 +23,11 @@ services:
     build: .
     ports:
       - "8080:8080"
+    env_file:
+      - .env
     environment:
+      # Overrides or fallback defaults can go here
       DATABASE_URL: postgres://capy:devpassword@db:5432/capy_db?sslmode=disable
-      JWT_SECRET: dev-secret-change-in-prod
-      ENV: development
     depends_on:
       db:
         condition: service_healthy

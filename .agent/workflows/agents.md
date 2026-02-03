@@ -249,7 +249,7 @@ Before deploying any endpoint:
 - [ ] **Authentication**: Endpoint uses `middleware.Authenticator`
 - [ ] **Authorization**: Role check matches API design (faculty, org_admin, etc.)
 - [ ] **Input Validation**: All user input validated with struct tags
-- [ ] **SQL Injection**: Using sqlc (parameterized queries) — automatic
+- [ ] **SQL Injection**: Using sqlc (parameterized queries) — automatic ✓
 - [ ] **Error Handling**: No sensitive info leaked in error messages
 - [ ] **Logging**: Sensitive data (passwords, tokens) never logged
 - [ ] **Rate Limiting**: Consider adding for public endpoints

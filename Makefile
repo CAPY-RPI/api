@@ -4,6 +4,9 @@
 generate:
 	sqlc generate
 
+docs:
+	sqlc generate
+
 # Build
 build: generate
 	go build -o bin/capy-server ./cmd/server
@@ -17,7 +20,7 @@ test:
 	go test -v -race -short ./...
 
 test-integration:
-	go test -v -race -run Integration ./...
+	go test -v -race -tags=integration ./tests/integration/... ./internal/database/...
 
 test-all:
 	go test -v -race -tags=integration ./...
@@ -28,7 +31,7 @@ lint:
 
 # Docker
 docker:
-	docker-compose up --build
+	docker-compose up --build -d
 
 docker-down:
 	docker-compose down -v
