@@ -836,8 +836,8 @@ RETURNING oid, name, date_created, date_modified
 `
 
 type UpdateOrganizationParams struct {
-	Oid  uuid.UUID `json:"oid"`
-	Name string    `json:"name"`
+	Oid  uuid.UUID   `json:"oid"`
+	Name pgtype.Text `json:"name"`
 }
 
 func (q *Queries) UpdateOrganization(ctx context.Context, arg UpdateOrganizationParams) (Organization, error) {
@@ -867,8 +867,8 @@ RETURNING uid, first_name, last_name, personal_email, school_email, phone, grad_
 
 type UpdateUserParams struct {
 	Uid           uuid.UUID    `json:"uid"`
-	FirstName     string       `json:"first_name"`
-	LastName      string       `json:"last_name"`
+	FirstName     pgtype.Text  `json:"first_name"`
+	LastName      pgtype.Text  `json:"last_name"`
 	PersonalEmail pgtype.Text  `json:"personal_email"`
 	SchoolEmail   pgtype.Text  `json:"school_email"`
 	Phone         pgtype.Text  `json:"phone"`

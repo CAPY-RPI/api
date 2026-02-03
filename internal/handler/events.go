@@ -264,7 +264,7 @@ func (h *Handler) RegisterForEvent(w http.ResponseWriter, r *http.Request) {
 	if err := h.queries.RegisterForEvent(r.Context(), database.RegisterForEventParams{
 		Uid:         *req.UID,
 		Eid:         eid,
-		IsAttending: req.IsAttending,
+		IsAttending: pgtype.Bool{Bool: req.IsAttending, Valid: true},
 	}); err != nil {
 		h.handleDBError(w, err)
 		return

@@ -9,6 +9,7 @@ import (
 	"github.com/capyrpi/api/internal/dto"
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5/pgtype"
 )
 
 // ListOrganizations lists all organizations
@@ -243,7 +244,7 @@ func (h *Handler) AddOrgMember(w http.ResponseWriter, r *http.Request) {
 	if err := h.queries.AddOrgMember(r.Context(), database.AddOrgMemberParams{
 		Uid:     req.UID,
 		Oid:     oid,
-		IsAdmin: req.IsAdmin,
+		IsAdmin: pgtype.Bool{Bool: req.IsAdmin, Valid: true},
 	}); err != nil {
 		h.handleDBError(w, err)
 		return

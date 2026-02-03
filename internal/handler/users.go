@@ -68,6 +68,11 @@ func (h *Handler) UpdateUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	var role database.NullUserRole
+	if req.Role != nil {
+		role = database.NullUserRole{UserRole: database.UserRole(*req.Role), Valid: true}
+	}
+
 	user, err := h.queries.UpdateUser(r.Context(), database.UpdateUserParams{
 		Uid:           uid,
 		FirstName:     toPgText(req.FirstName),
@@ -76,7 +81,7 @@ func (h *Handler) UpdateUser(w http.ResponseWriter, r *http.Request) {
 		SchoolEmail:   toPgText(req.SchoolEmail),
 		Phone:         toPgText(req.Phone),
 		GradYear:      toPgInt4(req.GradYear),
-		Role:          toPgText(req.Role),
+		Role:          role,
 	})
 	if err != nil {
 		h.handleDBError(w, err)

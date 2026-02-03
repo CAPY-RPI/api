@@ -7,21 +7,26 @@ import (
 
 	"github.com/capyrpi/api/internal/config"
 	"github.com/capyrpi/api/internal/database"
+	"github.com/capyrpi/api/internal/oauth"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
 )
 
 // Handler holds dependencies for HTTP handlers
 type Handler struct {
-	queries *database.Queries
-	config  *config.Config
+	queries       *database.Queries
+	config        *config.Config
+	googleAuth    *oauth.GoogleProvider
+	microsoftAuth *oauth.MicrosoftProvider
 }
 
 // New creates a new Handler with the given dependencies
 func New(queries *database.Queries, cfg *config.Config) *Handler {
 	return &Handler{
-		queries: queries,
-		config:  cfg,
+		queries:       queries,
+		config:        cfg,
+		googleAuth:    oauth.NewGoogleProvider(cfg.OAuth.Google.ClientID, cfg.OAuth.Google.ClientSecret, cfg.OAuth.Google.RedirectURL),
+		microsoftAuth: oauth.NewMicrosoftProvider(cfg.OAuth.Microsoft.ClientID, cfg.OAuth.Microsoft.ClientSecret, cfg.OAuth.Microsoft.RedirectURL, cfg.OAuth.Microsoft.TenantID),
 	}
 }
 
@@ -56,8 +61,8 @@ func (h *Handler) handleDBError(w http.ResponseWriter, err error) {
 	}
 
 	var pgErr *pgconn.PgError
-	if ok := err.(*pgconn.PgError); ok {
-		pgErr = ok
+	if x, ok := err.(*pgconn.PgError); ok {
+		pgErr = x
 		switch pgErr.Code {
 		case "23505": // unique_violation
 			h.respondError(w, http.StatusConflict, "Resource already exists")

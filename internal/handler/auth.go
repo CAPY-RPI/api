@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"context"
 	"crypto/rand"
 	"encoding/hex"
 	"encoding/json"
@@ -9,9 +10,11 @@ import (
 
 	"github.com/capyrpi/api/internal/database"
 	"github.com/capyrpi/api/internal/middleware"
+	"github.com/capyrpi/api/internal/oauth"
 	"github.com/go-chi/chi/v5"
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgtype"
 	"golang.org/x/crypto/bcrypt"
 )
@@ -58,8 +61,16 @@ type CreateBotTokenRequest struct {
 // @Success      302
 // @Router       /auth/google [get]
 func (h *Handler) GoogleAuth(w http.ResponseWriter, r *http.Request) {
-	// TODO: Implement Google OAuth redirect
-	h.respondError(w, http.StatusNotImplemented, "Google OAuth not yet implemented")
+	state, err := oauth.GenerateStateToken()
+	if err != nil {
+		h.respondError(w, http.StatusInternalServerError, "Failed to generate state")
+		return
+	}
+
+	// Set state cookie to verify callback
+	h.setStateCookie(w, state)
+
+	http.Redirect(w, r, h.googleAuth.GetAuthURL(state), http.StatusFound)
 }
 
 // GoogleCallback handles Google OAuth callback
@@ -72,8 +83,39 @@ func (h *Handler) GoogleAuth(w http.ResponseWriter, r *http.Request) {
 // @Failure      400   {object}  ErrorResponse
 // @Router       /auth/google/callback [get]
 func (h *Handler) GoogleCallback(w http.ResponseWriter, r *http.Request) {
-	// TODO: Implement Google OAuth callback
-	h.respondError(w, http.StatusNotImplemented, "Google OAuth not yet implemented")
+	// Verify state
+	state := r.URL.Query().Get("state")
+	if !h.verifyStateCookie(w, r, state) {
+		h.respondError(w, http.StatusBadRequest, "Invalid state parameter")
+		return
+	}
+
+	code := r.URL.Query().Get("code")
+	if code == "" {
+		h.respondError(w, http.StatusBadRequest, "Missing auth code")
+		return
+	}
+
+	userInfo, err := h.googleAuth.ExchangeCode(r.Context(), code)
+	if err != nil {
+		h.respondError(w, http.StatusInternalServerError, "Failed to exchange code")
+		return
+	}
+
+	user, err := h.upsertUser(r.Context(), userInfo.Email, userInfo.GivenName, userInfo.FamilyName)
+	if err != nil {
+		h.handleDBError(w, err)
+		return
+	}
+
+	token, err := h.generateJWT(user)
+	if err != nil {
+		h.respondError(w, http.StatusInternalServerError, "Failed to generate session")
+		return
+	}
+
+	h.setAuthCookie(w, token)
+	http.Redirect(w, r, h.config.OAuth.RedirectURL, http.StatusFound)
 }
 
 // MicrosoftAuth initiates Microsoft OAuth flow
@@ -83,8 +125,14 @@ func (h *Handler) GoogleCallback(w http.ResponseWriter, r *http.Request) {
 // @Success      302
 // @Router       /auth/microsoft [get]
 func (h *Handler) MicrosoftAuth(w http.ResponseWriter, r *http.Request) {
-	// TODO: Implement Microsoft OAuth redirect
-	h.respondError(w, http.StatusNotImplemented, "Microsoft OAuth not yet implemented")
+	state, err := oauth.GenerateStateToken()
+	if err != nil {
+		h.respondError(w, http.StatusInternalServerError, "Failed to generate state")
+		return
+	}
+
+	h.setStateCookie(w, state)
+	http.Redirect(w, r, h.microsoftAuth.GetAuthURL(state), http.StatusFound)
 }
 
 // MicrosoftCallback handles Microsoft OAuth callback
@@ -97,8 +145,44 @@ func (h *Handler) MicrosoftAuth(w http.ResponseWriter, r *http.Request) {
 // @Failure      400   {object}  ErrorResponse
 // @Router       /auth/microsoft/callback [get]
 func (h *Handler) MicrosoftCallback(w http.ResponseWriter, r *http.Request) {
-	// TODO: Implement Microsoft OAuth callback
-	h.respondError(w, http.StatusNotImplemented, "Microsoft OAuth not yet implemented")
+	state := r.URL.Query().Get("state")
+	if !h.verifyStateCookie(w, r, state) {
+		h.respondError(w, http.StatusBadRequest, "Invalid state parameter")
+		return
+	}
+
+	code := r.URL.Query().Get("code")
+	if code == "" {
+		h.respondError(w, http.StatusBadRequest, "Missing auth code")
+		return
+	}
+
+	userInfo, err := h.microsoftAuth.ExchangeCode(r.Context(), code)
+	if err != nil {
+		h.respondError(w, http.StatusInternalServerError, "Failed to exchange code")
+		return
+	}
+
+	// Use PrincipalName (email) or Mail
+	email := userInfo.UserPrincipalName
+	if email == "" {
+		email = userInfo.Mail
+	}
+
+	user, err := h.upsertUser(r.Context(), email, userInfo.GivenName, userInfo.Surname)
+	if err != nil {
+		h.handleDBError(w, err)
+		return
+	}
+
+	token, err := h.generateJWT(user)
+	if err != nil {
+		h.respondError(w, http.StatusInternalServerError, "Failed to generate session")
+		return
+	}
+
+	h.setAuthCookie(w, token)
+	http.Redirect(w, r, h.config.OAuth.RedirectURL, http.StatusFound)
 }
 
 // ============================================================================
@@ -397,6 +481,61 @@ func (h *Handler) setAuthCookie(w http.ResponseWriter, token string) {
 		Secure:   h.config.Cookie.Secure,
 		HttpOnly: true,
 		SameSite: http.SameSiteLaxMode,
+	})
+}
+
+func (h *Handler) setStateCookie(w http.ResponseWriter, state string) {
+	http.SetCookie(w, &http.Cookie{
+		Name:     "oauth_state",
+		Value:    state,
+		Path:     "/v1/auth",
+		Domain:   h.config.Cookie.Domain,
+		MaxAge:   300, // 5 minutes
+		Secure:   h.config.Cookie.Secure,
+		HttpOnly: true,
+		SameSite: http.SameSiteLaxMode,
+	})
+}
+
+func (h *Handler) verifyStateCookie(w http.ResponseWriter, r *http.Request, state string) bool {
+	cookie, err := r.Cookie("oauth_state")
+	if err != nil {
+		return false
+	}
+	// Clear cookie
+	http.SetCookie(w, &http.Cookie{
+		Name:     "oauth_state",
+		Value:    "",
+		Path:     "/v1/auth",
+		Domain:   h.config.Cookie.Domain,
+		MaxAge:   -1,
+		Secure:   h.config.Cookie.Secure,
+		HttpOnly: true,
+		SameSite: http.SameSiteLaxMode,
+	})
+	return cookie.Value == state
+}
+
+func (h *Handler) upsertUser(ctx context.Context, email, firstName, lastName string) (database.User, error) {
+	pgEmail := toPgTextFromString(email)
+
+	// Check if user exists
+	user, err := h.queries.GetUserByEmail(ctx, pgEmail)
+	if err == nil {
+		return user, nil
+	}
+
+	if err != pgx.ErrNoRows {
+		return database.User{}, err
+	}
+
+	// Create new user
+	return h.queries.CreateUser(ctx, database.CreateUserParams{
+		FirstName:     firstName,
+		LastName:      lastName,
+		PersonalEmail: pgEmail, // Default to personal email for oauth
+		SchoolEmail:   pgtype.Text{Valid: false},
+		Role:          database.NullUserRole{UserRole: database.UserRoleStudent, Valid: true}, // Default role
 	})
 }
 

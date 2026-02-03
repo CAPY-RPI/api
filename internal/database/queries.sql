@@ -14,13 +14,13 @@ RETURNING *;
 
 -- name: UpdateUser :one
 UPDATE users
-SET first_name = COALESCE($2, first_name),
-    last_name = COALESCE($3, last_name),
-    personal_email = COALESCE($4, personal_email),
-    school_email = COALESCE($5, school_email),
-    phone = COALESCE($6, phone),
-    grad_year = COALESCE($7, grad_year),
-    role = COALESCE($8, role)
+SET first_name = COALESCE(sqlc.narg('first_name'), first_name),
+    last_name = COALESCE(sqlc.narg('last_name'), last_name),
+    personal_email = COALESCE(sqlc.narg('personal_email'), personal_email),
+    school_email = COALESCE(sqlc.narg('school_email'), school_email),
+    phone = COALESCE(sqlc.narg('phone'), phone),
+    grad_year = COALESCE(sqlc.narg('grad_year'), grad_year),
+    role = COALESCE(sqlc.narg('role'), role)
 WHERE uid = $1
 RETURNING *;
 
@@ -40,7 +40,7 @@ RETURNING *;
 
 -- name: UpdateOrganization :one
 UPDATE organizations
-SET name = COALESCE($2, name)
+SET name = COALESCE(sqlc.narg('name'), name)
 WHERE oid = $1
 RETURNING *;
 
@@ -93,9 +93,9 @@ RETURNING *;
 
 -- name: UpdateEvent :one
 UPDATE events
-SET location = COALESCE($2, location),
-    event_time = COALESCE($3, event_time),
-    description = COALESCE($4, description)
+SET location = COALESCE(sqlc.narg('location'), location),
+    event_time = COALESCE(sqlc.narg('event_time'), event_time),
+    description = COALESCE(sqlc.narg('description'), description)
 WHERE eid = $1
 RETURNING *;
 

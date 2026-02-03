@@ -33,8 +33,9 @@ type CookieConfig struct {
 }
 
 type OAuthConfig struct {
-	Google    GoogleOAuthConfig
-	Microsoft MicrosoftOAuthConfig
+	Google      GoogleOAuthConfig
+	Microsoft   MicrosoftOAuthConfig
+	RedirectURL string `env:"AUTH_REDIRECT_URL" env-default:"/"`
 }
 
 type GoogleOAuthConfig struct {
