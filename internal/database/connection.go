@@ -3,6 +3,7 @@ package database
 import (
 	"context"
 	"fmt"
+	"os"
 	"time"
 
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -30,4 +31,19 @@ func NewPool(ctx context.Context, connString string) (*pgxpool.Pool, error) {
 	}
 
 	return pool, nil
+}
+
+// InitSchema reads the schema file and executes it against the database
+func InitSchema(ctx context.Context, pool *pgxpool.Pool, schemaPath string) error {
+	schema, err := os.ReadFile(schemaPath)
+	if err != nil {
+		return fmt.Errorf("failed to read schema file: %w", err)
+	}
+
+	_, err = pool.Exec(ctx, string(schema))
+	if err != nil {
+		return fmt.Errorf("failed to execute schema: %w", err)
+	}
+
+	return nil
 }

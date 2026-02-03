@@ -2,7 +2,11 @@
 -- Database Schema for CAPY (Club Assistant in Python)
 
 -- 1. ENUMs & Functions
-CREATE TYPE user_role AS ENUM ('student', 'alumni', 'faculty', 'external');
+DO $$ BEGIN
+    CREATE TYPE user_role AS ENUM ('student', 'alumni', 'faculty', 'external');
+EXCEPTION
+    WHEN duplicate_object THEN null;
+END $$;
 
 CREATE OR REPLACE FUNCTION update_modified_column()
 RETURNS TRIGGER AS $$
@@ -78,9 +82,14 @@ CREATE TABLE IF NOT EXISTS bot_tokens (
     is_active BOOLEAN DEFAULT TRUE
 );
 
-CREATE INDEX idx_bot_tokens_active ON bot_tokens(is_active) WHERE is_active = TRUE;
+CREATE INDEX IF NOT EXISTS idx_bot_tokens_active ON bot_tokens(is_active) WHERE is_active = TRUE;
 
 -- 4. Triggers
+DROP TRIGGER IF EXISTS update_users_modtime ON users;
 CREATE TRIGGER update_users_modtime BEFORE UPDATE ON users FOR EACH ROW EXECUTE FUNCTION update_modified_column();
+
+DROP TRIGGER IF EXISTS update_orgs_modtime ON organizations;
 CREATE TRIGGER update_orgs_modtime BEFORE UPDATE ON organizations FOR EACH ROW EXECUTE FUNCTION update_modified_column();
+
+DROP TRIGGER IF EXISTS update_events_modtime ON events;
 CREATE TRIGGER update_events_modtime BEFORE UPDATE ON events FOR EACH ROW EXECUTE FUNCTION update_modified_column();

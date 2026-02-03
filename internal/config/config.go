@@ -20,7 +20,8 @@ type ServerConfig struct {
 }
 
 type DatabaseConfig struct {
-	URL string `env:"DATABASE_URL" env-required:"true"`
+	URL        string `env:"DATABASE_URL" env-required:"true"`
+	SchemaPath string `env:"SCHEMA_PATH" env-default:"schema.sql"`
 }
 
 type JWTConfig struct {
