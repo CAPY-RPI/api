@@ -185,7 +185,6 @@ To run the full stack (API + Postgres + Cloudflare Tunnel) on a separate machine
 > **Note**: You will need a Cloudflare Tunnel Token. Add `TUNNEL_TOKEN=your_token` to your environment variables or `.env` file.
 
 ```yaml
-version: "3.9"
 services:
   db:
     image: postgres:16-alpine
