@@ -178,3 +178,43 @@ docker run -d `
 ```
 
 > **Note**: `host.docker.internal` allows the container to access your host machine's localhost (e.g., if running Postgres locally). On Linux, you may need `--add-host=host.docker.internal:host-gateway`.
+
+### Running with Docker Compose (Full Stack)
+To run the full stack (API + Postgres) on a separate machine, create a `docker-compose.yml` file:
+
+```yaml
+version: "3.9"
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: capy
+      POSTGRES_PASSWORD: devpassword
+      POSTGRES_DB: capy_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U capy -d capy_db" ]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  api:
+    image: ghcr.io/capy-rpi/api:main
+    ports:
+      - "8080:8080"
+    environment:
+      DATABASE_URL: postgres://capy:devpassword@db:5432/capy_db?sslmode=disable
+      JWT_SECRET: your-secret-key
+      ENV: production
+      SERVER_HOST: 0.0.0.0
+      SERVER_PORT: 8080
+    depends_on:
+      db:
+        condition: service_healthy
+
+volumes:
+  pgdata:
+```
