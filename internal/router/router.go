@@ -1,11 +1,13 @@
 package router
 
 import (
+	_ "github.com/capyrpi/api/docs/swagger" // Import generated docs
 	"github.com/capyrpi/api/internal/database"
 	"github.com/capyrpi/api/internal/handler"
 	"github.com/capyrpi/api/internal/middleware"
 	"github.com/go-chi/chi/v5"
 	chimiddleware "github.com/go-chi/chi/v5/middleware"
+	httpSwagger "github.com/swaggo/http-swagger/v2"
 )
 
 // New creates a new chi router with all routes configured
@@ -20,6 +22,9 @@ func New(h *handler.Handler, queries database.Querier, jwtSecret string, allowed
 
 	// Health check (public)
 	r.Get("/health", h.Health)
+
+	// Swagger UI (public)
+	r.Get("/swagger/*", httpSwagger.WrapHandler)
 
 	// API v1 routes
 	r.Route("/v1", func(r chi.Router) {

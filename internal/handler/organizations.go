@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"log/slog"
 	"net/http"
-	"strconv"
 
 	"github.com/capyrpi/api/internal/database"
 	"github.com/capyrpi/api/internal/dto"
@@ -353,26 +352,9 @@ func (h *Handler) ListOrgEvents(w http.ResponseWriter, r *http.Request) {
 // Helper functions
 func toOrgResponse(org database.Organization) dto.OrganizationResponse {
 	return dto.OrganizationResponse{
-		OID:  org.Oid,
-		Name: org.Name,
+		OID:          org.Oid,
+		Name:         org.Name,
+		DateCreated:  fromPgDate(org.DateCreated),
+		DateModified: fromPgDate(org.DateModified),
 	}
-}
-
-func parsePagination(r *http.Request) (limit, offset int) {
-	limit = 20
-	offset = 0
-
-	if l := r.URL.Query().Get("limit"); l != "" {
-		if parsed, err := strconv.Atoi(l); err == nil && parsed > 0 && parsed <= 100 {
-			limit = parsed
-		}
-	}
-
-	if o := r.URL.Query().Get("offset"); o != "" {
-		if parsed, err := strconv.Atoi(o); err == nil && parsed >= 0 {
-			offset = parsed
-		}
-	}
-
-	return limit, offset
 }

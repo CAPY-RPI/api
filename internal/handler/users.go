@@ -3,13 +3,11 @@ package handler
 import (
 	"encoding/json"
 	"net/http"
-	"time"
 
 	"github.com/capyrpi/api/internal/database"
 	"github.com/capyrpi/api/internal/dto"
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
-	"github.com/jackc/pgx/v5/pgtype"
 )
 
 // GetUser retrieves a user by ID
@@ -204,41 +202,7 @@ func toUserResponse(user database.User) dto.UserResponse {
 		Phone:         fromPgText(user.Phone),
 		GradYear:      fromPgInt4(user.GradYear),
 		Role:          string(user.Role.UserRole),
+		DateCreated:   fromPgDate(user.DateCreated),
+		DateModified:  fromPgDate(user.DateModified),
 	}
-}
-
-func toPgText(s *string) pgtype.Text {
-	if s == nil {
-		return pgtype.Text{Valid: false}
-	}
-	return pgtype.Text{String: *s, Valid: true}
-}
-
-func toPgInt4(i *int) pgtype.Int4 {
-	if i == nil {
-		return pgtype.Int4{Valid: false}
-	}
-	return pgtype.Int4{Int32: int32(*i), Valid: true}
-}
-
-func fromPgText(t pgtype.Text) *string {
-	if !t.Valid {
-		return nil
-	}
-	return &t.String
-}
-
-func fromPgInt4(i pgtype.Int4) *int {
-	if !i.Valid {
-		return nil
-	}
-	v := int(i.Int32)
-	return &v
-}
-
-func fromPgTimestamp(t pgtype.Timestamp) *time.Time {
-	if !t.Valid {
-		return nil
-	}
-	return &t.Time
 }

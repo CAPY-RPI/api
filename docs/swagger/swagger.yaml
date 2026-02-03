@@ -1,0 +1,1191 @@
+definitions:
+  dto.AddMemberRequest:
+    properties:
+      is_admin:
+        type: boolean
+      uid:
+        type: string
+    required:
+    - uid
+    type: object
+  dto.CreateEventRequest:
+    properties:
+      description:
+        type: string
+      event_time:
+        type: string
+      location:
+        type: string
+      org_id:
+        description: Which org is hosting
+        type: string
+    required:
+    - org_id
+    type: object
+  dto.CreateOrganizationRequest:
+    properties:
+      creator_uid:
+        description: Required for bot-created orgs
+        type: string
+      name:
+        maxLength: 200
+        minLength: 1
+        type: string
+    required:
+    - name
+    type: object
+  dto.EventRegistrationResponse:
+    properties:
+      date_registered:
+        type: string
+      first_name:
+        type: string
+      is_admin:
+        type: boolean
+      is_attending:
+        type: boolean
+      last_name:
+        type: string
+      uid:
+        type: string
+    type: object
+  dto.EventResponse:
+    properties:
+      date_created:
+        type: string
+      date_modified:
+        type: string
+      description:
+        type: string
+      eid:
+        type: string
+      event_time:
+        type: string
+      location:
+        type: string
+    type: object
+  dto.OrgMemberResponse:
+    properties:
+      date_joined:
+        type: string
+      email:
+        type: string
+      first_name:
+        type: string
+      is_admin:
+        type: boolean
+      last_active:
+        type: string
+      last_name:
+        type: string
+      uid:
+        type: string
+    type: object
+  dto.OrganizationResponse:
+    properties:
+      date_created:
+        type: string
+      date_modified:
+        type: string
+      name:
+        type: string
+      oid:
+        type: string
+    type: object
+  dto.RegisterEventRequest:
+    properties:
+      is_attending:
+        type: boolean
+      uid:
+        description: For bot to register on behalf of user
+        type: string
+    type: object
+  dto.UpdateEventRequest:
+    properties:
+      description:
+        type: string
+      event_time:
+        type: string
+      location:
+        type: string
+    type: object
+  dto.UpdateOrganizationRequest:
+    properties:
+      name:
+        maxLength: 200
+        minLength: 1
+        type: string
+    type: object
+  dto.UpdateUserRequest:
+    properties:
+      first_name:
+        maxLength: 100
+        minLength: 1
+        type: string
+      grad_year:
+        maximum: 2100
+        minimum: 2000
+        type: integer
+      last_name:
+        maxLength: 100
+        minLength: 1
+        type: string
+      personal_email:
+        type: string
+      phone:
+        type: string
+      role:
+        enum:
+        - student
+        - alumni
+        - faculty
+        - external
+        type: string
+      school_email:
+        type: string
+    type: object
+  dto.UserResponse:
+    properties:
+      date_created:
+        type: string
+      date_modified:
+        type: string
+      first_name:
+        type: string
+      grad_year:
+        type: integer
+      last_name:
+        type: string
+      personal_email:
+        type: string
+      phone:
+        type: string
+      role:
+        type: string
+      school_email:
+        type: string
+      uid:
+        type: string
+    type: object
+  handler.AuthResponse:
+    properties:
+      token:
+        description: Only included for non-cookie auth
+        type: string
+      user:
+        $ref: '#/definitions/handler.UserAuthResponse'
+    type: object
+  handler.BotTokenResponse:
+    properties:
+      created_at:
+        type: string
+      expires_at:
+        type: string
+      is_active:
+        type: boolean
+      name:
+        type: string
+      token:
+        description: Only on creation
+        type: string
+      token_id:
+        type: string
+    type: object
+  handler.CreateBotTokenRequest:
+    properties:
+      expires_at:
+        type: string
+      name:
+        maxLength: 100
+        minLength: 1
+        type: string
+    required:
+    - name
+    type: object
+  handler.ErrorResponse:
+    properties:
+      error:
+        type: string
+      message:
+        type: string
+    type: object
+  handler.UserAuthResponse:
+    properties:
+      email:
+        type: string
+      first_name:
+        type: string
+      last_name:
+        type: string
+      role:
+        type: string
+      uid:
+        type: string
+    type: object
+info:
+  contact: {}
+paths:
+  /auth/google:
+    get:
+      description: Redirects to Google OAuth consent screen
+      responses:
+        "302":
+          description: Found
+      summary: Initiate Google OAuth
+      tags:
+      - auth
+  /auth/google/callback:
+    get:
+      description: Handles the OAuth callback from Google
+      parameters:
+      - description: Authorization code
+        in: query
+        name: code
+        required: true
+        type: string
+      - description: State token
+        in: query
+        name: state
+        required: true
+        type: string
+      responses:
+        "302":
+          description: Found
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+      summary: Google OAuth callback
+      tags:
+      - auth
+  /auth/logout:
+    post:
+      description: Clears the authentication cookie
+      responses:
+        "204":
+          description: No Content
+      security:
+      - CookieAuth: []
+      summary: Logout
+      tags:
+      - auth
+  /auth/me:
+    get:
+      consumes:
+      - application/json
+      description: Returns the currently authenticated user's profile
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handler.UserAuthResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+      security:
+      - CookieAuth: []
+      summary: Get current user
+      tags:
+      - auth
+  /auth/microsoft:
+    get:
+      description: Redirects to Microsoft OAuth consent screen
+      responses:
+        "302":
+          description: Found
+      summary: Initiate Microsoft OAuth
+      tags:
+      - auth
+  /auth/microsoft/callback:
+    get:
+      description: Handles the OAuth callback from Microsoft
+      parameters:
+      - description: Authorization code
+        in: query
+        name: code
+        required: true
+        type: string
+      - description: State token
+        in: query
+        name: state
+        required: true
+        type: string
+      responses:
+        "302":
+          description: Found
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+      summary: Microsoft OAuth callback
+      tags:
+      - auth
+  /auth/refresh:
+    post:
+      consumes:
+      - application/json
+      description: Issues a new JWT token if the current one is valid
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handler.AuthResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+      security:
+      - CookieAuth: []
+      summary: Refresh token
+      tags:
+      - auth
+  /bot/me:
+    get:
+      consumes:
+      - application/json
+      description: Returns information about the current bot token
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handler.BotTokenResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+      security:
+      - BotToken: []
+      summary: Get bot info
+      tags:
+      - bot
+  /bot/tokens:
+    get:
+      consumes:
+      - application/json
+      description: Returns all bot tokens (requires faculty role)
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/handler.BotTokenResponse'
+            type: array
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+      security:
+      - CookieAuth: []
+      summary: List bot tokens
+      tags:
+      - bot
+    post:
+      consumes:
+      - application/json
+      description: Creates a new bot token (requires faculty role)
+      parameters:
+      - description: Token data
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/handler.CreateBotTokenRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/handler.BotTokenResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+      security:
+      - CookieAuth: []
+      summary: Create bot token
+      tags:
+      - bot
+  /bot/tokens/{token_id}:
+    delete:
+      consumes:
+      - application/json
+      description: Revokes a bot token (requires faculty role)
+      parameters:
+      - description: Token UUID
+        in: path
+        name: token_id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: No Content
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+      security:
+      - CookieAuth: []
+      summary: Revoke bot token
+      tags:
+      - bot
+  /events:
+    get:
+      consumes:
+      - application/json
+      description: Returns a paginated list of all public events
+      parameters:
+      - description: Limit (default 20, max 100)
+        in: query
+        name: limit
+        type: integer
+      - description: Offset (default 0)
+        in: query
+        name: offset
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/dto.EventResponse'
+            type: array
+      security:
+      - CookieAuth: []
+      summary: List events
+      tags:
+      - events
+    post:
+      consumes:
+      - application/json
+      description: Creates a new event for an organization
+      parameters:
+      - description: Event data
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/dto.CreateEventRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/dto.EventResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+      security:
+      - CookieAuth: []
+      summary: Create event
+      tags:
+      - events
+  /events/{eid}:
+    delete:
+      consumes:
+      - application/json
+      description: Deletes an event. Requires event_admin role.
+      parameters:
+      - description: Event UUID
+        in: path
+        name: eid
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: No Content
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+      security:
+      - CookieAuth: []
+      summary: Delete event
+      tags:
+      - events
+    get:
+      consumes:
+      - application/json
+      description: Returns event details
+      parameters:
+      - description: Event UUID
+        in: path
+        name: eid
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.EventResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+      security:
+      - CookieAuth: []
+      summary: Get event
+      tags:
+      - events
+    put:
+      consumes:
+      - application/json
+      description: Updates event details. Requires event_admin role.
+      parameters:
+      - description: Event UUID
+        in: path
+        name: eid
+        required: true
+        type: string
+      - description: Event update data
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/dto.UpdateEventRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.EventResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+      security:
+      - CookieAuth: []
+      summary: Update event
+      tags:
+      - events
+  /events/{eid}/register:
+    delete:
+      consumes:
+      - application/json
+      description: Removes registration for the current user or a specified user
+      parameters:
+      - description: Event UUID
+        in: path
+        name: eid
+        required: true
+        type: string
+      - description: User UUID (for bot auth)
+        in: query
+        name: uid
+        type: string
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: No Content
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+      security:
+      - CookieAuth: []
+      summary: Unregister from event
+      tags:
+      - events
+    post:
+      consumes:
+      - application/json
+      description: Registers the current user or a specified user for an event
+      parameters:
+      - description: Event UUID
+        in: path
+        name: eid
+        required: true
+        type: string
+      - description: Registration data
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/dto.RegisterEventRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+      security:
+      - CookieAuth: []
+      summary: Register for event
+      tags:
+      - events
+  /events/{eid}/registrations:
+    get:
+      consumes:
+      - application/json
+      description: Returns all users registered for an event
+      parameters:
+      - description: Event UUID
+        in: path
+        name: eid
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/dto.EventRegistrationResponse'
+            type: array
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+      security:
+      - CookieAuth: []
+      summary: List event registrations
+      tags:
+      - events
+  /events/org/{oid}:
+    get:
+      consumes:
+      - application/json
+      description: Returns all events hosted by a specific organization
+      parameters:
+      - description: Organization UUID
+        in: path
+        name: oid
+        required: true
+        type: string
+      - description: Limit (default 20)
+        in: query
+        name: limit
+        type: integer
+      - description: Offset (default 0)
+        in: query
+        name: offset
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/dto.EventResponse'
+            type: array
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+      security:
+      - CookieAuth: []
+      summary: List events by organization
+      tags:
+      - events
+  /organizations:
+    get:
+      consumes:
+      - application/json
+      description: Returns a paginated list of all organizations
+      parameters:
+      - description: Limit (default 20, max 100)
+        in: query
+        name: limit
+        type: integer
+      - description: Offset (default 0)
+        in: query
+        name: offset
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/dto.OrganizationResponse'
+            type: array
+      security:
+      - CookieAuth: []
+      summary: List organizations
+      tags:
+      - organizations
+    post:
+      consumes:
+      - application/json
+      description: Creates a new organization. The creator becomes an admin.
+      parameters:
+      - description: Organization data
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/dto.CreateOrganizationRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/dto.OrganizationResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+      security:
+      - CookieAuth: []
+      summary: Create organization
+      tags:
+      - organizations
+  /organizations/{oid}:
+    delete:
+      consumes:
+      - application/json
+      description: Deletes an organization. Requires org_admin role.
+      parameters:
+      - description: Organization UUID
+        in: path
+        name: oid
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: No Content
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+      security:
+      - CookieAuth: []
+      summary: Delete organization
+      tags:
+      - organizations
+    get:
+      consumes:
+      - application/json
+      description: Returns organization details
+      parameters:
+      - description: Organization UUID
+        in: path
+        name: oid
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.OrganizationResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+      security:
+      - CookieAuth: []
+      summary: Get organization
+      tags:
+      - organizations
+    put:
+      consumes:
+      - application/json
+      description: Updates organization details. Requires org_admin role.
+      parameters:
+      - description: Organization UUID
+        in: path
+        name: oid
+        required: true
+        type: string
+      - description: Organization update data
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/dto.UpdateOrganizationRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.OrganizationResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+      security:
+      - CookieAuth: []
+      summary: Update organization
+      tags:
+      - organizations
+  /organizations/{oid}/events:
+    get:
+      consumes:
+      - application/json
+      description: Returns all events hosted by an organization
+      parameters:
+      - description: Organization UUID
+        in: path
+        name: oid
+        required: true
+        type: string
+      - description: Limit (default 20)
+        in: query
+        name: limit
+        type: integer
+      - description: Offset (default 0)
+        in: query
+        name: offset
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/dto.EventResponse'
+            type: array
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+      security:
+      - CookieAuth: []
+      summary: List organization events
+      tags:
+      - organizations
+  /organizations/{oid}/members:
+    get:
+      consumes:
+      - application/json
+      description: Returns all members of an organization
+      parameters:
+      - description: Organization UUID
+        in: path
+        name: oid
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/dto.OrgMemberResponse'
+            type: array
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+      security:
+      - CookieAuth: []
+      summary: List organization members
+      tags:
+      - organizations
+    post:
+      consumes:
+      - application/json
+      description: Adds a user as a member of an organization
+      parameters:
+      - description: Organization UUID
+        in: path
+        name: oid
+        required: true
+        type: string
+      - description: Member data
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/dto.AddMemberRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+      security:
+      - CookieAuth: []
+      summary: Add organization member
+      tags:
+      - organizations
+  /organizations/{oid}/members/{uid}:
+    delete:
+      consumes:
+      - application/json
+      description: Removes a user from an organization
+      parameters:
+      - description: Organization UUID
+        in: path
+        name: oid
+        required: true
+        type: string
+      - description: User UUID
+        in: path
+        name: uid
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: No Content
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+      security:
+      - CookieAuth: []
+      summary: Remove organization member
+      tags:
+      - organizations
+  /users/{uid}:
+    delete:
+      consumes:
+      - application/json
+      description: Deletes a user account. Users can only delete their own account.
+      parameters:
+      - description: User UUID
+        in: path
+        name: uid
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: No Content
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+      security:
+      - CookieAuth: []
+      summary: Delete user
+      tags:
+      - users
+    get:
+      consumes:
+      - application/json
+      description: Retrieves a user's profile
+      parameters:
+      - description: User UUID
+        in: path
+        name: uid
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.UserResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+      security:
+      - CookieAuth: []
+      summary: Get user by ID
+      tags:
+      - users
+    put:
+      consumes:
+      - application/json
+      description: Updates a user's profile. Users can only update their own profile.
+      parameters:
+      - description: User UUID
+        in: path
+        name: uid
+        required: true
+        type: string
+      - description: User update data
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/dto.UpdateUserRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.UserResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+      security:
+      - CookieAuth: []
+      summary: Update user
+      tags:
+      - users
+  /users/{uid}/events:
+    get:
+      consumes:
+      - application/json
+      description: Returns all events the user is registered for
+      parameters:
+      - description: User UUID
+        in: path
+        name: uid
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/dto.EventResponse'
+            type: array
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+      security:
+      - CookieAuth: []
+      summary: List user's events
+      tags:
+      - users
+  /users/{uid}/organizations:
+    get:
+      consumes:
+      - application/json
+      description: Returns all organizations the user is a member of
+      parameters:
+      - description: User UUID
+        in: path
+        name: uid
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/dto.OrganizationResponse'
+            type: array
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+      security:
+      - CookieAuth: []
+      summary: List user's organizations
+      tags:
+      - users
+swagger: "2.0"

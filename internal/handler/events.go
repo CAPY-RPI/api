@@ -3,7 +3,6 @@ package handler
 import (
 	"encoding/json"
 	"net/http"
-	"time"
 
 	"github.com/capyrpi/api/internal/database"
 	"github.com/capyrpi/api/internal/dto"
@@ -363,23 +362,11 @@ func (h *Handler) ListEventsByOrg(w http.ResponseWriter, r *http.Request) {
 // Helper functions
 func toEventResponse(event database.Event) dto.EventResponse {
 	return dto.EventResponse{
-		EID:         event.Eid,
-		Location:    fromPgText(event.Location),
-		EventTime:   fromPgTimestamp(event.EventTime),
-		Description: fromPgText(event.Description),
+		EID:          event.Eid,
+		Location:     fromPgText(event.Location),
+		EventTime:    fromPgTimestamp(event.EventTime),
+		Description:  fromPgText(event.Description),
+		DateCreated:  fromPgDate(event.DateCreated),
+		DateModified: fromPgDate(event.DateModified),
 	}
-}
-
-func toPgTextFromString(s string) pgtype.Text {
-	if s == "" {
-		return pgtype.Text{Valid: false}
-	}
-	return pgtype.Text{String: s, Valid: true}
-}
-
-func toPgTimestamp(t *time.Time) pgtype.Timestamp {
-	if t == nil {
-		return pgtype.Timestamp{Valid: false}
-	}
-	return pgtype.Timestamp{Time: *t, Valid: true}
 }

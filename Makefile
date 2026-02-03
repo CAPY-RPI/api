@@ -1,11 +1,11 @@
 .PHONY: generate build run test test-integration lint swagger docker ci
 
 # Code generation
-generate:
+generate:	
 	sqlc generate
+	swag init -g cmd/server/main.go --output docs/swagger
 
-docs:
-	sqlc generate
+docs: generate
 
 # Build
 build: generate
