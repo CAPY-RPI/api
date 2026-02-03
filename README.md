@@ -188,16 +188,16 @@ To run the full stack (API + Postgres + Cloudflare Tunnel) on a separate machine
 services:
   db:
     image: postgres:16-alpine
+    env_file:
+      - .env
     environment:
-      POSTGRES_USER: capy
-      POSTGRES_PASSWORD: devpassword
-      POSTGRES_DB: capy_db
-    ports:
-      - "5432:5432"
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
     volumes:
       - pgdata:/var/lib/postgresql/data
     healthcheck:
-      test: [ "CMD-SHELL", "pg_isready -U capy -d capy_db" ]
+      test: [ "CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}" ]
       interval: 5s
       timeout: 5s
       retries: 5
@@ -206,12 +206,8 @@ services:
     image: ghcr.io/capy-rpi/api:main
     ports:
       - "8080:8080"
-    environment:
-      DATABASE_URL: postgres://capy:devpassword@db:5432/capy_db?sslmode=disable
-      JWT_SECRET: your-secret-key
-      ENV: production
-      SERVER_HOST: 0.0.0.0
-      SERVER_PORT: 8080
+    env_file:
+      - .env
     depends_on:
       db:
         condition: service_healthy
@@ -220,8 +216,8 @@ services:
     image: cloudflare/cloudflared:latest
     restart: unless-stopped
     command: tunnel run
-    environment:
-      - TUNNEL_TOKEN=${TUNNEL_TOKEN}
+    env_file:
+      - .env
     depends_on:
       - api
 

@@ -1,2 +1,0 @@
-- readme.md full stack
-- harden docker compose to put all secrets in env and disable postgres ports
