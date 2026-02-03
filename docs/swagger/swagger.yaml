@@ -223,7 +223,7 @@ definitions:
       uid:
         type: string
     type: object
-host: localhost:8080
+host: api.capyrpi.org
 info:
   contact:
     email: support@swagger.io
