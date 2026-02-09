@@ -15,7 +15,9 @@ func New(h *handler.Handler, queries database.Querier, jwtSecret string, allowed
 	r := chi.NewRouter()
 
 	// Global middleware
-	r.Use(chimiddleware.Logger)
+	if h.Config.Env != "bench" {
+		r.Use(chimiddleware.Logger)
+	}
 	r.Use(chimiddleware.Recoverer)
 	r.Use(chimiddleware.RequestID)
 	r.Use(middleware.CORS(allowedOrigins))

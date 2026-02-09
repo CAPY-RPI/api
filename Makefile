@@ -1,4 +1,4 @@
-.PHONY: generate build run test test-integration lint swagger docker ci
+.PHONY: generate build run test test-integration test-all lint swagger docker docker-down ci benchmark
 
 # Code generation
 generate:	
@@ -24,6 +24,13 @@ test-integration:
 
 test-all:
 	go test -v -race -tags=integration ./...
+
+benchmark:
+	@mkdir -p benchmarks/results
+	@timestamp=$$(date +%Y-%m-%d-%H%M%S); \
+	log_file="benchmarks/results/benchmark-$$timestamp.txt"; \
+	echo "Running benchmarks and saving to $$log_file..."; \
+	go test -bench=. -benchmem -run=^$$ ./tests/benchmarks/... | tee $$log_file
 
 # Linting
 lint:
