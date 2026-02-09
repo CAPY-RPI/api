@@ -13,8 +13,11 @@ import (
 	"github.com/capyrpi/api/internal/config"
 	"github.com/capyrpi/api/internal/database"
 	"github.com/capyrpi/api/internal/handler"
+	"github.com/capyrpi/api/internal/middleware"
 	"github.com/capyrpi/api/internal/router"
 	"github.com/go-chi/chi/v5"
+	"github.com/golang-jwt/jwt/v5"
+	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/testcontainers/testcontainers-go"
 	"github.com/testcontainers/testcontainers-go/modules/postgres"
@@ -22,9 +25,15 @@ import (
 )
 
 var (
-	benchDB     *pgxpool.Pool
-	benchRouter chi.Router
-	benchServer *httptest.Server
+	benchDB        *pgxpool.Pool
+	benchRouter    chi.Router
+	benchServer    *httptest.Server
+	benchQueries   *database.Queries
+	benchJWTToken  string
+	benchUserID    string
+	benchOrgID     string
+	benchEventID   string
+	benchJWTSecret string = "bench-secret"
 )
 
 func TestMain(m *testing.M) {
@@ -73,7 +82,8 @@ func TestMain(m *testing.M) {
 		log.Fatalf("failed to connect to database: %v", err)
 	}
 
-	queries := database.New(benchDB)
+	benchQueries = database.New(benchDB)
+	setupTestData(ctx)
 
 	cfg := &config.Config{
 		Env: "bench",
@@ -95,8 +105,8 @@ func TestMain(m *testing.M) {
 		},
 	}
 
-	h := handler.New(queries, cfg)
-	benchRouter = router.New(h, queries, cfg.JWT.Secret, []string{"*"})
+	h := handler.New(benchQueries, cfg)
+	benchRouter = router.New(h, benchQueries, cfg.JWT.Secret, []string{"*"})
 
 	benchServer = httptest.NewServer(benchRouter)
 	defer benchServer.Close()
@@ -105,4 +115,56 @@ func TestMain(m *testing.M) {
 	code := m.Run()
 
 	os.Exit(code)
+}
+
+func setupTestData(ctx context.Context) {
+	user, err := benchQueries.CreateUser(ctx, database.CreateUserParams{
+		FirstName:     "Bench",
+		LastName:      "User",
+		PersonalEmail: pgtype.Text{String: "bench@example.com", Valid: true},
+		Role:          database.NullUserRole{UserRole: database.UserRoleStudent, Valid: true},
+	})
+	if err != nil {
+		log.Fatalf("failed to create user: %v", err)
+	}
+	benchUserID = user.Uid.String()
+
+	org, err := benchQueries.CreateOrganization(ctx, "Bench Org")
+	if err != nil {
+		log.Fatalf("failed to create organization: %v", err)
+	}
+	benchOrgID = org.Oid.String()
+
+	event, err := benchQueries.CreateEvent(ctx, database.CreateEventParams{
+		Location:    pgtype.Text{String: "Bench Event", Valid: true},
+		EventTime:   pgtype.Timestamp{Time: time.Now().Add(24 * time.Hour), Valid: true},
+		Description: pgtype.Text{String: "Benchmark organization", Valid: true},
+	})
+	if err != nil {
+		log.Fatalf("failed to create event: %v", err)
+	}
+	benchEventID = event.Eid.String()
+
+	err = benchQueries.AddEventHost(ctx, database.AddEventHostParams{
+		Eid: event.Eid,
+		Oid: org.Oid,
+	})
+	if err != nil {
+		log.Fatalf("failed to add event host: %v", err)
+	}
+
+	claims := middleware.UserClaims{
+		UserID: benchUserID,
+		Email:  "bench@example.com",
+		Role:   "student",
+		RegisteredClaims: jwt.RegisteredClaims{
+			ExpiresAt: jwt.NewNumericDate(time.Now().Add(24 * time.Hour)),
+			IssuedAt:  jwt.NewNumericDate(time.Now()),
+		},
+	}
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+	benchJWTToken, err = token.SignedString([]byte(benchJWTSecret))
+	if err != nil {
+		log.Fatalf("failed to generate token: %v", err)
+	}
 }
