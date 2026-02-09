@@ -35,12 +35,22 @@ BenchmarkHealthEndpoint-10      15085    78187 ns/op    7146 B/op    80 allocs/o
 
 ## Benchmark Scope
 
-Currently covered routes:
+### Public Routes
 - `GET /health`: Basic health check performance.
 - `GET /v1/auth/google`: Google OAuth initiation performance.
 - `GET /v1/auth/microsoft`: Microsoft OAuth initiation performance.
 
-*Note: Protected routes requiring JWT or M2M tokens are currently excluded from this minimal implementation.*
+### Protected Routes
+These benchmarks test authenticated endpoints using a pre-generated JWT token with test data (User, Organization, Event):
+
+- `BenchmarkGetMe`: Get current authenticated user profile.
+- `BenchmarkGetUser`: Retrieve a specific user by ID.
+- `BenchmarkListOrganizations`: List all organizations.
+- `BenchmarkCreateOrganization`: Create a new organization.
+- `BenchmarkGetOrganization`: Retrieve organization details by ID.
+- `BenchmarkListEvents`: List all events.
+- `BenchmarkCreateEvent`: Create a new event.
+- `BenchmarkGetEvent`: Retrieve event details by ID.
 
 ## Output Files
 
@@ -51,7 +61,6 @@ These files are ignored by git to keep the repository clean.
 
 ## Future Enhancements
 
-- **Protected Routes**: Add benchmarks for authenticated endpoints.
 - **Regression Detection**: Compare current runs against a baseline.
 - **Performance Thresholds**: Define p99 latency targets and fail benchmarks if exceeded.
 - **Concurrent Load Testing**: Use multiple goroutines to simulate concurrent users.
