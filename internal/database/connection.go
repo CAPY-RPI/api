@@ -43,8 +43,8 @@ func InitSchema(ctx context.Context, pool *pgxpool.Pool, schemaPath string) erro
 
 	_, err = pool.Exec(ctx, string(schema))
 	if err != nil {
-		// Ignore "already exists" errors (42P07) to allow idempotency
-		if pgErr, ok := err.(*pgconn.PgError); ok && pgErr.Code == "42P07" {
+		// Ignore "type already exists" errors (42710) to allow idempotency
+		if pgErr, ok := err.(*pgconn.PgError); ok && (pgErr.Code == "42710") {
 			return nil
 		}
 		return fmt.Errorf("failed to execute schema: %w", err)
