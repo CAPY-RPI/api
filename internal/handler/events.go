@@ -6,6 +6,7 @@ import (
 
 	"github.com/capyrpi/api/internal/database"
 	"github.com/capyrpi/api/internal/dto"
+	"github.com/capyrpi/api/internal/middleware"
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgtype"
@@ -254,7 +255,26 @@ func (h *Handler) RegisterForEvent(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// TODO: Get user ID from context if not provided (for human auth)
+	authType := middleware.GetAuthType(r.Context())
+	if authType == "human" {
+		claims, ok := middleware.GetUserClaims(r.Context())
+		if !ok {
+			h.respondError(w, http.StatusUnauthorized, "Not authenticated")
+			return
+		}
+		userUID, err := uuid.Parse(claims.UserID)
+		if err != nil {
+			h.respondError(w, http.StatusInternalServerError, "Invalid user ID in token")
+			return
+		}
+
+		if req.UID != nil && *req.UID != userUID {
+			h.respondError(w, http.StatusForbidden, "Cannot register for another user")
+			return
+		}
+		req.UID = &userUID
+	}
+
 	if req.UID == nil {
 		h.respondError(w, http.StatusBadRequest, "uid is required")
 		return
@@ -295,16 +315,44 @@ func (h *Handler) UnregisterFromEvent(w http.ResponseWriter, r *http.Request) {
 
 	// Get UID from query param or context
 	uidStr := r.URL.Query().Get("uid")
-	if uidStr == "" {
-		// TODO: Get from auth context
-		h.respondError(w, http.StatusBadRequest, "uid is required")
-		return
-	}
+	var uid uuid.UUID
 
-	uid, err := uuid.Parse(uidStr)
-	if err != nil {
-		h.respondError(w, http.StatusBadRequest, "Invalid user ID")
-		return
+	authType := middleware.GetAuthType(r.Context())
+	if authType == "human" {
+		claims, ok := middleware.GetUserClaims(r.Context())
+		if !ok {
+			h.respondError(w, http.StatusUnauthorized, "Not authenticated")
+			return
+		}
+		userUID, err := uuid.Parse(claims.UserID)
+		if err != nil {
+			h.respondError(w, http.StatusInternalServerError, "Invalid user ID in token")
+			return
+		}
+
+		if uidStr != "" {
+			requestedUID, err := uuid.Parse(uidStr)
+			if err != nil {
+				h.respondError(w, http.StatusBadRequest, "Invalid user ID")
+				return
+			}
+			if requestedUID != userUID {
+				h.respondError(w, http.StatusForbidden, "Cannot unregister for another user")
+				return
+			}
+		}
+		uid = userUID
+	} else {
+		if uidStr == "" {
+			h.respondError(w, http.StatusBadRequest, "uid is required")
+			return
+		}
+		var err error
+		uid, err = uuid.Parse(uidStr)
+		if err != nil {
+			h.respondError(w, http.StatusBadRequest, "Invalid user ID")
+			return
+		}
 	}
 
 	if err := h.queries.UnregisterFromEvent(r.Context(), database.UnregisterFromEventParams{
