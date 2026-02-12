@@ -313,14 +313,7 @@ func (h *Handler) RefreshToken(w http.ResponseWriter, r *http.Request) {
 // @Security     CookieAuth
 // @Router       /bot/tokens [get]
 func (h *Handler) ListBotTokens(w http.ResponseWriter, r *http.Request) {
-	claims, ok := middleware.GetUserClaims(r.Context())
-	if !ok {
-		h.respondError(w, http.StatusUnauthorized, "Not authenticated")
-		return
-	}
-
-	if claims.Role != string(database.UserRoleDev) {
-		h.respondError(w, http.StatusForbidden, "Requires dev role")
+	if _, ok := h.requireDevRole(w, r); !ok {
 		return
 	}
 
@@ -357,14 +350,8 @@ func (h *Handler) ListBotTokens(w http.ResponseWriter, r *http.Request) {
 // @Security     CookieAuth
 // @Router       /bot/tokens [post]
 func (h *Handler) CreateBotToken(w http.ResponseWriter, r *http.Request) {
-	claims, ok := middleware.GetUserClaims(r.Context())
+	uid, ok := h.requireDevRole(w, r)
 	if !ok {
-		h.respondError(w, http.StatusUnauthorized, "Not authenticated")
-		return
-	}
-
-	if claims.Role != string(database.UserRoleDev) {
-		h.respondError(w, http.StatusForbidden, "Requires dev role")
 		return
 	}
 
@@ -392,8 +379,6 @@ func (h *Handler) CreateBotToken(w http.ResponseWriter, r *http.Request) {
 		h.respondError(w, http.StatusInternalServerError, "Failed to hash token")
 		return
 	}
-
-	uid, _ := uuid.Parse(claims.UserID)
 
 	token, err := h.queries.CreateBotToken(r.Context(), database.CreateBotTokenParams{
 		TokenHash: string(hashedToken),
@@ -436,14 +421,7 @@ func (h *Handler) RevokeBotToken(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	claims, ok := middleware.GetUserClaims(r.Context())
-	if !ok {
-		h.respondError(w, http.StatusUnauthorized, "Not authenticated")
-		return
-	}
-
-	if claims.Role != string(database.UserRoleDev) {
-		h.respondError(w, http.StatusForbidden, "Requires dev role")
+	if _, ok := h.requireDevRole(w, r); !ok {
 		return
 	}
 
@@ -629,4 +607,31 @@ func generateSecureToken(length int) (string, error) {
 		return "", err
 	}
 	return hex.EncodeToString(bytes), nil
+}
+
+func (h *Handler) requireDevRole(w http.ResponseWriter, r *http.Request) (uuid.UUID, bool) {
+	claims, ok := middleware.GetUserClaims(r.Context())
+	if !ok {
+		h.respondError(w, http.StatusUnauthorized, "Not authenticated")
+		return uuid.Nil, false
+	}
+
+	uid, err := uuid.Parse(claims.UserID)
+	if err != nil {
+		h.respondError(w, http.StatusUnauthorized, "Invalid user ID in token")
+		return uuid.Nil, false
+	}
+
+	user, err := h.queries.GetUserByID(r.Context(), uid)
+	if err != nil {
+		h.handleDBError(w, err)
+		return uuid.Nil, false
+	}
+
+	if !user.Role.Valid || user.Role.UserRole != database.UserRoleDev {
+		h.respondError(w, http.StatusForbidden, "Requires dev role")
+		return uuid.Nil, false
+	}
+
+	return uid, true
 }

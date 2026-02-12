@@ -5,7 +5,9 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/capyrpi/api/internal/database"
 	"github.com/golang-jwt/jwt/v5"
+	"github.com/google/uuid"
 )
 
 type contextKey string
@@ -23,8 +25,12 @@ type UserClaims struct {
 	jwt.RegisteredClaims
 }
 
+type UserLookup interface {
+	GetUserByID(ctx context.Context, uid uuid.UUID) (database.User, error)
+}
+
 // Auth middleware validates JWT tokens from cookies or Authorization header
-func Auth(jwtSecret string) func(http.Handler) http.Handler {
+func Auth(jwtSecret string, userLookup UserLookup) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			var tokenString string
@@ -56,6 +62,23 @@ func Auth(jwtSecret string) func(http.Handler) http.Handler {
 
 			if err != nil || !token.Valid {
 				http.Error(w, "Invalid token", http.StatusUnauthorized)
+				return
+			}
+
+			uid, err := uuid.Parse(claims.UserID)
+			if err != nil {
+				http.Error(w, "Invalid token", http.StatusUnauthorized)
+				return
+			}
+
+			user, err := userLookup.GetUserByID(r.Context(), uid)
+			if err != nil {
+				http.Error(w, "Invalid token", http.StatusUnauthorized)
+				return
+			}
+
+			if !user.Role.Valid || string(user.Role.UserRole) != claims.Role {
+				http.Error(w, "Stale token", http.StatusUnauthorized)
 				return
 			}
 

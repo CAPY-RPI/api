@@ -9,6 +9,7 @@ import (
 	"syscall"
 	"time"
 
+	swaggerdocs "github.com/capyrpi/api/docs/swagger"
 	"github.com/capyrpi/api/internal/config"
 	"github.com/capyrpi/api/internal/database"
 	"github.com/capyrpi/api/internal/handler"
@@ -27,7 +28,7 @@ import (
 // @license.name  Apache 2.0
 // @license.url   http://www.apache.org/licenses/LICENSE-2.0.html
 
-// @host      api.capyrpi.org
+// @host      localhost:8080
 // @BasePath  /v1
 
 // @securityDefinitions.apikey CookieAuth
@@ -49,6 +50,18 @@ func main() {
 	}
 
 	slog.Info("starting server", "env", cfg.Env)
+
+	swaggerHost := cfg.Swagger.Host
+	if swaggerHost == "" {
+		swaggerHost = "localhost:" + cfg.Server.Port
+	}
+	swaggerdocs.SwaggerInfo.Host = swaggerHost
+
+	if cfg.Env == "production" {
+		swaggerdocs.SwaggerInfo.Schemes = []string{"https"}
+	} else {
+		swaggerdocs.SwaggerInfo.Schemes = []string{"http"}
+	}
 
 	// Connect to database
 	ctx := context.Background()

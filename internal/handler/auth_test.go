@@ -83,7 +83,8 @@ func TestBotToken_RoleChecks(t *testing.T) {
 		handlerFunc    func(*handler.Handler) http.HandlerFunc
 		method         string
 		path           string
-		role           database.UserRole
+		tokenRole      database.UserRole
+		dbRole         database.UserRole
 		setupMock      func(*mocks.Querier)
 		expectedStatus int
 	}{
@@ -92,7 +93,20 @@ func TestBotToken_RoleChecks(t *testing.T) {
 			handlerFunc: func(h *handler.Handler) http.HandlerFunc { return h.ListBotTokens },
 			method:      "GET",
 			path:        "/bot/tokens",
-			role:        database.UserRoleDev,
+			tokenRole:   database.UserRoleDev,
+			dbRole:      database.UserRoleDev,
+			setupMock: func(m *mocks.Querier) {
+				m.On("ListBotTokens", mock.Anything).Return([]database.ListBotTokensRow{}, nil)
+			},
+			expectedStatus: http.StatusOK,
+		},
+		{
+			name:        "ListBotTokens_StudentClaim_DevDB_Success",
+			handlerFunc: func(h *handler.Handler) http.HandlerFunc { return h.ListBotTokens },
+			method:      "GET",
+			path:        "/bot/tokens",
+			tokenRole:   database.UserRoleStudent,
+			dbRole:      database.UserRoleDev,
 			setupMock: func(m *mocks.Querier) {
 				m.On("ListBotTokens", mock.Anything).Return([]database.ListBotTokensRow{}, nil)
 			},
@@ -103,7 +117,8 @@ func TestBotToken_RoleChecks(t *testing.T) {
 			handlerFunc:    func(h *handler.Handler) http.HandlerFunc { return h.ListBotTokens },
 			method:         "GET",
 			path:           "/bot/tokens",
-			role:           database.UserRoleFaculty,
+			tokenRole:      database.UserRoleFaculty,
+			dbRole:         database.UserRoleFaculty,
 			setupMock:      func(m *mocks.Querier) {},
 			expectedStatus: http.StatusForbidden,
 		},
@@ -112,7 +127,8 @@ func TestBotToken_RoleChecks(t *testing.T) {
 			handlerFunc:    func(h *handler.Handler) http.HandlerFunc { return h.ListBotTokens },
 			method:         "GET",
 			path:           "/bot/tokens",
-			role:           database.UserRoleStudent,
+			tokenRole:      database.UserRoleStudent,
+			dbRole:         database.UserRoleStudent,
 			setupMock:      func(m *mocks.Querier) {},
 			expectedStatus: http.StatusForbidden,
 		},
@@ -121,7 +137,8 @@ func TestBotToken_RoleChecks(t *testing.T) {
 			handlerFunc: func(h *handler.Handler) http.HandlerFunc { return h.CreateBotToken },
 			method:      "POST",
 			path:        "/bot/tokens",
-			role:        database.UserRoleDev,
+			tokenRole:   database.UserRoleDev,
+			dbRole:      database.UserRoleDev,
 			setupMock: func(m *mocks.Querier) {
 				m.On("CreateBotToken", mock.Anything, mock.Anything).Return(database.BotToken{
 					TokenID:   uuid.New(),
@@ -137,7 +154,8 @@ func TestBotToken_RoleChecks(t *testing.T) {
 			handlerFunc:    func(h *handler.Handler) http.HandlerFunc { return h.CreateBotToken },
 			method:         "POST",
 			path:           "/bot/tokens",
-			role:           database.UserRoleFaculty,
+			tokenRole:      database.UserRoleFaculty,
+			dbRole:         database.UserRoleFaculty,
 			setupMock:      func(m *mocks.Querier) {},
 			expectedStatus: http.StatusForbidden,
 		},
@@ -146,7 +164,8 @@ func TestBotToken_RoleChecks(t *testing.T) {
 			handlerFunc:    func(h *handler.Handler) http.HandlerFunc { return h.CreateBotToken },
 			method:         "POST",
 			path:           "/bot/tokens",
-			role:           database.UserRoleStudent,
+			tokenRole:      database.UserRoleStudent,
+			dbRole:         database.UserRoleStudent,
 			setupMock:      func(m *mocks.Querier) {},
 			expectedStatus: http.StatusForbidden,
 		},
@@ -155,7 +174,8 @@ func TestBotToken_RoleChecks(t *testing.T) {
 			handlerFunc: func(h *handler.Handler) http.HandlerFunc { return h.RevokeBotToken },
 			method:      "DELETE",
 			path:        "/bot/tokens/" + uuid.New().String(),
-			role:        database.UserRoleDev,
+			tokenRole:   database.UserRoleDev,
+			dbRole:      database.UserRoleDev,
 			setupMock: func(m *mocks.Querier) {
 				m.On("RevokeBotToken", mock.Anything, mock.Anything).Return(nil)
 			},
@@ -166,7 +186,8 @@ func TestBotToken_RoleChecks(t *testing.T) {
 			handlerFunc:    func(h *handler.Handler) http.HandlerFunc { return h.RevokeBotToken },
 			method:         "DELETE",
 			path:           "/bot/tokens/" + uuid.New().String(),
-			role:           database.UserRoleFaculty,
+			tokenRole:      database.UserRoleFaculty,
+			dbRole:         database.UserRoleFaculty,
 			setupMock:      func(m *mocks.Querier) {},
 			expectedStatus: http.StatusForbidden,
 		},
@@ -175,7 +196,8 @@ func TestBotToken_RoleChecks(t *testing.T) {
 			handlerFunc:    func(h *handler.Handler) http.HandlerFunc { return h.RevokeBotToken },
 			method:         "DELETE",
 			path:           "/bot/tokens/" + uuid.New().String(),
-			role:           database.UserRoleStudent,
+			tokenRole:      database.UserRoleStudent,
+			dbRole:         database.UserRoleStudent,
 			setupMock:      func(m *mocks.Querier) {},
 			expectedStatus: http.StatusForbidden,
 		},
@@ -184,6 +206,10 @@ func TestBotToken_RoleChecks(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			mockQueries := mocks.NewQuerier(t)
+			mockQueries.On("GetUserByID", mock.Anything, uid).Return(database.User{
+				Uid:  uid,
+				Role: database.NullUserRole{UserRole: tt.dbRole, Valid: true},
+			}, nil)
 			if tt.expectedStatus != http.StatusForbidden {
 				tt.setupMock(mockQueries)
 			}
@@ -204,7 +230,7 @@ func TestBotToken_RoleChecks(t *testing.T) {
 
 			claims := &middleware.UserClaims{
 				UserID: uid.String(),
-				Role:   string(tt.role),
+				Role:   string(tt.tokenRole),
 			}
 			ctx := context.WithValue(req.Context(), middleware.UserClaimsKey, claims)
 

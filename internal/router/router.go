@@ -27,7 +27,34 @@ func New(h *handler.Handler, queries database.Querier, jwtSecret string, allowed
 
 	// Swagger UI (public) - Only in non-production environments
 	if h.Config.Env != "production" {
-		r.Get("/swagger/*", httpSwagger.WrapHandler)
+		r.Get("/swagger/*", httpSwagger.Handler(
+			httpSwagger.URL("/swagger/doc.json"),
+			httpSwagger.BeforeScript(`const UrlMutatorPlugin = (system) => ({
+  rootInjects: {
+    setScheme: (scheme) => {
+      const jsonSpec = system.getState().toJSON().spec.json;
+      const schemes = Array.isArray(scheme) ? scheme : [scheme];
+      const newJsonSpec = Object.assign({}, jsonSpec, { schemes });
+
+      return system.specActions.updateJsonSpec(newJsonSpec);
+    },
+    setHost: (host) => {
+      const jsonSpec = system.getState().toJSON().spec.json;
+      const newJsonSpec = Object.assign({}, jsonSpec, { host });
+
+      return system.specActions.updateJsonSpec(newJsonSpec);
+    }
+  }
+});`),
+			httpSwagger.Plugins([]string{"UrlMutatorPlugin"}),
+			httpSwagger.UIConfig(map[string]string{
+				"onComplete": `() => {
+    const loc = window.location;
+    window.ui.setScheme(loc.protocol.replace(':', ''));
+    window.ui.setHost(loc.host);
+  }`,
+			}),
+		))
 	}
 
 	// API v1 routes
@@ -41,7 +68,7 @@ func New(h *handler.Handler, queries database.Querier, jwtSecret string, allowed
 
 			// Protected auth routes
 			r.Group(func(r chi.Router) {
-				r.Use(middleware.Auth(jwtSecret))
+				r.Use(middleware.Auth(jwtSecret, queries))
 				r.Get("/me", h.GetMe)
 				r.Post("/logout", h.Logout)
 				r.Post("/refresh", h.RefreshToken)
@@ -50,7 +77,7 @@ func New(h *handler.Handler, queries database.Querier, jwtSecret string, allowed
 
 		// Protected routes - require human authentication
 		r.Group(func(r chi.Router) {
-			r.Use(middleware.Auth(jwtSecret))
+			r.Use(middleware.Auth(jwtSecret, queries))
 
 			// Users
 			r.Route("/users", func(r chi.Router) {

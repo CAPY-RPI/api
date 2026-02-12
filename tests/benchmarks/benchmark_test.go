@@ -15,6 +15,16 @@ var benchClient = &http.Client{
 	},
 }
 
+func drainAndCloseBody(b *testing.B, body io.ReadCloser) {
+	b.Helper()
+	if _, err := io.Copy(io.Discard, body); err != nil {
+		b.Fatalf("failed to drain response body: %v", err)
+	}
+	if err := body.Close(); err != nil {
+		b.Fatalf("failed to close response body: %v", err)
+	}
+}
+
 func BenchmarkHealthEndpoint(b *testing.B) {
 	b.ResetTimer()
 	b.ReportAllocs()
@@ -27,8 +37,7 @@ func BenchmarkHealthEndpoint(b *testing.B) {
 		if resp.StatusCode != http.StatusOK {
 			b.Fatalf("unexpected status code: %d", resp.StatusCode)
 		}
-		io.Copy(io.Discard, resp.Body)
-		resp.Body.Close()
+		drainAndCloseBody(b, resp.Body)
 	}
 }
 
@@ -53,8 +62,7 @@ func BenchmarkAuthGoogleInitiation(b *testing.B) {
 		if resp.StatusCode != http.StatusTemporaryRedirect && resp.StatusCode != http.StatusFound {
 			b.Fatalf("unexpected status code: %d", resp.StatusCode)
 		}
-		io.Copy(io.Discard, resp.Body)
-		resp.Body.Close()
+		drainAndCloseBody(b, resp.Body)
 	}
 }
 
@@ -79,8 +87,7 @@ func BenchmarkAuthMicrosoftInitiation(b *testing.B) {
 		if resp.StatusCode != http.StatusTemporaryRedirect && resp.StatusCode != http.StatusFound {
 			b.Fatalf("unexpected status code: %d", resp.StatusCode)
 		}
-		io.Copy(io.Discard, resp.Body)
-		resp.Body.Close()
+		drainAndCloseBody(b, resp.Body)
 	}
 }
 
@@ -97,8 +104,7 @@ func BenchmarkGetMe(b *testing.B) {
 		if resp.StatusCode != http.StatusOK {
 			b.Fatalf("unexpected status code: %d", resp.StatusCode)
 		}
-		io.Copy(io.Discard, resp.Body)
-		resp.Body.Close()
+		drainAndCloseBody(b, resp.Body)
 	}
 }
 
@@ -115,8 +121,7 @@ func BenchmarkGetUser(b *testing.B) {
 		if resp.StatusCode != http.StatusOK {
 			b.Fatalf("unexpected status code: %d", resp.StatusCode)
 		}
-		io.Copy(io.Discard, resp.Body)
-		resp.Body.Close()
+		drainAndCloseBody(b, resp.Body)
 	}
 }
 
@@ -133,8 +138,7 @@ func BenchmarkListOrganizations(b *testing.B) {
 		if resp.StatusCode != http.StatusOK {
 			b.Fatalf("unexpected status code: %d", resp.StatusCode)
 		}
-		io.Copy(io.Discard, resp.Body)
-		resp.Body.Close()
+		drainAndCloseBody(b, resp.Body)
 	}
 }
 
@@ -157,8 +161,7 @@ func BenchmarkCreateOrganization(b *testing.B) {
 		if resp.StatusCode != http.StatusCreated {
 			b.Fatalf("unexpected status code: %d", resp.StatusCode)
 		}
-		io.Copy(io.Discard, resp.Body)
-		resp.Body.Close()
+		drainAndCloseBody(b, resp.Body)
 	}
 }
 
@@ -175,8 +178,7 @@ func BenchmarkGetOrganization(b *testing.B) {
 		if resp.StatusCode != http.StatusOK {
 			b.Fatalf("unexpected status code: %d", resp.StatusCode)
 		}
-		io.Copy(io.Discard, resp.Body)
-		resp.Body.Close()
+		drainAndCloseBody(b, resp.Body)
 	}
 }
 
@@ -193,8 +195,7 @@ func BenchmarkListEvents(b *testing.B) {
 		if resp.StatusCode != http.StatusOK {
 			b.Fatalf("unexpected status code: %d", resp.StatusCode)
 		}
-		io.Copy(io.Discard, resp.Body)
-		resp.Body.Close()
+		drainAndCloseBody(b, resp.Body)
 	}
 }
 
@@ -218,8 +219,7 @@ func BenchmarkCreateEvent(b *testing.B) {
 		if resp.StatusCode != http.StatusCreated {
 			b.Fatalf("unexpected status code: %d", resp.StatusCode)
 		}
-		io.Copy(io.Discard, resp.Body)
-		resp.Body.Close()
+		drainAndCloseBody(b, resp.Body)
 	}
 }
 
@@ -236,7 +236,6 @@ func BenchmarkGetEvent(b *testing.B) {
 		if resp.StatusCode != http.StatusOK {
 			b.Fatalf("unexpected status code: %d", resp.StatusCode)
 		}
-		io.Copy(io.Discard, resp.Body)
-		resp.Body.Close()
+		drainAndCloseBody(b, resp.Body)
 	}
 }

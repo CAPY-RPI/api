@@ -10,7 +10,12 @@ type Config struct {
 	JWT      JWTConfig
 	Cookie   CookieConfig
 	OAuth    OAuthConfig
+	Swagger  SwaggerConfig
 	Env      string `env:"ENV" env-default:"development"`
+}
+
+type SwaggerConfig struct {
+	Host string `env:"SWAGGER_HOST"`
 }
 
 type ServerConfig struct {
