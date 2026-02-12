@@ -25,3 +25,6 @@ coverage.html
 
 # Benchmarks
 benchmarks/results/*.txt
+
+# Agents
+.sisyphus/

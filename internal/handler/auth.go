@@ -313,7 +313,17 @@ func (h *Handler) RefreshToken(w http.ResponseWriter, r *http.Request) {
 // @Security     CookieAuth
 // @Router       /bot/tokens [get]
 func (h *Handler) ListBotTokens(w http.ResponseWriter, r *http.Request) {
-	// TODO: Check faculty role
+	claims, ok := middleware.GetUserClaims(r.Context())
+	if !ok {
+		h.respondError(w, http.StatusUnauthorized, "Not authenticated")
+		return
+	}
+
+	if claims.Role != string(database.UserRoleFaculty) {
+		h.respondError(w, http.StatusForbidden, "Requires faculty role")
+		return
+	}
+
 	tokens, err := h.queries.ListBotTokens(r.Context())
 	if err != nil {
 		h.handleDBError(w, err)
@@ -353,7 +363,10 @@ func (h *Handler) CreateBotToken(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// TODO: Check faculty role
+	if claims.Role != string(database.UserRoleFaculty) {
+		h.respondError(w, http.StatusForbidden, "Requires faculty role")
+		return
+	}
 
 	var req CreateBotTokenRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
@@ -423,7 +436,16 @@ func (h *Handler) RevokeBotToken(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// TODO: Check faculty role
+	claims, ok := middleware.GetUserClaims(r.Context())
+	if !ok {
+		h.respondError(w, http.StatusUnauthorized, "Not authenticated")
+		return
+	}
+
+	if claims.Role != string(database.UserRoleFaculty) {
+		h.respondError(w, http.StatusForbidden, "Requires faculty role")
+		return
+	}
 
 	if err := h.queries.RevokeBotToken(r.Context(), tokenID); err != nil {
 		h.handleDBError(w, err)
