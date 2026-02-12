@@ -30,3 +30,7 @@ func (r *UserRepoAdapter) CreateUser(ctx context.Context, arg database.CreateUse
 func (r *UserRepoAdapter) GetUserByID(ctx context.Context, uid uuid.UUID) (database.User, error) {
 	return r.queries.GetUserByID(ctx, uid)
 }
+
+func (r *UserRepoAdapter) CreateBotToken(ctx context.Context, arg database.CreateBotTokenParams) (database.BotToken, error) {
+	return r.queries.CreateBotToken(ctx, arg)
+}

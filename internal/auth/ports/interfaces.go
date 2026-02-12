@@ -22,6 +22,11 @@ type UserRepo interface {
 	GetUserByID(ctx context.Context, uid uuid.UUID) (database.User, error)
 }
 
+// BotRepo defines the interface for bot token persistence
+type BotRepo interface {
+	CreateBotToken(ctx context.Context, arg database.CreateBotTokenParams) (database.BotToken, error)
+}
+
 // TokenProvider defines the interface for token generation
 type TokenProvider interface {
 	GenerateToken(user database.User) (string, error)

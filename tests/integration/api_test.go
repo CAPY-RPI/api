@@ -53,6 +53,7 @@ func TestFullAPI(t *testing.T) {
 	// 3. Generate Auth Token
 	claims := middleware.UserClaims{
 		UserID: user.Uid.String(),
+		Role:   string(user.Role.UserRole),
 		RegisteredClaims: jwt.RegisteredClaims{
 			ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Hour)),
 		},
