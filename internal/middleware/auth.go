@@ -43,15 +43,6 @@ func Auth(jwtSecret string) func(http.Handler) http.Handler {
 				}
 			}
 
-			// Check for bot token
-			botToken := r.Header.Get("X-Bot-Token")
-			if botToken != "" {
-				// Bot authentication will be handled separately
-				ctx := context.WithValue(r.Context(), AuthTypeKey, "bot")
-				next.ServeHTTP(w, r.WithContext(ctx))
-				return
-			}
-
 			if tokenString == "" {
 				http.Error(w, "Unauthorized", http.StatusUnauthorized)
 				return
