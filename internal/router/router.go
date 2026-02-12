@@ -93,6 +93,12 @@ func New(h *handler.Handler, queries database.Querier, jwtSecret string, allowed
 				r.Post("/", h.CreateBotToken)
 				r.Delete("/{token_id}", h.RevokeBotToken)
 			})
+
+			r.Route("/api-keys", func(r chi.Router) {
+				r.Get("/", h.ListBotTokens)
+				r.Post("/", h.CreateBotToken)
+				r.Delete("/{token_id}", h.RevokeBotToken)
+			})
 		})
 
 		// Bot routes (M2M auth)

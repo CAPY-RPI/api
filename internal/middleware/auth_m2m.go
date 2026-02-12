@@ -21,9 +21,12 @@ type BotTokenInfo struct {
 func M2MAuth(queries database.Querier) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			token := r.Header.Get("X-Bot-Token")
+			token := r.Header.Get("X-API-Key")
 			if token == "" {
-				http.Error(w, "Missing X-Bot-Token header", http.StatusUnauthorized)
+				token = r.Header.Get("X-Bot-Token")
+			}
+			if token == "" {
+				http.Error(w, "Missing API key header", http.StatusUnauthorized)
 				return
 			}
 

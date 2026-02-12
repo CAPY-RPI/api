@@ -88,32 +88,40 @@ func TestBotToken_RoleChecks(t *testing.T) {
 		expectedStatus int
 	}{
 		{
-			name:        "ListBotTokens_Faculty_Success",
+			name:        "ListBotTokens_Dev_Success",
 			handlerFunc: func(h *handler.Handler) http.HandlerFunc { return h.ListBotTokens },
 			method:      "GET",
 			path:        "/bot/tokens",
-			role:        database.UserRoleFaculty,
+			role:        database.UserRoleDev,
 			setupMock: func(m *mocks.Querier) {
 				m.On("ListBotTokens", mock.Anything).Return([]database.ListBotTokensRow{}, nil)
 			},
 			expectedStatus: http.StatusOK,
 		},
 		{
-			name:        "ListBotTokens_Student_Forbidden",
-			handlerFunc: func(h *handler.Handler) http.HandlerFunc { return h.ListBotTokens },
-			method:      "GET",
-			path:        "/bot/tokens",
-			role:        database.UserRoleStudent,
-			setupMock: func(m *mocks.Querier) {
-			},
+			name:           "ListBotTokens_Faculty_Forbidden",
+			handlerFunc:    func(h *handler.Handler) http.HandlerFunc { return h.ListBotTokens },
+			method:         "GET",
+			path:           "/bot/tokens",
+			role:           database.UserRoleFaculty,
+			setupMock:      func(m *mocks.Querier) {},
 			expectedStatus: http.StatusForbidden,
 		},
 		{
-			name:        "CreateBotToken_Faculty_Success",
+			name:           "ListBotTokens_Student_Forbidden",
+			handlerFunc:    func(h *handler.Handler) http.HandlerFunc { return h.ListBotTokens },
+			method:         "GET",
+			path:           "/bot/tokens",
+			role:           database.UserRoleStudent,
+			setupMock:      func(m *mocks.Querier) {},
+			expectedStatus: http.StatusForbidden,
+		},
+		{
+			name:        "CreateBotToken_Dev_Success",
 			handlerFunc: func(h *handler.Handler) http.HandlerFunc { return h.CreateBotToken },
 			method:      "POST",
 			path:        "/bot/tokens",
-			role:        database.UserRoleFaculty,
+			role:        database.UserRoleDev,
 			setupMock: func(m *mocks.Querier) {
 				m.On("CreateBotToken", mock.Anything, mock.Anything).Return(database.BotToken{
 					TokenID:   uuid.New(),
@@ -125,34 +133,50 @@ func TestBotToken_RoleChecks(t *testing.T) {
 			expectedStatus: http.StatusCreated,
 		},
 		{
-			name:        "CreateBotToken_Student_Forbidden",
-			handlerFunc: func(h *handler.Handler) http.HandlerFunc { return h.CreateBotToken },
-			method:      "POST",
-			path:        "/bot/tokens",
-			role:        database.UserRoleStudent,
-			setupMock: func(m *mocks.Querier) {
-			},
+			name:           "CreateBotToken_Faculty_Forbidden",
+			handlerFunc:    func(h *handler.Handler) http.HandlerFunc { return h.CreateBotToken },
+			method:         "POST",
+			path:           "/bot/tokens",
+			role:           database.UserRoleFaculty,
+			setupMock:      func(m *mocks.Querier) {},
 			expectedStatus: http.StatusForbidden,
 		},
 		{
-			name:        "RevokeBotToken_Faculty_Success",
+			name:           "CreateBotToken_Student_Forbidden",
+			handlerFunc:    func(h *handler.Handler) http.HandlerFunc { return h.CreateBotToken },
+			method:         "POST",
+			path:           "/bot/tokens",
+			role:           database.UserRoleStudent,
+			setupMock:      func(m *mocks.Querier) {},
+			expectedStatus: http.StatusForbidden,
+		},
+		{
+			name:        "RevokeBotToken_Dev_Success",
 			handlerFunc: func(h *handler.Handler) http.HandlerFunc { return h.RevokeBotToken },
 			method:      "DELETE",
 			path:        "/bot/tokens/" + uuid.New().String(),
-			role:        database.UserRoleFaculty,
+			role:        database.UserRoleDev,
 			setupMock: func(m *mocks.Querier) {
 				m.On("RevokeBotToken", mock.Anything, mock.Anything).Return(nil)
 			},
 			expectedStatus: http.StatusNoContent,
 		},
 		{
-			name:        "RevokeBotToken_Student_Forbidden",
-			handlerFunc: func(h *handler.Handler) http.HandlerFunc { return h.RevokeBotToken },
-			method:      "DELETE",
-			path:        "/bot/tokens/" + uuid.New().String(),
-			role:        database.UserRoleStudent,
-			setupMock: func(m *mocks.Querier) {
-			},
+			name:           "RevokeBotToken_Faculty_Forbidden",
+			handlerFunc:    func(h *handler.Handler) http.HandlerFunc { return h.RevokeBotToken },
+			method:         "DELETE",
+			path:           "/bot/tokens/" + uuid.New().String(),
+			role:           database.UserRoleFaculty,
+			setupMock:      func(m *mocks.Querier) {},
+			expectedStatus: http.StatusForbidden,
+		},
+		{
+			name:           "RevokeBotToken_Student_Forbidden",
+			handlerFunc:    func(h *handler.Handler) http.HandlerFunc { return h.RevokeBotToken },
+			method:         "DELETE",
+			path:           "/bot/tokens/" + uuid.New().String(),
+			role:           database.UserRoleStudent,
+			setupMock:      func(m *mocks.Querier) {},
 			expectedStatus: http.StatusForbidden,
 		},
 	}

@@ -17,7 +17,7 @@ type CreateUserRequest struct {
 	SchoolEmail   string `json:"school_email,omitempty" validate:"omitempty,email"`
 	Phone         string `json:"phone,omitempty"`
 	GradYear      int    `json:"grad_year,omitempty" validate:"omitempty,gte=2000,lte=2100"`
-	Role          string `json:"role,omitempty" validate:"omitempty,oneof=student alumni faculty external"`
+	Role          string `json:"role,omitempty" validate:"omitempty,oneof=student alumni faculty dev external"`
 }
 
 type UpdateUserRequest struct {
@@ -27,7 +27,7 @@ type UpdateUserRequest struct {
 	SchoolEmail   *string `json:"school_email,omitempty" validate:"omitempty,email"`
 	Phone         *string `json:"phone,omitempty"`
 	GradYear      *int    `json:"grad_year,omitempty" validate:"omitempty,gte=2000,lte=2100"`
-	Role          *string `json:"role,omitempty" validate:"omitempty,oneof=student alumni faculty external"`
+	Role          *string `json:"role,omitempty" validate:"omitempty,oneof=student alumni faculty dev external"`
 }
 
 type UserResponse struct {

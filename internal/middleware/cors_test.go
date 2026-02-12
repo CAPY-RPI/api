@@ -78,6 +78,9 @@ func TestCORS(t *testing.T) {
 
 			assert.Equal(t, tt.expectedOrigin, rr.Header().Get("Access-Control-Allow-Origin"))
 			assert.Equal(t, tt.expectedCreds, rr.Header().Get("Access-Control-Allow-Credentials"))
+			if tt.expectedOrigin != "" {
+				assert.Equal(t, "Accept, Authorization, Content-Type, X-Bot-Token, X-API-Key", rr.Header().Get("Access-Control-Allow-Headers"))
+			}
 
 			if tt.method == "OPTIONS" && tt.expectedOrigin != "" {
 				assert.Equal(t, "GET, POST, PUT, DELETE, OPTIONS", rr.Header().Get("Access-Control-Allow-Methods"))

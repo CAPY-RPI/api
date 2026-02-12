@@ -45,7 +45,7 @@ func main() {
 		FirstName:     "Dev",
 		LastName:      "User",
 		PersonalEmail: pgtype.Text{String: "dev@example.com", Valid: true},
-		Role:          database.NullUserRole{UserRole: database.UserRoleStudent, Valid: true},
+		Role:          database.NullUserRole{UserRole: database.UserRoleDev, Valid: true},
 	})
 	if err != nil {
 		// Try to find existing if duplicate
@@ -60,7 +60,7 @@ func main() {
 	claims := middleware.UserClaims{
 		UserID: user.Uid.String(),
 		Email:  user.PersonalEmail.String,
-		Role:   "student",
+		Role:   string(database.UserRoleDev),
 		RegisteredClaims: jwt.RegisteredClaims{
 			ExpiresAt: jwt.NewNumericDate(time.Now().Add(24 * time.Hour)),
 			IssuedAt:  jwt.NewNumericDate(time.Now()),

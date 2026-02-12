@@ -304,7 +304,7 @@ func (h *Handler) RefreshToken(w http.ResponseWriter, r *http.Request) {
 
 // ListBotTokens lists all bot tokens
 // @Summary      List bot tokens
-// @Description  Returns all bot tokens (requires faculty role)
+// @Description  Returns all bot tokens (requires dev role)
 // @Tags         bot
 // @Accept       json
 // @Produce      json
@@ -319,8 +319,8 @@ func (h *Handler) ListBotTokens(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if claims.Role != string(database.UserRoleFaculty) {
-		h.respondError(w, http.StatusForbidden, "Requires faculty role")
+	if claims.Role != string(database.UserRoleDev) {
+		h.respondError(w, http.StatusForbidden, "Requires dev role")
 		return
 	}
 
@@ -346,7 +346,7 @@ func (h *Handler) ListBotTokens(w http.ResponseWriter, r *http.Request) {
 
 // CreateBotToken creates a new bot token
 // @Summary      Create bot token
-// @Description  Creates a new bot token (requires faculty role)
+// @Description  Creates a new bot token (requires dev role)
 // @Tags         bot
 // @Accept       json
 // @Produce      json
@@ -363,8 +363,8 @@ func (h *Handler) CreateBotToken(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if claims.Role != string(database.UserRoleFaculty) {
-		h.respondError(w, http.StatusForbidden, "Requires faculty role")
+	if claims.Role != string(database.UserRoleDev) {
+		h.respondError(w, http.StatusForbidden, "Requires dev role")
 		return
 	}
 
@@ -418,7 +418,7 @@ func (h *Handler) CreateBotToken(w http.ResponseWriter, r *http.Request) {
 
 // RevokeBotToken revokes a bot token
 // @Summary      Revoke bot token
-// @Description  Revokes a bot token (requires faculty role)
+// @Description  Revokes a bot token (requires dev role)
 // @Tags         bot
 // @Accept       json
 // @Produce      json
@@ -442,8 +442,8 @@ func (h *Handler) RevokeBotToken(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if claims.Role != string(database.UserRoleFaculty) {
-		h.respondError(w, http.StatusForbidden, "Requires faculty role")
+	if claims.Role != string(database.UserRoleDev) {
+		h.respondError(w, http.StatusForbidden, "Requires dev role")
 		return
 	}
 

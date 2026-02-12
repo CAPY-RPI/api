@@ -18,6 +18,7 @@ const (
 	UserRoleStudent  UserRole = "student"
 	UserRoleAlumni   UserRole = "alumni"
 	UserRoleFaculty  UserRole = "faculty"
+	UserRoleDev      UserRole = "dev"
 	UserRoleExternal UserRole = "external"
 )
 
