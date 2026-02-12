@@ -1,9 +1,6 @@
 package handler
 
 import (
-	"context"
-	"crypto/rand"
-	"encoding/hex"
 	"encoding/json"
 	"net/http"
 	"time"
@@ -14,9 +11,6 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
-	"github.com/jackc/pgx/v5"
-	"github.com/jackc/pgx/v5/pgtype"
-	"golang.org/x/crypto/bcrypt"
 )
 
 // ============================================================================
@@ -96,25 +90,13 @@ func (h *Handler) GoogleCallback(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	userInfo, err := h.googleAuth.ExchangeCode(r.Context(), code)
+	authResult, err := h.authService.HandleOAuthCallback(r.Context(), "google", code)
 	if err != nil {
-		h.respondError(w, http.StatusInternalServerError, "Failed to exchange code")
+		h.respondError(w, http.StatusInternalServerError, "Authentication failed")
 		return
 	}
 
-	user, err := h.upsertUser(r.Context(), userInfo.Email, userInfo.GivenName, userInfo.FamilyName)
-	if err != nil {
-		h.handleDBError(w, err)
-		return
-	}
-
-	token, err := h.generateJWT(user)
-	if err != nil {
-		h.respondError(w, http.StatusInternalServerError, "Failed to generate session")
-		return
-	}
-
-	h.setAuthCookie(w, token)
+	h.setAuthCookie(w, authResult.Token)
 	h.respondWithCloseWindow(w)
 }
 
@@ -157,31 +139,13 @@ func (h *Handler) MicrosoftCallback(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	userInfo, err := h.microsoftAuth.ExchangeCode(r.Context(), code)
+	authResult, err := h.authService.HandleOAuthCallback(r.Context(), "microsoft", code)
 	if err != nil {
-		h.respondError(w, http.StatusInternalServerError, "Failed to exchange code")
+		h.respondError(w, http.StatusInternalServerError, "Authentication failed")
 		return
 	}
 
-	// Use PrincipalName (email) or Mail
-	email := userInfo.UserPrincipalName
-	if email == "" {
-		email = userInfo.Mail
-	}
-
-	user, err := h.upsertUser(r.Context(), email, userInfo.GivenName, userInfo.Surname)
-	if err != nil {
-		h.handleDBError(w, err)
-		return
-	}
-
-	token, err := h.generateJWT(user)
-	if err != nil {
-		h.respondError(w, http.StatusInternalServerError, "Failed to generate session")
-		return
-	}
-
-	h.setAuthCookie(w, token)
+	h.setAuthCookie(w, authResult.Token)
 	h.respondWithCloseWindow(w)
 }
 
@@ -366,38 +330,19 @@ func (h *Handler) CreateBotToken(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Generate random token
-	rawToken, err := generateSecureToken(32)
-	if err != nil {
-		h.respondError(w, http.StatusInternalServerError, "Failed to generate token")
-		return
-	}
-
-	// Hash the token for storage
-	hashedToken, err := bcrypt.GenerateFromPassword([]byte(rawToken), bcrypt.DefaultCost)
-	if err != nil {
-		h.respondError(w, http.StatusInternalServerError, "Failed to hash token")
-		return
-	}
-
-	token, err := h.queries.CreateBotToken(r.Context(), database.CreateBotTokenParams{
-		TokenHash: string(hashedToken),
-		Name:      req.Name,
-		CreatedBy: uid,
-		ExpiresAt: toPgTimestamp(req.ExpiresAt),
-	})
+	result, err := h.authService.GenerateBotToken(r.Context(), req.Name, uid, req.ExpiresAt)
 	if err != nil {
 		h.handleDBError(w, err)
 		return
 	}
 
 	h.respondJSON(w, http.StatusCreated, BotTokenResponse{
-		TokenID:   token.TokenID,
-		Name:      token.Name,
-		Token:     rawToken, // Only returned on creation!
-		CreatedAt: token.CreatedAt.Time,
-		ExpiresAt: fromPgTimestamp(token.ExpiresAt),
-		IsActive:  token.IsActive.Bool,
+		TokenID:   result.Token.TokenID,
+		Name:      result.Token.Name,
+		Token:     result.RawToken, // Only returned on creation!
+		CreatedAt: result.Token.CreatedAt.Time,
+		ExpiresAt: fromPgTimestamp(result.Token.ExpiresAt),
+		IsActive:  result.Token.IsActive.Bool,
 	})
 }
 
@@ -568,29 +513,6 @@ func (h *Handler) verifyStateCookie(w http.ResponseWriter, r *http.Request, stat
 	return cookie.Value == state
 }
 
-func (h *Handler) upsertUser(ctx context.Context, email, firstName, lastName string) (database.User, error) {
-	pgEmail := toPgTextFromString(email)
-
-	// Check if user exists
-	user, err := h.queries.GetUserByEmail(ctx, pgEmail)
-	if err == nil {
-		return user, nil
-	}
-
-	if err != pgx.ErrNoRows {
-		return database.User{}, err
-	}
-
-	// Create new user
-	return h.queries.CreateUser(ctx, database.CreateUserParams{
-		FirstName:     firstName,
-		LastName:      lastName,
-		PersonalEmail: pgEmail, // Default to personal email for oauth
-		SchoolEmail:   pgtype.Text{Valid: false},
-		Role:          database.NullUserRole{UserRole: database.UserRoleStudent, Valid: true}, // Default role
-	})
-}
-
 func getEmail(user database.User) string {
 	if user.SchoolEmail.Valid {
 		return user.SchoolEmail.String
@@ -599,14 +521,6 @@ func getEmail(user database.User) string {
 		return user.PersonalEmail.String
 	}
 	return ""
-}
-
-func generateSecureToken(length int) (string, error) {
-	bytes := make([]byte, length)
-	if _, err := rand.Read(bytes); err != nil {
-		return "", err
-	}
-	return hex.EncodeToString(bytes), nil
 }
 
 func (h *Handler) requireDevRole(w http.ResponseWriter, r *http.Request) (uuid.UUID, bool) {

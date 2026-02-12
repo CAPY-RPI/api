@@ -5,6 +5,9 @@ import (
 	"log/slog"
 	"net/http"
 
+	"github.com/capyrpi/api/internal/auth/adapters"
+	"github.com/capyrpi/api/internal/auth/ports"
+	"github.com/capyrpi/api/internal/auth/service"
 	"github.com/capyrpi/api/internal/config"
 	"github.com/capyrpi/api/internal/database"
 	"github.com/capyrpi/api/internal/oauth"
@@ -18,15 +21,38 @@ type Handler struct {
 	Config        *config.Config
 	googleAuth    *oauth.GoogleProvider
 	microsoftAuth *oauth.MicrosoftProvider
+	authService   *service.AuthService
 }
 
 // New creates a new Handler with the given dependencies
 func New(queries database.Querier, cfg *config.Config) *Handler {
+	googleProvider := oauth.NewGoogleProvider(cfg.OAuth.Google.ClientID, cfg.OAuth.Google.ClientSecret, cfg.OAuth.Google.RedirectURL)
+	microsoftProvider := oauth.NewMicrosoftProvider(cfg.OAuth.Microsoft.ClientID, cfg.OAuth.Microsoft.ClientSecret, cfg.OAuth.Microsoft.RedirectURL, cfg.OAuth.Microsoft.TenantID)
+
+	userRepoAdapter := adapters.NewUserRepoAdapter(queries)
+	botRepoAdapter, ok := userRepoAdapter.(ports.BotRepo)
+	if !ok {
+		panic("UserRepoAdapter does not implement BotRepo")
+	}
+
+	tokenProviderAdapter := adapters.NewJWTAdapter(cfg)
+	googleAdapter := adapters.NewGoogleOAuthAdapter(googleProvider)
+	microsoftAdapter := adapters.NewMicrosoftOAuthAdapter(microsoftProvider)
+
+	authService := service.NewAuthService(
+		userRepoAdapter,
+		botRepoAdapter,
+		tokenProviderAdapter,
+		googleAdapter,
+		microsoftAdapter,
+	)
+
 	return &Handler{
 		queries:       queries,
 		Config:        cfg,
-		googleAuth:    oauth.NewGoogleProvider(cfg.OAuth.Google.ClientID, cfg.OAuth.Google.ClientSecret, cfg.OAuth.Google.RedirectURL),
-		microsoftAuth: oauth.NewMicrosoftProvider(cfg.OAuth.Microsoft.ClientID, cfg.OAuth.Microsoft.ClientSecret, cfg.OAuth.Microsoft.RedirectURL, cfg.OAuth.Microsoft.TenantID),
+		googleAuth:    googleProvider,
+		microsoftAuth: microsoftProvider,
+		authService:   authService,
 	}
 }
 
