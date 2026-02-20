@@ -62,3 +62,53 @@ func TestUserQueries(t *testing.T) {
 	_, err = q.GetUserByID(ctx, newUser.Uid)
 	assert.Error(t, err)
 }
+
+var testUserParams = database.CreateUserParams{
+	FirstName:     "Test",
+	LastName:      "User",
+	PersonalEmail: pgtype.Text{String: "testuser@gmail.com", Valid: true},
+	SchoolEmail:   pgtype.Text{String: "testuser@rpi.edu", Valid: true},
+	Phone:         pgtype.Text{String: "555-555-5555", Valid: true},
+	GradYear:      pgtype.Int4{Int32: 2027, Valid: true},
+	Role:          database.NullUserRole{UserRole: database.UserRoleStudent, Valid: true},
+}
+
+func TestAddUser(t *testing.T) {
+	// Spin up container
+	pool := testutils.SetupTestDB(t)
+	defer pool.Close()
+
+	q := database.New(pool)
+	ctx := context.Background()
+
+	q.CreateUser(ctx, testUserParams)
+	user, err := q.GetUserByEmail(ctx, pgtype.Text{String: "testuser@gmail.com", Valid: true})
+	require.NoError(t, err)
+	assert.Equal(t, user.FirstName, "Test")
+	assert.Equal(t, user.LastName, "User")
+	assert.Equal(t, user.Phone.String, "555-555-5555")
+	assert.Equal(t, user.GradYear.Int32, int32(2027))
+	assert.Equal(t, user.Role.UserRole, database.UserRoleStudent)
+}
+
+func TestAddDuplicateUser(t *testing.T) {
+	// Spin up container
+	pool := testutils.SetupTestDB(t)
+	defer pool.Close()
+	q := database.New(pool)
+	ctx := context.Background()
+
+	addedUser, err := q.CreateUser(ctx, testUserParams)
+	require.NoError(t, err)
+
+	personalUser, err := q.GetUserByEmail(ctx, pgtype.Text{String: "testuser@gmail.com", Valid: true})
+	require.NoError(t, err)
+
+	assert.Equal(t, addedUser.Uid, personalUser.Uid)
+
+	_, err = q.CreateUser(ctx, testUserParams)
+	require.Error(t, err)
+
+	schoolUser, err := q.GetUserByEmail(ctx, pgtype.Text{String: "testuser@rpi.edu", Valid: true})
+	assert.Equal(t, addedUser.Uid, schoolUser.Uid)
+}
