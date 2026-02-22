@@ -1,4 +1,6 @@
-.PHONY: generate build run test test-integration test-all lint swagger docker docker-down ci benchmark
+.PHONY: generate build run test test-integration test-all lint swagger docker docker-down ci benchmark migrate-up migrate-down migrate-version migrate-create
+
+MIGRATIONS_PATH ?= migrations
 
 # Code generation
 generate:	
@@ -32,6 +34,20 @@ benchmark:
 	log_file="benchmarks/results/benchmark-$$timestamp.txt"; \
 	echo "Running benchmarks and saving to $$log_file..."; \
 	go test -bench=. -benchmem -run=^$$ ./tests/benchmarks/... | tee $$log_file
+
+# Database migrations (requires DATABASE_URL)
+migrate-up:
+	migrate -path $(MIGRATIONS_PATH) -database "$(DATABASE_URL)" up
+
+migrate-down:
+	migrate -path $(MIGRATIONS_PATH) -database "$(DATABASE_URL)" down 1
+
+migrate-version:
+	migrate -path $(MIGRATIONS_PATH) -database "$(DATABASE_URL)" version
+
+migrate-create:
+	@if [ -z "$(name)" ]; then echo "usage: make migrate-create name=add_users_index"; exit 1; fi
+	migrate create -ext sql -dir $(MIGRATIONS_PATH) -seq $(name)
 
 # Linting
 lint:

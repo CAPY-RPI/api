@@ -54,7 +54,10 @@ make docker
 
 ### 3. Run Migrations & Generate Code
 ```bash
-# Install tools if needed (see Step 5 in agents.md or CI workflow)
+# Apply DB migrations (DATABASE_URL must point at your DB)
+make migrate-up
+
+# Generate sqlc + swagger artifacts
 make generate
 ```
 
@@ -175,7 +178,7 @@ docker run -d `
 To run the full stack (API + Postgres + Cloudflare Tunnel), update your `.env` file with the required credentials and use the following `docker-compose.yml`.
 
 > [!IMPORTANT]
-> Ensure your `.env` file contains all necessary OAuth credentials (`GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `GOOGLE_REDIRECT_URL`, `MICROSOFT_CLIENT_ID`, `MICROSOFT_CLIENT_SECRET`, `MICROSOFT_REDIRECT_URL`, etc.), the `TUNNEL_TOKEN`, and `SCHEMA_PATH` (defaults to `schema.sql`). The `api` service will pull these automatically via the `env_file` directive.
+> Ensure your `.env` file contains all necessary OAuth credentials (`GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `GOOGLE_REDIRECT_URL`, `MICROSOFT_CLIENT_ID`, `MICROSOFT_CLIENT_SECRET`, `MICROSOFT_REDIRECT_URL`, etc.), the `TUNNEL_TOKEN`, and `MIGRATIONS_PATH` (defaults to `migrations`). The `api` service will pull these automatically via the `env_file` directive.
 
 ```yaml
 services:

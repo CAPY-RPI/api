@@ -14,18 +14,12 @@ import (
 	"github.com/testcontainers/testcontainers-go/wait"
 )
 
-// SetupTestDB creates a fresh Postgres container and returns the connection pool
-func SetupTestDB(t *testing.T) *pgxpool.Pool {
+// SetupTestPostgres creates a fresh Postgres container and returns its connection string.
+func SetupTestPostgres(t *testing.T) string {
 	ctx := context.Background()
-
-	// Get repo root for schema.sql
-	_, filename, _, _ := runtime.Caller(0)
-	projectRoot := filepath.Join(filepath.Dir(filename), "../..")
-	schemaPath := filepath.Join(projectRoot, "schema.sql")
 
 	pgContainer, err := postgres.Run(ctx,
 		"postgres:16-alpine",
-		postgres.WithInitScripts(schemaPath),
 		postgres.WithDatabase("test_db"),
 		postgres.WithUsername("test"),
 		postgres.WithPassword("test"),
@@ -47,6 +41,23 @@ func SetupTestDB(t *testing.T) *pgxpool.Pool {
 	connStr, err := pgContainer.ConnectionString(ctx, "sslmode=disable")
 	if err != nil {
 		t.Fatalf("failed to get connection string: %v", err)
+	}
+
+	return connStr
+}
+
+// SetupTestDB creates a fresh Postgres container, applies migrations, and returns the connection pool.
+func SetupTestDB(t *testing.T) *pgxpool.Pool {
+	ctx := context.Background()
+	connStr := SetupTestPostgres(t)
+
+	// Get repo root for migrations/
+	_, filename, _, _ := runtime.Caller(0)
+	projectRoot := filepath.Join(filepath.Dir(filename), "../..")
+	migrationsPath := filepath.Join(projectRoot, "migrations")
+
+	if err := database.RunMigrations(ctx, connStr, migrationsPath); err != nil {
+		t.Fatalf("failed to run migrations: %v", err)
 	}
 
 	pool, err := database.NewPool(ctx, connStr)

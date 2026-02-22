@@ -43,13 +43,12 @@ func TestMain(m *testing.M) {
 
 	_, filename, _, _ := runtime.Caller(0)
 	projectRoot := filepath.Join(filepath.Dir(filename), "../..")
-	schemaPath := filepath.Join(projectRoot, "schema.sql")
+	migrationsPath := filepath.Join(projectRoot, "migrations")
 
-	log.Printf("Using schema from: %s", schemaPath)
+	log.Printf("Using migrations from: %s", migrationsPath)
 
 	pgContainer, err := postgres.Run(ctx,
 		"postgres:16-alpine",
-		postgres.WithInitScripts(schemaPath),
 		postgres.WithDatabase("bench_db"),
 		postgres.WithUsername("bench"),
 		postgres.WithPassword("bench"),
@@ -75,6 +74,10 @@ func TestMain(m *testing.M) {
 	connStr, err := pgContainer.ConnectionString(ctx, "sslmode=disable")
 	if err != nil {
 		log.Fatalf("failed to get connection string: %v", err)
+	}
+
+	if err := database.RunMigrations(ctx, connStr, migrationsPath); err != nil {
+		log.Fatalf("failed to run migrations: %v", err)
 	}
 
 	benchDB, err = database.NewPool(ctx, connStr)

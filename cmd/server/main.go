@@ -50,8 +50,16 @@ func main() {
 
 	slog.Info("starting server", "env", cfg.Env)
 
-	// Connect to database
 	ctx := context.Background()
+
+	// Apply database migrations before serving traffic.
+	if err := database.RunMigrations(ctx, cfg.Database.URL, cfg.Database.MigrationsPath); err != nil {
+		slog.Error("failed to run database migrations", "error", err, "path", cfg.Database.MigrationsPath)
+		os.Exit(1)
+	}
+	slog.Info("database migrations applied", "path", cfg.Database.MigrationsPath)
+
+	// Connect to database
 	pool, err := database.NewPool(ctx, cfg.Database.URL)
 	if err != nil {
 		slog.Error("failed to connect to database", "error", err)
@@ -60,13 +68,6 @@ func main() {
 	defer pool.Close()
 
 	slog.Info("connected to database")
-
-	// Initialize schema
-	if err := database.InitSchema(ctx, pool, cfg.Database.SchemaPath); err != nil {
-		slog.Error("failed to initialize database schema", "error", err)
-		os.Exit(1)
-	}
-	slog.Info("database schema initialized")
 
 	// Create queries and handler
 	queries := database.New(pool)
