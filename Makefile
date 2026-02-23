@@ -17,7 +17,7 @@ generate:
 
 docs: generate
 
-# Database migrations (golang-migrate)
+# Database migrations via Docker (uses Compose network, works with DATABASE_URL=db:5432)
 migrate-create:
 	@test -n "$(name)" || (echo "Usage: make migrate-create name=add_users_table" && exit 1)
 	@mkdir -p $(MIGRATIONS_DIR)
@@ -26,57 +26,27 @@ migrate-create:
 migrate-up:
 	@db_url="$${MIGRATE_DATABASE_URL:-$${DATABASE_URL:-$$(grep -E '^DATABASE_URL=' .env 2>/dev/null | head -n1 | cut -d= -f2-)}}"; \
 	test -n "$$db_url" || (echo "Set MIGRATE_DATABASE_URL or DATABASE_URL (or add DATABASE_URL to .env)" && exit 1); \
-	$(MIGRATE) -path $(MIGRATIONS_DIR) -database "$$db_url" up
+	docker run --rm --network $(COMPOSE_NETWORK) -v "$(CURDIR)/$(MIGRATIONS_DIR):/migrations" $(MIGRATE_DOCKER_IMAGE) -path /migrations -database "$$db_url" up
 
 migrate-down:
-	@$(MAKE) migrate-down-all
+	@$(MAKE) migrate-down-all-docker
 
 migrate-down-all:
 	@db_url="$${MIGRATE_DATABASE_URL:-$${DATABASE_URL:-$$(grep -E '^DATABASE_URL=' .env 2>/dev/null | head -n1 | cut -d= -f2-)}}"; \
 	test -n "$$db_url" || (echo "Set MIGRATE_DATABASE_URL or DATABASE_URL (or add DATABASE_URL to .env)" && exit 1); \
-	$(MIGRATE) -path $(MIGRATIONS_DIR) -database "$$db_url" down -all
+	docker run --rm --network $(COMPOSE_NETWORK) -v "$(CURDIR)/$(MIGRATIONS_DIR):/migrations" $(MIGRATE_DOCKER_IMAGE) -path /migrations -database "$$db_url" down -all
 
 migrate-down-one:
 	@db_url="$${MIGRATE_DATABASE_URL:-$${DATABASE_URL:-$$(grep -E '^DATABASE_URL=' .env 2>/dev/null | head -n1 | cut -d= -f2-)}}"; \
 	test -n "$$db_url" || (echo "Set MIGRATE_DATABASE_URL or DATABASE_URL (or add DATABASE_URL to .env)" && exit 1); \
-	$(MIGRATE) -path $(MIGRATIONS_DIR) -database "$$db_url" down 1
+	docker run --rm --network $(COMPOSE_NETWORK) -v "$(CURDIR)/$(MIGRATIONS_DIR):/migrations" $(MIGRATE_DOCKER_IMAGE) -path /migrations -database "$$db_url" down 1
 
 migrate-version:
 	@db_url="$${MIGRATE_DATABASE_URL:-$${DATABASE_URL:-$$(grep -E '^DATABASE_URL=' .env 2>/dev/null | head -n1 | cut -d= -f2-)}}"; \
 	test -n "$$db_url" || (echo "Set MIGRATE_DATABASE_URL or DATABASE_URL (or add DATABASE_URL to .env)" && exit 1); \
-	$(MIGRATE) -path $(MIGRATIONS_DIR) -database "$$db_url" version
-
-migrate-force:
-	@test -n "$(version)" || (echo "Usage: make migrate-force version=<number>" && exit 1)
-	@db_url="$${MIGRATE_DATABASE_URL:-$${DATABASE_URL:-$$(grep -E '^DATABASE_URL=' .env 2>/dev/null | head -n1 | cut -d= -f2-)}}"; \
-	test -n "$$db_url" || (echo "Set MIGRATE_DATABASE_URL or DATABASE_URL (or add DATABASE_URL to .env)" && exit 1); \
-	$(MIGRATE) -path $(MIGRATIONS_DIR) -database "$$db_url" force $(version)
-
-# Database migrations via Docker (uses Compose network, works with DATABASE_URL=db:5432)
-migrate-up-docker:
-	@db_url="$${MIGRATE_DATABASE_URL:-$${DATABASE_URL:-$$(grep -E '^DATABASE_URL=' .env 2>/dev/null | head -n1 | cut -d= -f2-)}}"; \
-	test -n "$$db_url" || (echo "Set MIGRATE_DATABASE_URL or DATABASE_URL (or add DATABASE_URL to .env)" && exit 1); \
-	docker run --rm --network $(COMPOSE_NETWORK) -v "$(CURDIR)/$(MIGRATIONS_DIR):/migrations" $(MIGRATE_DOCKER_IMAGE) -path /migrations -database "$$db_url" up
-
-migrate-down-docker:
-	@$(MAKE) migrate-down-all-docker
-
-migrate-down-all-docker:
-	@db_url="$${MIGRATE_DATABASE_URL:-$${DATABASE_URL:-$$(grep -E '^DATABASE_URL=' .env 2>/dev/null | head -n1 | cut -d= -f2-)}}"; \
-	test -n "$$db_url" || (echo "Set MIGRATE_DATABASE_URL or DATABASE_URL (or add DATABASE_URL to .env)" && exit 1); \
-	docker run --rm --network $(COMPOSE_NETWORK) -v "$(CURDIR)/$(MIGRATIONS_DIR):/migrations" $(MIGRATE_DOCKER_IMAGE) -path /migrations -database "$$db_url" down -all
-
-migrate-down-one-docker:
-	@db_url="$${MIGRATE_DATABASE_URL:-$${DATABASE_URL:-$$(grep -E '^DATABASE_URL=' .env 2>/dev/null | head -n1 | cut -d= -f2-)}}"; \
-	test -n "$$db_url" || (echo "Set MIGRATE_DATABASE_URL or DATABASE_URL (or add DATABASE_URL to .env)" && exit 1); \
-	docker run --rm --network $(COMPOSE_NETWORK) -v "$(CURDIR)/$(MIGRATIONS_DIR):/migrations" $(MIGRATE_DOCKER_IMAGE) -path /migrations -database "$$db_url" down 1
-
-migrate-version-docker:
-	@db_url="$${MIGRATE_DATABASE_URL:-$${DATABASE_URL:-$$(grep -E '^DATABASE_URL=' .env 2>/dev/null | head -n1 | cut -d= -f2-)}}"; \
-	test -n "$$db_url" || (echo "Set MIGRATE_DATABASE_URL or DATABASE_URL (or add DATABASE_URL to .env)" && exit 1); \
 	docker run --rm --network $(COMPOSE_NETWORK) -v "$(CURDIR)/$(MIGRATIONS_DIR):/migrations" $(MIGRATE_DOCKER_IMAGE) -path /migrations -database "$$db_url" version
 
-migrate-force-docker:
+migrate-force:
 	@test -n "$(version)" || (echo "Usage: make migrate-force-docker version=<number>" && exit 1)
 	@db_url="$${MIGRATE_DATABASE_URL:-$${DATABASE_URL:-$$(grep -E '^DATABASE_URL=' .env 2>/dev/null | head -n1 | cut -d= -f2-)}}"; \
 	test -n "$$db_url" || (echo "Set MIGRATE_DATABASE_URL or DATABASE_URL (or add DATABASE_URL to .env)" && exit 1); \
