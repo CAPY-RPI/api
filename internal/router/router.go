@@ -25,6 +25,9 @@ func New(h *handler.Handler, queries database.Querier, jwtSecret string, allowed
 	// Health check (public)
 	r.Get("/health", h.Health)
 
+	// Link resolution (public)
+	r.Get("/r/{endpoint_url}", h.ResolveLink)
+
 	// Swagger UI (public) - Only in non-production environments
 	if h.Config.Env != "production" {
 		r.Get("/swagger/*", httpSwagger.WrapHandler)
@@ -72,6 +75,7 @@ func New(h *handler.Handler, queries database.Querier, jwtSecret string, allowed
 				r.Post("/{oid}/members", h.AddOrgMember)
 				r.Delete("/{oid}/members/{uid}", h.RemoveOrgMember)
 				r.Get("/{oid}/events", h.ListOrgEvents)
+				r.Get("/{oid}/links", h.ListOrgLinks)
 			})
 
 			// Events
@@ -85,6 +89,14 @@ func New(h *handler.Handler, queries database.Querier, jwtSecret string, allowed
 				r.Get("/{eid}/registrations", h.ListEventRegistrations)
 				r.Post("/{eid}/register", h.RegisterForEvent)
 				r.Delete("/{eid}/register", h.UnregisterFromEvent)
+			})
+
+			// Links
+			r.Route("/links", func(r chi.Router) {
+				r.Post("/", h.CreateLink)
+				r.Put("/{lid}", h.UpdateLink)
+				r.Get("/{lid}/visits", h.GetTotalVisits)
+				r.Get("/{lid}/qrcode", h.GetQRCode)
 			})
 
 			// Bot token management (human auth only)

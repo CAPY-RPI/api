@@ -152,3 +152,37 @@ UPDATE bot_tokens SET is_active = false WHERE token_id = $1;
 
 -- name: UpdateBotTokenLastUsed :exec
 UPDATE bot_tokens SET last_used_at = CURRENT_TIMESTAMP WHERE token_id = $1;
+
+-- Link Queries
+
+-- name: CreateLink :one
+INSERT INTO links (endpoint_url, dest_url, oid)
+VALUES ($1, $2, $3)
+RETURNING *;
+
+-- name: GetLinkByLID :one
+SELECT * FROM links WHERE lid = $1;
+
+-- name: GetLinkByEndpointURL :one
+SELECT * FROM links WHERE endpoint_url = $1;
+
+-- name: UpdateLink :one
+UPDATE links
+SET endpoint_url = COALESCE(sqlc.narg('endpoint_url'), endpoint_url),
+    dest_url = COALESCE(sqlc.narg('dest_url'), dest_url)
+WHERE lid = $1
+RETURNING *;
+
+-- name: DeleteLink :exec
+DELETE FROM links WHERE lid = $1;
+
+-- name: ListLinksByOrg :many
+SELECT * FROM links WHERE oid = $1 ORDER BY created_at DESC;
+
+-- name: LogLinkVisit :one
+INSERT INTO link_visits (lid, uid)
+VALUES ($1, $2)
+RETURNING *;
+
+-- name: GetTotalVisits :one
+SELECT COUNT(*) FROM link_visits WHERE lid = $1;

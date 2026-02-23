@@ -16,17 +16,23 @@ type Querier interface {
 	AddOrgMember(ctx context.Context, arg AddOrgMemberParams) error
 	CreateBotToken(ctx context.Context, arg CreateBotTokenParams) (BotToken, error)
 	CreateEvent(ctx context.Context, arg CreateEventParams) (Event, error)
+	// Link Queries
+	CreateLink(ctx context.Context, arg CreateLinkParams) (Link, error)
 	CreateOrganization(ctx context.Context, name string) (Organization, error)
 	CreateUser(ctx context.Context, arg CreateUserParams) (User, error)
 	DeleteEvent(ctx context.Context, eid uuid.UUID) error
+	DeleteLink(ctx context.Context, lid uuid.UUID) error
 	DeleteOrganization(ctx context.Context, oid uuid.UUID) error
 	DeleteUser(ctx context.Context, uid uuid.UUID) error
 	// Bot Token Queries
 	GetBotTokenByHash(ctx context.Context, tokenHash string) (BotToken, error)
 	GetEventByID(ctx context.Context, eid uuid.UUID) (Event, error)
 	GetEventRegistrations(ctx context.Context, eid uuid.UUID) ([]GetEventRegistrationsRow, error)
+	GetLinkByEndpointURL(ctx context.Context, endpointUrl string) (Link, error)
+	GetLinkByLID(ctx context.Context, lid uuid.UUID) (Link, error)
 	GetOrgMembers(ctx context.Context, oid uuid.UUID) ([]GetOrgMembersRow, error)
 	GetOrganizationByID(ctx context.Context, oid uuid.UUID) (Organization, error)
+	GetTotalVisits(ctx context.Context, lid uuid.UUID) (int64, error)
 	GetUserByEmail(ctx context.Context, personalEmail pgtype.Text) (User, error)
 	GetUserByID(ctx context.Context, uid uuid.UUID) (User, error)
 	GetUserEvents(ctx context.Context, uid uuid.UUID) ([]GetUserEventsRow, error)
@@ -36,14 +42,17 @@ type Querier interface {
 	ListBotTokens(ctx context.Context) ([]ListBotTokensRow, error)
 	ListEvents(ctx context.Context, arg ListEventsParams) ([]Event, error)
 	ListEventsByOrg(ctx context.Context, arg ListEventsByOrgParams) ([]Event, error)
+	ListLinksByOrg(ctx context.Context, oid uuid.UUID) ([]Link, error)
 	ListOrganizations(ctx context.Context, arg ListOrganizationsParams) ([]Organization, error)
 	ListUsers(ctx context.Context, arg ListUsersParams) ([]User, error)
+	LogLinkVisit(ctx context.Context, arg LogLinkVisitParams) (LinkVisit, error)
 	RegisterForEvent(ctx context.Context, arg RegisterForEventParams) error
 	RemoveOrgMember(ctx context.Context, arg RemoveOrgMemberParams) error
 	RevokeBotToken(ctx context.Context, tokenID uuid.UUID) error
 	UnregisterFromEvent(ctx context.Context, arg UnregisterFromEventParams) error
 	UpdateBotTokenLastUsed(ctx context.Context, tokenID uuid.UUID) error
 	UpdateEvent(ctx context.Context, arg UpdateEventParams) (Event, error)
+	UpdateLink(ctx context.Context, arg UpdateLinkParams) (Link, error)
 	UpdateOrganization(ctx context.Context, arg UpdateOrganizationParams) (Organization, error)
 	UpdateUser(ctx context.Context, arg UpdateUserParams) (User, error)
 }

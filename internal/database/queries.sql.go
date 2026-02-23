@@ -105,6 +105,33 @@ func (q *Queries) CreateEvent(ctx context.Context, arg CreateEventParams) (Event
 	return i, err
 }
 
+const createLink = `-- name: CreateLink :one
+
+INSERT INTO links (endpoint_url, dest_url, oid)
+VALUES ($1, $2, $3)
+RETURNING lid, endpoint_url, dest_url, oid, created_at
+`
+
+type CreateLinkParams struct {
+	EndpointUrl string    `json:"endpoint_url"`
+	DestUrl     string    `json:"dest_url"`
+	Oid         uuid.UUID `json:"oid"`
+}
+
+// Link Queries
+func (q *Queries) CreateLink(ctx context.Context, arg CreateLinkParams) (Link, error) {
+	row := q.db.QueryRow(ctx, createLink, arg.EndpointUrl, arg.DestUrl, arg.Oid)
+	var i Link
+	err := row.Scan(
+		&i.Lid,
+		&i.EndpointUrl,
+		&i.DestUrl,
+		&i.Oid,
+		&i.CreatedAt,
+	)
+	return i, err
+}
+
 const createOrganization = `-- name: CreateOrganization :one
 INSERT INTO organizations (name)
 VALUES ($1)
@@ -171,6 +198,15 @@ DELETE FROM events WHERE eid = $1
 
 func (q *Queries) DeleteEvent(ctx context.Context, eid uuid.UUID) error {
 	_, err := q.db.Exec(ctx, deleteEvent, eid)
+	return err
+}
+
+const deleteLink = `-- name: DeleteLink :exec
+DELETE FROM links WHERE lid = $1
+`
+
+func (q *Queries) DeleteLink(ctx context.Context, lid uuid.UUID) error {
+	_, err := q.db.Exec(ctx, deleteLink, lid)
 	return err
 }
 
@@ -290,6 +326,40 @@ func (q *Queries) GetEventRegistrations(ctx context.Context, eid uuid.UUID) ([]G
 	return items, nil
 }
 
+const getLinkByEndpointURL = `-- name: GetLinkByEndpointURL :one
+SELECT lid, endpoint_url, dest_url, oid, created_at FROM links WHERE endpoint_url = $1
+`
+
+func (q *Queries) GetLinkByEndpointURL(ctx context.Context, endpointUrl string) (Link, error) {
+	row := q.db.QueryRow(ctx, getLinkByEndpointURL, endpointUrl)
+	var i Link
+	err := row.Scan(
+		&i.Lid,
+		&i.EndpointUrl,
+		&i.DestUrl,
+		&i.Oid,
+		&i.CreatedAt,
+	)
+	return i, err
+}
+
+const getLinkByLID = `-- name: GetLinkByLID :one
+SELECT lid, endpoint_url, dest_url, oid, created_at FROM links WHERE lid = $1
+`
+
+func (q *Queries) GetLinkByLID(ctx context.Context, lid uuid.UUID) (Link, error) {
+	row := q.db.QueryRow(ctx, getLinkByLID, lid)
+	var i Link
+	err := row.Scan(
+		&i.Lid,
+		&i.EndpointUrl,
+		&i.DestUrl,
+		&i.Oid,
+		&i.CreatedAt,
+	)
+	return i, err
+}
+
 const getOrgMembers = `-- name: GetOrgMembers :many
 SELECT u.uid, u.first_name, u.last_name, u.personal_email, u.school_email, u.phone, u.grad_year, u.role, u.date_created, u.date_modified, om.is_admin, om.date_joined, om.last_active
 FROM users u
@@ -362,6 +432,17 @@ func (q *Queries) GetOrganizationByID(ctx context.Context, oid uuid.UUID) (Organ
 		&i.DateModified,
 	)
 	return i, err
+}
+
+const getTotalVisits = `-- name: GetTotalVisits :one
+SELECT COUNT(*) FROM link_visits WHERE lid = $1
+`
+
+func (q *Queries) GetTotalVisits(ctx context.Context, lid uuid.UUID) (int64, error) {
+	row := q.db.QueryRow(ctx, getTotalVisits, lid)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
 }
 
 const getUserByEmail = `-- name: GetUserByEmail :one
@@ -656,6 +737,36 @@ func (q *Queries) ListEventsByOrg(ctx context.Context, arg ListEventsByOrgParams
 	return items, nil
 }
 
+const listLinksByOrg = `-- name: ListLinksByOrg :many
+SELECT lid, endpoint_url, dest_url, oid, created_at FROM links WHERE oid = $1 ORDER BY created_at DESC
+`
+
+func (q *Queries) ListLinksByOrg(ctx context.Context, oid uuid.UUID) ([]Link, error) {
+	rows, err := q.db.Query(ctx, listLinksByOrg, oid)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []Link{}
+	for rows.Next() {
+		var i Link
+		if err := rows.Scan(
+			&i.Lid,
+			&i.EndpointUrl,
+			&i.DestUrl,
+			&i.Oid,
+			&i.CreatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const listOrganizations = `-- name: ListOrganizations :many
 SELECT oid, name, date_created, date_modified FROM organizations ORDER BY name LIMIT $1 OFFSET $2
 `
@@ -728,6 +839,29 @@ func (q *Queries) ListUsers(ctx context.Context, arg ListUsersParams) ([]User, e
 		return nil, err
 	}
 	return items, nil
+}
+
+const logLinkVisit = `-- name: LogLinkVisit :one
+INSERT INTO link_visits (lid, uid)
+VALUES ($1, $2)
+RETURNING lvid, lid, uid, created_at
+`
+
+type LogLinkVisitParams struct {
+	Lid uuid.UUID   `json:"lid"`
+	Uid pgtype.UUID `json:"uid"`
+}
+
+func (q *Queries) LogLinkVisit(ctx context.Context, arg LogLinkVisitParams) (LinkVisit, error) {
+	row := q.db.QueryRow(ctx, logLinkVisit, arg.Lid, arg.Uid)
+	var i LinkVisit
+	err := row.Scan(
+		&i.Lvid,
+		&i.Lid,
+		&i.Uid,
+		&i.CreatedAt,
+	)
+	return i, err
 }
 
 const registerForEvent = `-- name: RegisterForEvent :exec
@@ -824,6 +958,33 @@ func (q *Queries) UpdateEvent(ctx context.Context, arg UpdateEventParams) (Event
 		&i.Description,
 		&i.DateCreated,
 		&i.DateModified,
+	)
+	return i, err
+}
+
+const updateLink = `-- name: UpdateLink :one
+UPDATE links
+SET endpoint_url = COALESCE($2, endpoint_url),
+    dest_url = COALESCE($3, dest_url)
+WHERE lid = $1
+RETURNING lid, endpoint_url, dest_url, oid, created_at
+`
+
+type UpdateLinkParams struct {
+	Lid         uuid.UUID   `json:"lid"`
+	EndpointUrl pgtype.Text `json:"endpoint_url"`
+	DestUrl     pgtype.Text `json:"dest_url"`
+}
+
+func (q *Queries) UpdateLink(ctx context.Context, arg UpdateLinkParams) (Link, error) {
+	row := q.db.QueryRow(ctx, updateLink, arg.Lid, arg.EndpointUrl, arg.DestUrl)
+	var i Link
+	err := row.Scan(
+		&i.Lid,
+		&i.EndpointUrl,
+		&i.DestUrl,
+		&i.Oid,
+		&i.CreatedAt,
 	)
 	return i, err
 }
