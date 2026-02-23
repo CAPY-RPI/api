@@ -4,86 +4,178 @@ package database_test
 
 import (
 	"context"
+	"fmt"
+	"os"
 	"path/filepath"
 	"runtime"
+	"sort"
+	"strings"
 	"testing"
 
-	"github.com/capyrpi/api/internal/database"
 	"github.com/capyrpi/api/internal/testutils"
-	"github.com/jackc/pgx/v5/pgtype"
-	"github.com/stretchr/testify/assert"
+	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/stretchr/testify/require"
 )
 
-func TestRunMigrations_AppliesInitAndIsIdempotent(t *testing.T) {
-	connStr := testutils.SetupTestPostgres(t)
-	migrationsPath := testMigrationsPath(t)
-	ctx := context.Background()
-
-	require.NoError(t, database.RunMigrations(ctx, connStr, migrationsPath))
-	require.NoError(t, database.RunMigrations(ctx, connStr, migrationsPath))
-
-	pool, err := database.NewPool(ctx, connStr)
-	require.NoError(t, err)
+func TestMigrationsApplyAndRollback(t *testing.T) {
+	pool := testutils.SetupEmptyTestDB(t)
 	defer pool.Close()
 
-	for _, table := range []string{
-		"users",
-		"organizations",
-		"org_members",
-		"events",
-		"event_hosting",
-		"event_registrations",
-		"bot_tokens",
-	} {
-		var regclass pgtype.Text
-		err := pool.QueryRow(ctx, "SELECT to_regclass($1)::text", "public."+table).Scan(&regclass)
+	ctx := context.Background()
+	migrationsDir := repoRoot(t, 2)
+	migrationsDir = filepath.Join(migrationsDir, "migrations")
+
+	upFiles, downFiles := migrationFiles(t, migrationsDir)
+	require.NotEmpty(t, upFiles, "no migration files found in %s", migrationsDir)
+	require.Equal(t, len(upFiles), len(downFiles), "up/down migration file count mismatch")
+
+	beforeState := snapshotPublicSchema(t, ctx, pool)
+
+	for i, path := range upFiles {
+		sqlBytes, err := os.ReadFile(path)
 		require.NoError(t, err)
-		assert.Truef(t, regclass.Valid, "expected table %s to exist", table)
+		_, err = pool.Exec(ctx, string(sqlBytes))
+		require.NoErrorf(t, err, "failed applying up migration %d: %s", i, filepath.Base(path))
 	}
 
-	var version int64
-	var dirty bool
-	err = pool.QueryRow(ctx, "SELECT version, dirty FROM schema_migrations").Scan(&version, &dirty)
-	require.NoError(t, err)
-	assert.Equal(t, int64(1), version)
-	assert.False(t, dirty)
+	afterUpState := snapshotPublicSchema(t, ctx, pool)
+	require.NotEqual(t, beforeState, afterUpState, "expected schema to change after applying up migrations")
+
+	for i := len(downFiles) - 1; i >= 0; i-- {
+		path := downFiles[i]
+		sqlBytes, err := os.ReadFile(path)
+		require.NoError(t, err)
+		_, err = pool.Exec(ctx, string(sqlBytes))
+		require.NoErrorf(t, err, "failed applying down migration %d: %s", i, filepath.Base(path))
+	}
+
+	afterDownState := snapshotPublicSchema(t, ctx, pool)
+	require.Equal(t, beforeState, afterDownState, "expected schema state after down migrations to match initial state")
 }
 
-func TestRunMigrations_DownAndUp(t *testing.T) {
-	connStr := testutils.SetupTestPostgres(t)
-	migrationsPath := testMigrationsPath(t)
-	ctx := context.Background()
+func migrationFiles(t *testing.T, dir string) ([]string, []string) {
+	t.Helper()
 
-	require.NoError(t, database.RunMigrations(ctx, connStr, migrationsPath))
-	require.NoError(t, database.RunMigrationsDown(ctx, connStr, migrationsPath, 1))
-
-	pool, err := database.NewPool(ctx, connStr)
+	entries, err := os.ReadDir(dir)
 	require.NoError(t, err)
 
-	var regclass pgtype.Text
-	err = pool.QueryRow(ctx, "SELECT to_regclass('public.users')::text").Scan(&regclass)
-	require.NoError(t, err)
-	assert.False(t, regclass.Valid, "users table should be removed after rolling back init migration")
-	pool.Close()
+	var upFiles []string
+	var downFiles []string
 
-	require.NoError(t, database.RunMigrations(ctx, connStr, migrationsPath))
+	for _, entry := range entries {
+		if entry.IsDir() {
+			continue
+		}
+		name := entry.Name()
+		fullPath := filepath.Join(dir, name)
 
-	pool, err = database.NewPool(ctx, connStr)
-	require.NoError(t, err)
-	defer pool.Close()
+		switch {
+		case strings.HasSuffix(name, ".up.sql"):
+			upFiles = append(upFiles, fullPath)
+		case strings.HasSuffix(name, ".down.sql"):
+			downFiles = append(downFiles, fullPath)
+		}
+	}
 
-	err = pool.QueryRow(ctx, "SELECT to_regclass('public.users')::text").Scan(&regclass)
-	require.NoError(t, err)
-	assert.True(t, regclass.Valid, "users table should exist after re-applying migrations")
+	sort.Strings(upFiles)
+	sort.Strings(downFiles)
+	return upFiles, downFiles
 }
 
-func testMigrationsPath(t *testing.T) string {
+func repoRoot(t *testing.T, upLevels int) string {
 	t.Helper()
 
 	_, filename, _, ok := runtime.Caller(0)
 	require.True(t, ok)
 
-	projectRoot := filepath.Join(filepath.Dir(filename), "../..")
-	return filepath.Join(projectRoot, "migrations")
+	root := filepath.Dir(filename)
+	for range upLevels {
+		root = filepath.Dir(root)
+	}
+	return root
+}
+
+type schemaSnapshot struct {
+	Tables    []string
+	Columns   []string
+	Indexes   []string
+	Views     []string
+	Sequences []string
+	Enums     []string
+}
+
+func snapshotPublicSchema(t *testing.T, ctx context.Context, pool *pgxpool.Pool) schemaSnapshot {
+	t.Helper()
+
+	return schemaSnapshot{
+		Tables:    querySingleColumn(t, ctx, pool, `SELECT table_name FROM information_schema.tables WHERE table_schema = 'public' AND table_type = 'BASE TABLE' ORDER BY table_name`),
+		Columns:   queryColumns(t, ctx, pool),
+		Indexes:   querySingleColumn(t, ctx, pool, `SELECT indexname || ':' || indexdef FROM pg_indexes WHERE schemaname = 'public' ORDER BY indexname`),
+		Views:     querySingleColumn(t, ctx, pool, `SELECT table_name FROM information_schema.views WHERE table_schema = 'public' ORDER BY table_name`),
+		Sequences: querySingleColumn(t, ctx, pool, `SELECT sequence_name FROM information_schema.sequences WHERE sequence_schema = 'public' ORDER BY sequence_name`),
+		Enums:     queryEnums(t, ctx, pool),
+	}
+}
+
+func querySingleColumn(t *testing.T, ctx context.Context, pool *pgxpool.Pool, sql string) []string {
+	t.Helper()
+
+	rows, err := pool.Query(ctx, sql)
+	require.NoError(t, err)
+	defer rows.Close()
+
+	var out []string
+	for rows.Next() {
+		var v string
+		require.NoError(t, rows.Scan(&v))
+		out = append(out, v)
+	}
+	require.NoError(t, rows.Err())
+	return out
+}
+
+func queryColumns(t *testing.T, ctx context.Context, pool *pgxpool.Pool) []string {
+	t.Helper()
+
+	rows, err := pool.Query(ctx, `
+		SELECT table_name, column_name, data_type, is_nullable, COALESCE(column_default, '')
+		FROM information_schema.columns
+		WHERE table_schema = 'public'
+		ORDER BY table_name, ordinal_position
+	`)
+	require.NoError(t, err)
+	defer rows.Close()
+
+	var out []string
+	for rows.Next() {
+		var tableName, columnName, dataType, isNullable, columnDefault string
+		require.NoError(t, rows.Scan(&tableName, &columnName, &dataType, &isNullable, &columnDefault))
+		out = append(out, fmt.Sprintf("%s.%s:%s:%s:%s", tableName, columnName, dataType, isNullable, columnDefault))
+	}
+	require.NoError(t, rows.Err())
+	return out
+}
+
+func queryEnums(t *testing.T, ctx context.Context, pool *pgxpool.Pool) []string {
+	t.Helper()
+
+	rows, err := pool.Query(ctx, `
+		SELECT t.typname, e.enumlabel
+		FROM pg_type t
+		JOIN pg_enum e ON e.enumtypid = t.oid
+		JOIN pg_namespace n ON n.oid = t.typnamespace
+		WHERE n.nspname = 'public'
+		ORDER BY t.typname, e.enumsortorder
+	`)
+	require.NoError(t, err)
+	defer rows.Close()
+
+	var out []string
+	for rows.Next() {
+		var typeName, label string
+		require.NoError(t, rows.Scan(&typeName, &label))
+		out = append(out, fmt.Sprintf("%s:%s", typeName, label))
+	}
+	require.NoError(t, rows.Err())
+	return out
 }
