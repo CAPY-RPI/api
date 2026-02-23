@@ -12,6 +12,7 @@ RUN apk add --no-cache ca-certificates tzdata wget
 COPY --from=builder /capy-server .
 COPY --from=builder /app/docs ./docs
 COPY --from=builder /app/schema.sql ./schema.sql
+COPY --from=builder /app/migrations ./migrations
 RUN adduser -D -g '' appuser
 USER appuser
 EXPOSE 8080

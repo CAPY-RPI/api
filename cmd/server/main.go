@@ -50,8 +50,9 @@ func main() {
 
 	slog.Info("starting server", "env", cfg.Env)
 
-	// Connect to database
 	ctx := context.Background()
+
+	// Connect to database
 	pool, err := database.NewPool(ctx, cfg.Database.URL)
 	if err != nil {
 		slog.Error("failed to connect to database", "error", err)
@@ -60,13 +61,6 @@ func main() {
 	defer pool.Close()
 
 	slog.Info("connected to database")
-
-	// Initialize schema
-	if err := database.InitSchema(ctx, pool, cfg.Database.SchemaPath); err != nil {
-		slog.Error("failed to initialize database schema", "error", err)
-		os.Exit(1)
-	}
-	slog.Info("database schema initialized")
 
 	// Create queries and handler
 	queries := database.New(pool)

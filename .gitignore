@@ -11,6 +11,7 @@ bin/
 .vscode/
 *.swp
 *.swo
+.sisyphus/
 
 # OS
 .DS_Store
