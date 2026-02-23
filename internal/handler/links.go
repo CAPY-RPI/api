@@ -278,7 +278,7 @@ func (h *Handler) GetQRCode(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	qrc, err := qrcode.New(link.DestUrl)
+	qrc, err := qrcode.New(link.EndpointUrl)
 	if err != nil {
 		slog.Error("failed to generate QR code", "error", err)
 		h.respondError(w, http.StatusInternalServerError, "Failed to generate QR code")
