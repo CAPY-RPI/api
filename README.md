@@ -54,12 +54,44 @@ make docker
 
 ### 3. Run Migrations & Generate Code
 ```bash
-# Apply DB migrations (DATABASE_URL must point at your DB)
+# If your DB is running via docker-compose on your host machine, override host:
+# export MIGRATE_DATABASE_URL=postgres://capy:devpassword@localhost:5432/capy_db?sslmode=disable or use make migrate-up-docker
 make migrate-up
-
-# Generate sqlc + swagger artifacts
 make generate
 ```
+
+Create a new migration:
+```bash
+make migrate-create name=add_event_capacity
+```
+
+What goes in migration files:
+- `*.up.sql`: the incremental schema change you want to apply (DDL like `CREATE TABLE`, `ALTER TABLE`, `CREATE INDEX`)
+- `*.down.sql`: the reverse of that same change (rollback), not the full previous schema
+
+Example (`add_event_capacity`):
+```sql
+-- up.sql
+ALTER TABLE events
+ADD COLUMN capacity INTEGER;
+
+ALTER TABLE events
+ADD CONSTRAINT events_capacity_nonnegative
+CHECK (capacity IS NULL OR capacity >= 0);
+```
+
+```sql
+-- down.sql
+ALTER TABLE events
+DROP CONSTRAINT IF EXISTS events_capacity_nonnegative;
+
+ALTER TABLE events
+DROP COLUMN IF EXISTS capacity;
+```
+
+Rule of thumb:
+- `up` = apply one change
+- `down` = undo that same change only
 
 ### 4. Run Server
 ```bash
