@@ -114,20 +114,6 @@ benchmark:
 	echo "Running benchmarks and saving to $$log_file..."; \
 	go test -bench=. -benchmem -run=^$$ ./tests/benchmarks/... | tee $$log_file
 
-# Database migrations (requires DATABASE_URL)
-migrate-up:
-	migrate -path $(MIGRATIONS_PATH) -database "$(DATABASE_URL)" up
-
-migrate-down:
-	migrate -path $(MIGRATIONS_PATH) -database "$(DATABASE_URL)" down 1
-
-migrate-version:
-	migrate -path $(MIGRATIONS_PATH) -database "$(DATABASE_URL)" version
-
-migrate-create:
-	@if [ -z "$(name)" ]; then echo "usage: make migrate-create name=add_users_index"; exit 1; fi
-	migrate create -ext sql -dir $(MIGRATIONS_PATH) -seq $(name)
-
 # Linting
 lint:
 	golangci-lint run ./...

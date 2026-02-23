@@ -52,13 +52,6 @@ func main() {
 
 	ctx := context.Background()
 
-	// Apply database migrations before serving traffic.
-	if err := database.RunMigrations(ctx, cfg.Database.URL, cfg.Database.MigrationsPath); err != nil {
-		slog.Error("failed to run database migrations", "error", err, "path", cfg.Database.MigrationsPath)
-		os.Exit(1)
-	}
-	slog.Info("database migrations applied", "path", cfg.Database.MigrationsPath)
-
 	// Connect to database
 	pool, err := database.NewPool(ctx, cfg.Database.URL)
 	if err != nil {
