@@ -14,11 +14,41 @@ import (
 	"github.com/testcontainers/testcontainers-go/wait"
 )
 
-// SetupTestDB creates a fresh Postgres container and returns the connection pool
-func SetupTestDB(t *testing.T) *pgxpool.Pool {
+// SetupTestPostgres creates a fresh Postgres container and returns its connection string.
+func SetupTestPostgres(t *testing.T) string {
 	ctx := context.Background()
 
-	// Get repo root for schema.sql
+	pgContainer, err := postgres.Run(ctx,
+		"postgres:16-alpine",
+		postgres.WithDatabase("test_db"),
+		postgres.WithUsername("test"),
+		postgres.WithPassword("test"),
+		testcontainers.WithWaitStrategy(
+			wait.ForLog("database system is ready to accept connections").
+				WithOccurrence(2).
+				WithStartupTimeout(30*time.Second)),
+	)
+	if err != nil {
+		t.Fatalf("failed to start postgres container: %v", err)
+	}
+
+	t.Cleanup(func() {
+		if err := pgContainer.Terminate(ctx); err != nil {
+			t.Fatalf("failed to terminate container: %v", err)
+		}
+	})
+
+	connStr, err := pgContainer.ConnectionString(ctx, "sslmode=disable")
+	if err != nil {
+		t.Fatalf("failed to get connection string: %v", err)
+	}
+
+	return connStr
+}
+
+// SetupTestDB creates a fresh Postgres container, initializes schema.sql, and returns the connection pool.
+func SetupTestDB(t *testing.T) *pgxpool.Pool {
+	ctx := context.Background()
 	_, filename, _, _ := runtime.Caller(0)
 	projectRoot := filepath.Join(filepath.Dir(filename), "../..")
 	schemaPath := filepath.Join(projectRoot, "schema.sql")
@@ -26,6 +56,44 @@ func SetupTestDB(t *testing.T) *pgxpool.Pool {
 	pgContainer, err := postgres.Run(ctx,
 		"postgres:18-alpine",
 		postgres.WithInitScripts(schemaPath),
+		postgres.WithDatabase("test_db"),
+		postgres.WithUsername("test"),
+		postgres.WithPassword("test"),
+		testcontainers.WithWaitStrategy(
+			wait.ForLog("database system is ready to accept connections").
+				WithOccurrence(2).
+				WithStartupTimeout(30*time.Second)),
+	)
+	if err != nil {
+		t.Fatalf("failed to start postgres container: %v", err)
+	}
+
+	t.Cleanup(func() {
+		if err := pgContainer.Terminate(ctx); err != nil {
+			t.Fatalf("failed to terminate container: %v", err)
+		}
+	})
+
+	connStr, err := pgContainer.ConnectionString(ctx, "sslmode=disable")
+	if err != nil {
+		t.Fatalf("failed to get connection string: %v", err)
+	}
+
+	pool, err := database.NewPool(ctx, connStr)
+	if err != nil {
+		t.Fatalf("failed to connect to database: %v", err)
+	}
+
+	return pool
+}
+
+// SetupEmptyTestDB creates a fresh Postgres container without loading schema.sql.
+// Use this for migration tests that need to apply schema changes from scratch.
+func SetupEmptyTestDB(t *testing.T) *pgxpool.Pool {
+	ctx := context.Background()
+
+	pgContainer, err := postgres.Run(ctx,
+		"postgres:16-alpine",
 		postgres.WithDatabase("test_db"),
 		postgres.WithUsername("test"),
 		postgres.WithPassword("test"),
