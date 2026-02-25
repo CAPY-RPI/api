@@ -24,6 +24,18 @@ services:
     depends_on:
       db:
         condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+
+  migrate:
+    build: .
+    env_file:
+      - .env
+    depends_on:
+      db:
+        condition: service_healthy
+    command: ["migrate", "up"]
+    restart: "no"
 
   tunnel:
     image: cloudflare/cloudflared:latest

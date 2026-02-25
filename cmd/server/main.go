@@ -41,6 +41,10 @@ func main() {
 	// Setup structured logging
 	slog.SetDefault(slog.New(slog.NewJSONHandler(os.Stdout, nil)))
 
+	if len(os.Args) > 1 {
+		os.Exit(runCommand(os.Args[1:]))
+	}
+
 	// Load configuration
 	cfg, err := config.Load()
 	if err != nil {
@@ -103,4 +107,36 @@ func main() {
 	}
 
 	slog.Info("server stopped")
+}
+
+func runCommand(args []string) int {
+	if len(args) == 0 {
+		return 0
+	}
+
+	switch args[0] {
+	case "migrate":
+		if len(args) != 2 || args[1] != "up" {
+			slog.Error("invalid migrate command", "usage", "capy-server migrate up")
+			return 2
+		}
+
+		cfg, err := config.Load()
+		if err != nil {
+			slog.Error("failed to load config", "error", err)
+			return 1
+		}
+
+		slog.Info("running migrations", "path", cfg.Database.MigrationsPath)
+		if err := database.RunMigrations(context.Background(), cfg.Database.URL, cfg.Database.MigrationsPath); err != nil {
+			slog.Error("migration command failed", "error", err)
+			return 1
+		}
+
+		slog.Info("migrations complete")
+		return 0
+	default:
+		slog.Error("unknown command", "command", args[0], "usage", "capy-server [migrate up]")
+		return 2
+	}
 }
