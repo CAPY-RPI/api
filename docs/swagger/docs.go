@@ -1894,8 +1894,8 @@ const docTemplate = `{
 // SwaggerInfo holds exported Swagger Info so clients can modify it
 var SwaggerInfo = &swag.Spec{
 	Version:          "1.0",
-	Host:             "api.capyrpi.org",
-	BasePath:         "/v1",
+	Host:             "capyrpi.org",
+	BasePath:         "/api/v1",
 	Schemes:          []string{},
 	Title:            "Capy API",
 	Description:      "API for Capy RPI Club Assistant",

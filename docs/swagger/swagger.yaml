@@ -1,4 +1,4 @@
-basePath: /v1
+basePath: /api/v1
 definitions:
   dto.AddMemberRequest:
     properties:
@@ -223,7 +223,7 @@ definitions:
       uid:
         type: string
     type: object
-host: api.capyrpi.org
+host: capyrpi.org
 info:
   contact:
     email: support@swagger.io
