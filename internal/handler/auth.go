@@ -540,7 +540,7 @@ func (h *Handler) setStateCookie(w http.ResponseWriter, state string) {
 	http.SetCookie(w, &http.Cookie{
 		Name:     "oauth_state",
 		Value:    state,
-		Path:     "/v1/auth",
+		Path:     "/api/v1/auth",
 		Domain:   h.Config.Cookie.Domain,
 		MaxAge:   300, // 5 minutes
 		Secure:   h.Config.Cookie.Secure,
@@ -558,7 +558,7 @@ func (h *Handler) verifyStateCookie(w http.ResponseWriter, r *http.Request, stat
 	http.SetCookie(w, &http.Cookie{
 		Name:     "oauth_state",
 		Value:    "",
-		Path:     "/v1/auth",
+		Path:     "/api/v1/auth",
 		Domain:   h.Config.Cookie.Domain,
 		MaxAge:   -1,
 		Secure:   h.Config.Cookie.Secure,

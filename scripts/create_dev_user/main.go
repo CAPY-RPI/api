@@ -79,5 +79,5 @@ func main() {
 	fmt.Printf("User ID:   %s\n", user.Uid)
 	fmt.Println("---------------------------------------------------")
 	fmt.Println("\nTry this command now:")
-	fmt.Printf("curl -H \"Authorization: Bearer %s\" http://localhost:8080/v1/auth/me\n", tokenString)
+	fmt.Printf("curl -H \"Authorization: Bearer %s\" http://localhost:8080/api/v1/auth/me\n", tokenString)
 }

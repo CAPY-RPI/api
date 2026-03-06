@@ -22,16 +22,16 @@ func New(h *handler.Handler, queries database.Querier, jwtSecret string, allowed
 	r.Use(chimiddleware.RequestID)
 	r.Use(middleware.CORS(allowedOrigins))
 
-	// Health check (public)
-	r.Get("/health", h.Health)
-
-	// Swagger UI (public) - Only in non-production environments
-	if h.Config.Env != "production" {
-		r.Get("/swagger/*", httpSwagger.WrapHandler)
-	}
-
 	// API routes
 	r.Route("/api", func(r chi.Router) {
+		// Health check (public)
+		r.Get("/health", h.Health)
+
+		// Swagger UI (public) - Only in non-production environments
+		if h.Config.Env != "production" {
+			r.Get("/swagger/*", httpSwagger.WrapHandler)
+		}
+
 		// API v1 routes
 		r.Route("/v1", func(r chi.Router) {
 			// Auth routes (public)

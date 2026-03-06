@@ -56,7 +56,7 @@ func BenchmarkAuthGoogleInitiation(b *testing.B) {
 	b.ReportAllocs()
 
 	for i := 0; i < b.N; i++ {
-		resp, err := client.Get(benchServer.URL + "/v1/auth/google")
+		resp, err := client.Get(benchServer.URL + "/api/v1/auth/google")
 		if err != nil {
 			b.Fatalf("failed to make request: %v", err)
 		}
@@ -81,7 +81,7 @@ func BenchmarkAuthMicrosoftInitiation(b *testing.B) {
 	b.ReportAllocs()
 
 	for i := 0; i < b.N; i++ {
-		resp, err := client.Get(benchServer.URL + "/v1/auth/microsoft")
+		resp, err := client.Get(benchServer.URL + "/api/v1/auth/microsoft")
 		if err != nil {
 			b.Fatalf("failed to make request: %v", err)
 		}
@@ -96,7 +96,7 @@ func BenchmarkGetMe(b *testing.B) {
 	b.ResetTimer()
 	b.ReportAllocs()
 	for i := 0; i < b.N; i++ {
-		req, _ := http.NewRequest("GET", benchServer.URL+"/v1/auth/me", nil)
+		req, _ := http.NewRequest("GET", benchServer.URL+"/api/v1/auth/me", nil)
 		req.AddCookie(&http.Cookie{Name: "capy_auth", Value: benchJWTToken})
 		resp, err := benchClient.Do(req)
 		if err != nil {

@@ -70,7 +70,7 @@ func TestFullAPI(t *testing.T) {
 	}
 
 	// 4. Test: Get Me (Protected Route)
-	req, _ := http.NewRequest("GET", server.URL+"/v1/auth/me", nil)
+	req, _ := http.NewRequest("GET", server.URL+"/api/v1/auth/me", nil)
 	req.AddCookie(cookie)
 
 	resp, err := client.Do(req)
@@ -86,7 +86,7 @@ func TestFullAPI(t *testing.T) {
 
 	// 5. Test: Create Organization
 	orgBody := []byte(`{"name": "Test Org", "slug": "test-org"}`)
-	req, _ = http.NewRequest("POST", server.URL+"/v1/organizations", bytes.NewBuffer(orgBody))
+	req, _ = http.NewRequest("POST", server.URL+"/api/v1/organizations", bytes.NewBuffer(orgBody))
 	req.AddCookie(cookie)
 	req.Header.Set("Content-Type", "application/json")
 
@@ -145,7 +145,7 @@ func TestEventFlow(t *testing.T) {
 
 	// Create Org
 	orgBody := []byte(`{"name":"Event Org","slug":"event-org"}`)
-	req, _ := http.NewRequest("POST", server.URL+"/v1/organizations", bytes.NewBuffer(orgBody))
+	req, _ := http.NewRequest("POST", server.URL+"/api/v1/organizations", bytes.NewBuffer(orgBody))
 	req.AddCookie(cookie)
 	req.Header.Set("Content-Type", "application/json")
 	resp, err := client.Do(req)
@@ -160,7 +160,7 @@ func TestEventFlow(t *testing.T) {
 	// Create Event
 	// include org_id and some fields
 	eventJSON := fmt.Sprintf(`{"org_id":"%s","location":"Auditorium","description":"Test event","event_time":"%s"}`, oid, time.Now().Add(24*time.Hour).Format(time.RFC3339))
-	req, _ = http.NewRequest("POST", server.URL+"/v1/events", bytes.NewBuffer([]byte(eventJSON)))
+	req, _ = http.NewRequest("POST", server.URL+"/api/v1/events", bytes.NewBuffer([]byte(eventJSON)))
 	req.AddCookie(cookie)
 	req.Header.Set("Content-Type", "application/json")
 	resp, err = client.Do(req)
@@ -331,7 +331,7 @@ func TestOrgMemberEndpoints(t *testing.T) {
 
 	// Create organization (admin will be creator)
 	orgBody := []byte(`{"name":"Members Org","slug":"members-org"}`)
-	req, _ := http.NewRequest("POST", server.URL+"/v1/organizations", bytes.NewBuffer(orgBody))
+	req, _ := http.NewRequest("POST", server.URL+"/api/v1/organizations", bytes.NewBuffer(orgBody))
 	req.AddCookie(cookie)
 	req.Header.Set("Content-Type", "application/json")
 	resp, err := client.Do(req)
@@ -403,7 +403,7 @@ func TestEventUpdateDeleteFlow(t *testing.T) {
 
 	// Create org
 	orgBody := []byte(`{"name":"EvUpd Org","slug":"evupd-org"}`)
-	req, _ := http.NewRequest("POST", server.URL+"/v1/organizations", bytes.NewBuffer(orgBody))
+	req, _ := http.NewRequest("POST", server.URL+"/api/v1/organizations", bytes.NewBuffer(orgBody))
 	req.AddCookie(cookie)
 	req.Header.Set("Content-Type", "application/json")
 	resp, err := client.Do(req)
@@ -417,7 +417,7 @@ func TestEventUpdateDeleteFlow(t *testing.T) {
 
 	// Create event
 	eventJSON := fmt.Sprintf(`{"org_id":"%s","location":"Room","description":"Desc","event_time":"%s"}`, oid, time.Now().Add(48*time.Hour).Format(time.RFC3339))
-	req, _ = http.NewRequest("POST", server.URL+"/v1/events", bytes.NewBuffer([]byte(eventJSON)))
+	req, _ = http.NewRequest("POST", server.URL+"/api/v1/events", bytes.NewBuffer([]byte(eventJSON)))
 	req.AddCookie(cookie)
 	req.Header.Set("Content-Type", "application/json")
 	resp, err = client.Do(req)
@@ -430,7 +430,7 @@ func TestEventUpdateDeleteFlow(t *testing.T) {
 
 	// Try creating event with missing org_id
 	badEvent := []byte(`{"location":"Nowhere"}`)
-	req, _ = http.NewRequest("POST", server.URL+"/v1/events", bytes.NewBuffer(badEvent))
+	req, _ = http.NewRequest("POST", server.URL+"/api/v1/events", bytes.NewBuffer(badEvent))
 	req.AddCookie(cookie)
 	req.Header.Set("Content-Type", "application/json")
 	resp, err = client.Do(req)
@@ -496,7 +496,7 @@ func TestOrganizationCRUD(t *testing.T) {
 
 	// Create org
 	orgBody := []byte(`{"name":"Crud Org","slug":"crud-org"}`)
-	req, _ := http.NewRequest("POST", server.URL+"/v1/organizations", bytes.NewBuffer(orgBody))
+	req, _ := http.NewRequest("POST", server.URL+"/api/v1/organizations", bytes.NewBuffer(orgBody))
 	req.AddCookie(cookie)
 	req.Header.Set("Content-Type", "application/json")
 	resp, err := client.Do(req)
@@ -531,7 +531,7 @@ func TestOrganizationCRUD(t *testing.T) {
 	assert.Equal(t, "Crud Org Updated", updated.Name)
 
 	// List organizations
-	req, _ = http.NewRequest("GET", server.URL+"/v1/organizations", nil)
+	req, _ = http.NewRequest("GET", server.URL+"/api/v1/organizations", nil)
 	req.AddCookie(cookie)
 	resp, err = client.Do(req)
 	require.NoError(t, err)

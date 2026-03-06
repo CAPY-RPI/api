@@ -71,7 +71,7 @@ func main() {
 	fmt.Printf("Role:    %s\n", *role)
 	fmt.Println("---------------------------------------------------")
 	fmt.Println("\nUsage with curl:")
-	fmt.Printf("curl -H \"Authorization: Bearer %s\" http://localhost:8080/v1/auth/me\n", tokenString)
+	fmt.Printf("curl -H \"Authorization: Bearer %s\" http://localhost:8080/api/v1/auth/me\n", tokenString)
 	fmt.Println("\nToken:")
 	fmt.Println(tokenString)
 }

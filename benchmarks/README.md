@@ -37,8 +37,8 @@ BenchmarkHealthEndpoint-10      15085    78187 ns/op    7146 B/op    80 allocs/o
 
 ### Public Routes
 - `GET /health`: Basic health check performance.
-- `GET /v1/auth/google`: Google OAuth initiation performance.
-- `GET /v1/auth/microsoft`: Microsoft OAuth initiation performance.
+- `GET /api/v1/auth/google`: Google OAuth initiation performance.
+- `GET /api/v1/auth/microsoft`: Microsoft OAuth initiation performance.
 
 ### Protected Routes
 These benchmarks test authenticated endpoints using a pre-generated JWT token with test data (User, Organization, Event):
