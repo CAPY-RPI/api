@@ -54,11 +54,11 @@ make docker
 
 ### 3. Run Migrations & Generate Code
 ```bash
-# If your DB is running via docker-compose on your host machine, override host:
-# export MIGRATE_DATABASE_URL=postgres://capy:devpassword@localhost:5432/capy_db?sslmode=disable or use make migrate-up-docker
 make migrate-up
 make generate
 ```
+
+`make migrate-up` runs all pending migrations in Docker on the Compose network by default. `make migrate-down` rolls back exactly one migration. `make migrate-version` shows the current version.
 
 Create a new migration:
 ```bash
@@ -99,6 +99,8 @@ make run
 # API will be available at http://localhost:8080
 # Health check: http://localhost:8080/health
 ```
+
+The API applies pending migrations automatically on startup before serving requests.
 
 ## Testing
 

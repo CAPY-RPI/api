@@ -9,6 +9,7 @@ import (
 	"syscall"
 	"time"
 
+	swaggerdocs "github.com/capyrpi/api/docs/swagger"
 	"github.com/capyrpi/api/internal/config"
 	"github.com/capyrpi/api/internal/database"
 	"github.com/capyrpi/api/internal/handler"
@@ -50,7 +51,16 @@ func main() {
 
 	slog.Info("starting server", "env", cfg.Env)
 
+	configureSwagger(cfg)
+
 	ctx := context.Background()
+
+	if err := database.RunMigrations(ctx, cfg.Database.URL, cfg.Database.MigrationsPath); err != nil {
+		slog.Error("failed to run migrations", "error", err, "path", cfg.Database.MigrationsPath)
+		os.Exit(1)
+	}
+
+	slog.Info("migrations applied", "path", cfg.Database.MigrationsPath)
 
 	// Connect to database
 	pool, err := database.NewPool(ctx, cfg.Database.URL)
@@ -103,4 +113,13 @@ func main() {
 	}
 
 	slog.Info("server stopped")
+}
+
+func configureSwagger(cfg *config.Config) {
+	if cfg.Env != "development" {
+		return
+	}
+
+	swaggerdocs.SwaggerInfo.Host = "localhost:" + cfg.Server.Port
+	swaggerdocs.SwaggerInfo.Schemes = []string{"http"}
 }
