@@ -9,6 +9,7 @@ import (
 	"syscall"
 	"time"
 
+	swaggerdocs "github.com/capyrpi/api/docs/swagger"
 	"github.com/capyrpi/api/internal/config"
 	"github.com/capyrpi/api/internal/database"
 	"github.com/capyrpi/api/internal/handler"
@@ -49,6 +50,8 @@ func main() {
 	}
 
 	slog.Info("starting server", "env", cfg.Env)
+
+	configureSwagger(cfg)
 
 	ctx := context.Background()
 
@@ -110,4 +113,13 @@ func main() {
 	}
 
 	slog.Info("server stopped")
+}
+
+func configureSwagger(cfg *config.Config) {
+	if cfg.Env != "development" {
+		return
+	}
+
+	swaggerdocs.SwaggerInfo.Host = "localhost:" + cfg.Server.Port
+	swaggerdocs.SwaggerInfo.Schemes = []string{"http"}
 }
