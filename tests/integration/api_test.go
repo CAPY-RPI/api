@@ -103,7 +103,7 @@ func TestFullAPI(t *testing.T) {
 
 	// Verify User is Member of Org
 	orgID := orgResponse["oid"].(string)
-	req, _ = http.NewRequest("GET", fmt.Sprintf("%s/v1/organizations/%s/members", server.URL, orgID), nil)
+	req, _ = http.NewRequest("GET", fmt.Sprintf("%s/api/v1/organizations/%s/members", server.URL, orgID), nil)
 	req.AddCookie(cookie)
 
 	resp, err = client.Do(req)
@@ -172,7 +172,7 @@ func TestEventFlow(t *testing.T) {
 	require.NoError(t, err)
 
 	// GET event by id
-	req, _ = http.NewRequest("GET", fmt.Sprintf("%s/v1/events/%s", server.URL, evResp.EID.String()), nil)
+	req, _ = http.NewRequest("GET", fmt.Sprintf("%s/api/v1/events/%s", server.URL, evResp.EID.String()), nil)
 	req.AddCookie(cookie)
 	resp, err = client.Do(req)
 	require.NoError(t, err)
@@ -180,7 +180,7 @@ func TestEventFlow(t *testing.T) {
 	require.Equal(t, http.StatusOK, resp.StatusCode)
 
 	// List events by org
-	req, _ = http.NewRequest("GET", fmt.Sprintf("%s/v1/events/org/%s", server.URL, oid), nil)
+	req, _ = http.NewRequest("GET", fmt.Sprintf("%s/api/v1/events/org/%s", server.URL, oid), nil)
 	req.AddCookie(cookie)
 	resp, err = client.Do(req)
 	require.NoError(t, err)
@@ -193,7 +193,7 @@ func TestEventFlow(t *testing.T) {
 
 	// Register user for event
 	regBody := fmt.Sprintf(`{"uid":"%s","is_attending":true}`, user.Uid.String())
-	req, _ = http.NewRequest("POST", fmt.Sprintf("%s/v1/events/%s/register", server.URL, evResp.EID.String()), bytes.NewBuffer([]byte(regBody)))
+	req, _ = http.NewRequest("POST", fmt.Sprintf("%s/api/v1/events/%s/register", server.URL, evResp.EID.String()), bytes.NewBuffer([]byte(regBody)))
 	req.AddCookie(cookie)
 	req.Header.Set("Content-Type", "application/json")
 	resp, err = client.Do(req)
@@ -202,7 +202,7 @@ func TestEventFlow(t *testing.T) {
 	require.Equal(t, http.StatusCreated, resp.StatusCode)
 
 	// Register without uid -> should return 400
-	req, _ = http.NewRequest("POST", fmt.Sprintf("%s/v1/events/%s/register", server.URL, evResp.EID.String()), bytes.NewBuffer([]byte(`{"is_attending":true}`)))
+	req, _ = http.NewRequest("POST", fmt.Sprintf("%s/api/v1/events/%s/register", server.URL, evResp.EID.String()), bytes.NewBuffer([]byte(`{"is_attending":true}`)))
 	req.AddCookie(cookie)
 	req.Header.Set("Content-Type", "application/json")
 	resp, err = client.Do(req)
@@ -211,7 +211,7 @@ func TestEventFlow(t *testing.T) {
 	require.Equal(t, http.StatusBadRequest, resp.StatusCode)
 
 	// List registrations
-	req, _ = http.NewRequest("GET", fmt.Sprintf("%s/v1/events/%s/registrations", server.URL, evResp.EID.String()), nil)
+	req, _ = http.NewRequest("GET", fmt.Sprintf("%s/api/v1/events/%s/registrations", server.URL, evResp.EID.String()), nil)
 	req.AddCookie(cookie)
 	resp, err = client.Do(req)
 	require.NoError(t, err)
@@ -224,7 +224,7 @@ func TestEventFlow(t *testing.T) {
 	assert.Equal(t, user.Uid.String(), regs[0].UID.String())
 
 	// Verify user events endpoint
-	req, _ = http.NewRequest("GET", fmt.Sprintf("%s/v1/users/%s/events", server.URL, user.Uid.String()), nil)
+	req, _ = http.NewRequest("GET", fmt.Sprintf("%s/api/v1/users/%s/events", server.URL, user.Uid.String()), nil)
 	req.AddCookie(cookie)
 	resp, err = client.Do(req)
 	require.NoError(t, err)
@@ -236,7 +236,7 @@ func TestEventFlow(t *testing.T) {
 	require.GreaterOrEqual(t, len(uevents), 1)
 
 	// List all events
-	req, _ = http.NewRequest("GET", fmt.Sprintf("%s/v1/events", server.URL), nil)
+	req, _ = http.NewRequest("GET", fmt.Sprintf("%s/api/v1/events", server.URL), nil)
 	req.AddCookie(cookie)
 	resp, err = client.Do(req)
 	require.NoError(t, err)
@@ -272,7 +272,7 @@ func TestUserUpdateDelete(t *testing.T) {
 
 	// Update user
 	updateBody := []byte(`{"first_name":"Updated","last_name":"Name"}`)
-	req, _ := http.NewRequest("PUT", fmt.Sprintf("%s/v1/users/%s", server.URL, user.Uid.String()), bytes.NewBuffer(updateBody))
+	req, _ := http.NewRequest("PUT", fmt.Sprintf("%s/api/v1/users/%s", server.URL, user.Uid.String()), bytes.NewBuffer(updateBody))
 	req.AddCookie(cookie)
 	req.Header.Set("Content-Type", "application/json")
 	resp, err := client.Do(req)
@@ -287,7 +287,7 @@ func TestUserUpdateDelete(t *testing.T) {
 	assert.Equal(t, "Name", ur.LastName)
 
 	// Delete user
-	req, _ = http.NewRequest("DELETE", fmt.Sprintf("%s/v1/users/%s", server.URL, user.Uid.String()), nil)
+	req, _ = http.NewRequest("DELETE", fmt.Sprintf("%s/api/v1/users/%s", server.URL, user.Uid.String()), nil)
 	req.AddCookie(cookie)
 	resp, err = client.Do(req)
 	require.NoError(t, err)
@@ -295,7 +295,7 @@ func TestUserUpdateDelete(t *testing.T) {
 	require.Equal(t, http.StatusNoContent, resp.StatusCode)
 
 	// Verify deletion
-	req, _ = http.NewRequest("GET", fmt.Sprintf("%s/v1/users/%s", server.URL, user.Uid.String()), nil)
+	req, _ = http.NewRequest("GET", fmt.Sprintf("%s/api/v1/users/%s", server.URL, user.Uid.String()), nil)
 	req.AddCookie(cookie)
 	resp, err = client.Do(req)
 	require.NoError(t, err)
@@ -345,7 +345,7 @@ func TestOrgMemberEndpoints(t *testing.T) {
 
 	// Add member to org
 	addBody := fmt.Sprintf(`{"uid":"%s","is_admin":false}`, member.Uid.String())
-	req, _ = http.NewRequest("POST", fmt.Sprintf("%s/v1/organizations/%s/members", server.URL, oid), bytes.NewBuffer([]byte(addBody)))
+	req, _ = http.NewRequest("POST", fmt.Sprintf("%s/api/v1/organizations/%s/members", server.URL, oid), bytes.NewBuffer([]byte(addBody)))
 	req.AddCookie(cookie)
 	req.Header.Set("Content-Type", "application/json")
 	resp, err = client.Do(req)
@@ -354,7 +354,7 @@ func TestOrgMemberEndpoints(t *testing.T) {
 	require.Equal(t, http.StatusCreated, resp.StatusCode)
 
 	// List org members
-	req, _ = http.NewRequest("GET", fmt.Sprintf("%s/v1/organizations/%s/members", server.URL, oid), nil)
+	req, _ = http.NewRequest("GET", fmt.Sprintf("%s/api/v1/organizations/%s/members", server.URL, oid), nil)
 	req.AddCookie(cookie)
 	resp, err = client.Do(req)
 	require.NoError(t, err)
@@ -367,7 +367,7 @@ func TestOrgMemberEndpoints(t *testing.T) {
 	require.GreaterOrEqual(t, len(members), 2)
 
 	// Verify GetUserOrganizations for member
-	req, _ = http.NewRequest("GET", fmt.Sprintf("%s/v1/users/%s/organizations", server.URL, member.Uid.String()), nil)
+	req, _ = http.NewRequest("GET", fmt.Sprintf("%s/api/v1/users/%s/organizations", server.URL, member.Uid.String()), nil)
 	req.AddCookie(cookie)
 	resp, err = client.Do(req)
 	require.NoError(t, err)
@@ -440,7 +440,7 @@ func TestEventUpdateDeleteFlow(t *testing.T) {
 
 	// Update event
 	updBody := []byte(`{"location":"Updated Room","description":"Updated"}`)
-	req, _ = http.NewRequest("PUT", fmt.Sprintf("%s/v1/events/%s", server.URL, ev.EID.String()), bytes.NewBuffer(updBody))
+	req, _ = http.NewRequest("PUT", fmt.Sprintf("%s/api/v1/events/%s", server.URL, ev.EID.String()), bytes.NewBuffer(updBody))
 	req.AddCookie(cookie)
 	req.Header.Set("Content-Type", "application/json")
 	resp, err = client.Do(req)
@@ -453,7 +453,7 @@ func TestEventUpdateDeleteFlow(t *testing.T) {
 	assert.Equal(t, "Updated Room", *evUpd.Location)
 
 	// Unregister (will error if uid not provided) -> ensure delete works when provided
-	req, _ = http.NewRequest("DELETE", fmt.Sprintf("%s/v1/events/%s/register?uid=%s", server.URL, ev.EID.String(), user.Uid.String()), nil)
+	req, _ = http.NewRequest("DELETE", fmt.Sprintf("%s/api/v1/events/%s/register?uid=%s", server.URL, ev.EID.String(), user.Uid.String()), nil)
 	req.AddCookie(cookie)
 	resp, err = client.Do(req)
 	require.NoError(t, err)
@@ -464,7 +464,7 @@ func TestEventUpdateDeleteFlow(t *testing.T) {
 	}
 
 	// Delete event
-	req, _ = http.NewRequest("DELETE", fmt.Sprintf("%s/v1/events/%s", server.URL, ev.EID.String()), nil)
+	req, _ = http.NewRequest("DELETE", fmt.Sprintf("%s/api/v1/events/%s", server.URL, ev.EID.String()), nil)
 	req.AddCookie(cookie)
 	resp, err = client.Do(req)
 	require.NoError(t, err)
@@ -509,7 +509,7 @@ func TestOrganizationCRUD(t *testing.T) {
 	oid := orgResp["oid"].(string)
 
 	// Get organization
-	req, _ = http.NewRequest("GET", fmt.Sprintf("%s/v1/organizations/%s", server.URL, oid), nil)
+	req, _ = http.NewRequest("GET", fmt.Sprintf("%s/api/v1/organizations/%s", server.URL, oid), nil)
 	req.AddCookie(cookie)
 	resp, err = client.Do(req)
 	require.NoError(t, err)
@@ -518,7 +518,7 @@ func TestOrganizationCRUD(t *testing.T) {
 
 	// Update organization
 	upd := []byte(`{"name":"Crud Org Updated"}`)
-	req, _ = http.NewRequest("PUT", fmt.Sprintf("%s/v1/organizations/%s", server.URL, oid), bytes.NewBuffer(upd))
+	req, _ = http.NewRequest("PUT", fmt.Sprintf("%s/api/v1/organizations/%s", server.URL, oid), bytes.NewBuffer(upd))
 	req.AddCookie(cookie)
 	req.Header.Set("Content-Type", "application/json")
 	resp, err = client.Do(req)
@@ -546,7 +546,7 @@ func TestOrganizationCRUD(t *testing.T) {
 	member, err := q.CreateUser(ctx, database.CreateUserParams{FirstName: "ToRemove", LastName: "Member", Role: database.NullUserRole{UserRole: database.UserRoleStudent, Valid: true}})
 	require.NoError(t, err)
 	addBody := fmt.Sprintf(`{"uid":"%s","is_admin":false}`, member.Uid.String())
-	req, _ = http.NewRequest("POST", fmt.Sprintf("%s/v1/organizations/%s/members", server.URL, oid), bytes.NewBuffer([]byte(addBody)))
+	req, _ = http.NewRequest("POST", fmt.Sprintf("%s/api/v1/organizations/%s/members", server.URL, oid), bytes.NewBuffer([]byte(addBody)))
 	req.AddCookie(cookie)
 	req.Header.Set("Content-Type", "application/json")
 	resp, err = client.Do(req)
@@ -555,7 +555,7 @@ func TestOrganizationCRUD(t *testing.T) {
 	require.Equal(t, http.StatusCreated, resp.StatusCode)
 
 	// Remove member
-	req, _ = http.NewRequest("DELETE", fmt.Sprintf("%s/v1/organizations/%s/members/%s", server.URL, oid, member.Uid.String()), nil)
+	req, _ = http.NewRequest("DELETE", fmt.Sprintf("%s/api/v1/organizations/%s/members/%s", server.URL, oid, member.Uid.String()), nil)
 	req.AddCookie(cookie)
 	resp, err = client.Do(req)
 	require.NoError(t, err)
@@ -563,7 +563,7 @@ func TestOrganizationCRUD(t *testing.T) {
 	require.Equal(t, http.StatusNoContent, resp.StatusCode)
 
 	// List org events (should be empty)
-	req, _ = http.NewRequest("GET", fmt.Sprintf("%s/v1/organizations/%s/events", server.URL, oid), nil)
+	req, _ = http.NewRequest("GET", fmt.Sprintf("%s/api/v1/organizations/%s/events", server.URL, oid), nil)
 	req.AddCookie(cookie)
 	resp, err = client.Do(req)
 	require.NoError(t, err)
@@ -574,7 +574,7 @@ func TestOrganizationCRUD(t *testing.T) {
 	require.NoError(t, err)
 
 	// Delete org
-	req, _ = http.NewRequest("DELETE", fmt.Sprintf("%s/v1/organizations/%s", server.URL, oid), nil)
+	req, _ = http.NewRequest("DELETE", fmt.Sprintf("%s/api/v1/organizations/%s", server.URL, oid), nil)
 	req.AddCookie(cookie)
 	resp, err = client.Do(req)
 	require.NoError(t, err)
@@ -625,7 +625,7 @@ func TestAddUser(t *testing.T) {
 	cookie := &http.Cookie{Name: "capy_auth", Value: tokenString}
 
 	// Fetch user via API
-	req, _ := http.NewRequest("GET", fmt.Sprintf("%s/v1/users/%s", server.URL, createdUser.Uid.String()), nil)
+	req, _ := http.NewRequest("GET", fmt.Sprintf("%s/api/v1/users/%s", server.URL, createdUser.Uid.String()), nil)
 	req.AddCookie(cookie)
 	resp, err := client.Do(req)
 	require.NoError(t, err)
@@ -677,7 +677,7 @@ func TestAddDuplicateUser(t *testing.T) {
 	cookie := &http.Cookie{Name: "capy_auth", Value: tokenString}
 
 	// Fetch via API and verify UID matches
-	req, _ := http.NewRequest("GET", fmt.Sprintf("%s/v1/users/%s", server.URL, addedUser.Uid.String()), nil)
+	req, _ := http.NewRequest("GET", fmt.Sprintf("%s/api/v1/users/%s", server.URL, addedUser.Uid.String()), nil)
 	req.AddCookie(cookie)
 	resp, err := client.Do(req)
 	require.NoError(t, err)
