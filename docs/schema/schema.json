@@ -71699,8 +71699,8 @@
       "insert_into_table": null
     },
     {
-      "text": "\nSELECT token_id, token_hash, name, created_by, created_at, last_used_at, expires_at, is_active FROM bot_tokens WHERE token_hash = $1 AND is_active = true",
-      "name": "GetBotTokenByHash",
+      "text": "\nSELECT token_id, token_hash, name, created_by, created_at, last_used_at, expires_at, is_active FROM bot_tokens WHERE token_id = $1",
+      "name": "GetBotTokenByID",
       "cmd": ":one",
       "columns": [
         {
@@ -71916,7 +71916,7 @@
         {
           "number": 1,
           "column": {
-            "name": "token_hash",
+            "name": "token_id",
             "not_null": true,
             "is_array": false,
             "comment": "",
@@ -71933,11 +71933,11 @@
             "type": {
               "catalog": "",
               "schema": "",
-              "name": "text"
+              "name": "uuid"
             },
             "is_sqlc_slice": false,
             "embed_table": null,
-            "original_name": "token_hash",
+            "original_name": "token_id",
             "unsigned": false,
             "array_dims": 0
           }

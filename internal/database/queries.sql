@@ -134,8 +134,8 @@ ORDER BY e.event_time DESC;
 
 -- Bot Token Queries
 
--- name: GetBotTokenByHash :one
-SELECT * FROM bot_tokens WHERE token_hash = $1 AND is_active = true;
+-- name: GetBotTokenByID :one
+SELECT * FROM bot_tokens WHERE token_id = $1;
 
 -- name: CreateBotToken :one
 INSERT INTO bot_tokens (token_hash, name, created_by, expires_at)

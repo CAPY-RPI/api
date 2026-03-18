@@ -192,14 +192,14 @@ func (q *Queries) DeleteUser(ctx context.Context, uid uuid.UUID) error {
 	return err
 }
 
-const getBotTokenByHash = `-- name: GetBotTokenByHash :one
+const getBotTokenByID = `-- name: GetBotTokenByID :one
 
-SELECT token_id, token_hash, name, created_by, created_at, last_used_at, expires_at, is_active FROM bot_tokens WHERE token_hash = $1 AND is_active = true
+SELECT token_id, token_hash, name, created_by, created_at, last_used_at, expires_at, is_active FROM bot_tokens WHERE token_id = $1
 `
 
 // Bot Token Queries
-func (q *Queries) GetBotTokenByHash(ctx context.Context, tokenHash string) (BotToken, error) {
-	row := q.db.QueryRow(ctx, getBotTokenByHash, tokenHash)
+func (q *Queries) GetBotTokenByID(ctx context.Context, tokenID uuid.UUID) (BotToken, error) {
+	row := q.db.QueryRow(ctx, getBotTokenByID, tokenID)
 	var i BotToken
 	err := row.Scan(
 		&i.TokenID,

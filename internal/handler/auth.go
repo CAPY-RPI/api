@@ -45,6 +45,13 @@ type BotTokenResponse struct {
 	IsActive  bool       `json:"is_active"`
 }
 
+type BotMeResponse struct {
+	TokenID   uuid.UUID  `json:"token_id"`
+	Name      string     `json:"name"`
+	ExpiresAt *time.Time `json:"expires_at,omitempty"`
+	AuthType  string     `json:"auth_type"`
+}
+
 type CreateBotTokenRequest struct {
 	Name      string     `json:"name" validate:"required,min=1,max=100"`
 	ExpiresAt *time.Time `json:"expires_at,omitempty"`
@@ -313,7 +320,10 @@ func (h *Handler) RefreshToken(w http.ResponseWriter, r *http.Request) {
 // @Security     CookieAuth
 // @Router       /bot/tokens [get]
 func (h *Handler) ListBotTokens(w http.ResponseWriter, r *http.Request) {
-	// TODO: Check faculty role
+	if !h.requireFaculty(w, r) {
+		return
+	}
+
 	tokens, err := h.queries.ListBotTokens(r.Context())
 	if err != nil {
 		h.handleDBError(w, err)
@@ -336,7 +346,7 @@ func (h *Handler) ListBotTokens(w http.ResponseWriter, r *http.Request) {
 
 // CreateBotToken creates a new bot token
 // @Summary      Create bot token
-// @Description  Creates a new bot token (requires faculty role)
+// @Description  Creates a new bot token (requires faculty role). The raw token is returned only once and must be stored by the caller.
 // @Tags         bot
 // @Accept       json
 // @Produce      json
@@ -347,13 +357,10 @@ func (h *Handler) ListBotTokens(w http.ResponseWriter, r *http.Request) {
 // @Security     CookieAuth
 // @Router       /bot/tokens [post]
 func (h *Handler) CreateBotToken(w http.ResponseWriter, r *http.Request) {
-	claims, ok := middleware.GetUserClaims(r.Context())
+	claims, ok := h.requireFacultyClaims(w, r)
 	if !ok {
-		h.respondError(w, http.StatusUnauthorized, "Not authenticated")
 		return
 	}
-
-	// TODO: Check faculty role
 
 	var req CreateBotTokenRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
@@ -366,15 +373,13 @@ func (h *Handler) CreateBotToken(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Generate random token
-	rawToken, err := generateSecureToken(32)
+	secret, err := generateSecureToken(32)
 	if err != nil {
 		h.respondError(w, http.StatusInternalServerError, "Failed to generate token")
 		return
 	}
 
-	// Hash the token for storage
-	hashedToken, err := bcrypt.GenerateFromPassword([]byte(rawToken), bcrypt.DefaultCost)
+	hashedToken, err := bcrypt.GenerateFromPassword([]byte(secret), bcrypt.DefaultCost)
 	if err != nil {
 		h.respondError(w, http.StatusInternalServerError, "Failed to hash token")
 		return
@@ -392,6 +397,8 @@ func (h *Handler) CreateBotToken(w http.ResponseWriter, r *http.Request) {
 		h.handleDBError(w, err)
 		return
 	}
+
+	rawToken := formatBotToken(token.TokenID, secret)
 
 	h.respondJSON(w, http.StatusCreated, BotTokenResponse{
 		TokenID:   token.TokenID,
@@ -416,14 +423,16 @@ func (h *Handler) CreateBotToken(w http.ResponseWriter, r *http.Request) {
 // @Security     CookieAuth
 // @Router       /bot/tokens/{token_id} [delete]
 func (h *Handler) RevokeBotToken(w http.ResponseWriter, r *http.Request) {
+	if !h.requireFaculty(w, r) {
+		return
+	}
+
 	tokenIDStr := chi.URLParam(r, "token_id")
 	tokenID, err := uuid.Parse(tokenIDStr)
 	if err != nil {
 		h.respondError(w, http.StatusBadRequest, "Invalid token ID")
 		return
 	}
-
-	// TODO: Check faculty role
 
 	if err := h.queries.RevokeBotToken(r.Context(), tokenID); err != nil {
 		h.handleDBError(w, err)
@@ -435,19 +444,26 @@ func (h *Handler) RevokeBotToken(w http.ResponseWriter, r *http.Request) {
 
 // GetBotMe returns info about the current bot token
 // @Summary      Get bot info
-// @Description  Returns information about the current bot token
+// @Description  Returns information about the current bot token. Authenticate with X-Bot-Token: <token_id>.<secret>, for example: curl -H 'X-Bot-Token: <token>' http://localhost:8080/api/v1/bot/me
 // @Tags         bot
 // @Accept       json
 // @Produce      json
-// @Success      200   {object}  BotTokenResponse
+// @Success      200   {object}  BotMeResponse
 // @Failure      401   {object}  ErrorResponse
 // @Security     BotToken
 // @Router       /bot/me [get]
 func (h *Handler) GetBotMe(w http.ResponseWriter, r *http.Request) {
-	// Token info would be in context from M2M middleware
-	h.respondJSON(w, http.StatusOK, map[string]string{
-		"status": "authenticated",
-		"type":   "bot",
+	token, ok := middleware.GetBotToken(r.Context())
+	if !ok {
+		h.respondError(w, http.StatusUnauthorized, "Not authenticated")
+		return
+	}
+
+	h.respondJSON(w, http.StatusOK, BotMeResponse{
+		TokenID:   token.TokenID,
+		Name:      token.Name,
+		ExpiresAt: token.ExpiresAt,
+		AuthType:  middleware.GetAuthType(r.Context()),
 	})
 }
 
@@ -607,4 +623,28 @@ func generateSecureToken(length int) (string, error) {
 		return "", err
 	}
 	return hex.EncodeToString(bytes), nil
+}
+
+func formatBotToken(tokenID uuid.UUID, secret string) string {
+	return tokenID.String() + "." + secret
+}
+
+func (h *Handler) requireFaculty(w http.ResponseWriter, r *http.Request) bool {
+	_, ok := h.requireFacultyClaims(w, r)
+	return ok
+}
+
+func (h *Handler) requireFacultyClaims(w http.ResponseWriter, r *http.Request) (*middleware.UserClaims, bool) {
+	claims, ok := middleware.GetUserClaims(r.Context())
+	if !ok {
+		h.respondError(w, http.StatusUnauthorized, "Not authenticated")
+		return nil, false
+	}
+
+	if claims.Role != string(database.UserRoleFaculty) {
+		h.respondError(w, http.StatusForbidden, "Faculty role required")
+		return nil, false
+	}
+
+	return claims, true
 }

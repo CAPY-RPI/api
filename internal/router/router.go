@@ -10,6 +10,50 @@ import (
 	httpSwagger "github.com/swaggo/http-swagger/v2"
 )
 
+func mountProtectedRoutes(r chi.Router, h *handler.Handler, jwtSecret string) {
+	r.Group(func(r chi.Router) {
+		r.Use(middleware.Auth(jwtSecret))
+
+		r.Route("/users", func(r chi.Router) {
+			r.Get("/{uid}", h.GetUser)
+			r.Put("/{uid}", h.UpdateUser)
+			r.Delete("/{uid}", h.DeleteUser)
+			r.Get("/{uid}/organizations", h.GetUserOrganizations)
+			r.Get("/{uid}/events", h.GetUserEvents)
+		})
+
+		r.Route("/organizations", func(r chi.Router) {
+			r.Get("/", h.ListOrganizations)
+			r.Post("/", h.CreateOrganization)
+			r.Get("/{oid}", h.GetOrganization)
+			r.Put("/{oid}", h.UpdateOrganization)
+			r.Delete("/{oid}", h.DeleteOrganization)
+			r.Get("/{oid}/members", h.ListOrgMembers)
+			r.Post("/{oid}/members", h.AddOrgMember)
+			r.Delete("/{oid}/members/{uid}", h.RemoveOrgMember)
+			r.Get("/{oid}/events", h.ListOrgEvents)
+		})
+
+		r.Route("/events", func(r chi.Router) {
+			r.Get("/", h.ListEvents)
+			r.Post("/", h.CreateEvent)
+			r.Get("/org/{oid}", h.ListEventsByOrg)
+			r.Get("/{eid}", h.GetEvent)
+			r.Put("/{eid}", h.UpdateEvent)
+			r.Delete("/{eid}", h.DeleteEvent)
+			r.Get("/{eid}/registrations", h.ListEventRegistrations)
+			r.Post("/{eid}/register", h.RegisterForEvent)
+			r.Delete("/{eid}/register", h.UnregisterFromEvent)
+		})
+
+		r.Route("/bot/tokens", func(r chi.Router) {
+			r.Get("/", h.ListBotTokens)
+			r.Post("/", h.CreateBotToken)
+			r.Delete("/{token_id}", h.RevokeBotToken)
+		})
+	})
+}
+
 // New creates a new chi router with all routes configured
 func New(h *handler.Handler, queries database.Querier, jwtSecret string, allowedOrigins []string) chi.Router {
 	r := chi.NewRouter()
@@ -50,52 +94,7 @@ func New(h *handler.Handler, queries database.Querier, jwtSecret string, allowed
 				})
 			})
 
-			// Protected routes - require human authentication
-			r.Group(func(r chi.Router) {
-				r.Use(middleware.Auth(jwtSecret))
-
-				// Users
-				r.Route("/users", func(r chi.Router) {
-					r.Get("/{uid}", h.GetUser)
-					r.Put("/{uid}", h.UpdateUser)
-					r.Delete("/{uid}", h.DeleteUser)
-					r.Get("/{uid}/organizations", h.GetUserOrganizations)
-					r.Get("/{uid}/events", h.GetUserEvents)
-				})
-
-				// Organizations
-				r.Route("/organizations", func(r chi.Router) {
-					r.Get("/", h.ListOrganizations)
-					r.Post("/", h.CreateOrganization)
-					r.Get("/{oid}", h.GetOrganization)
-					r.Put("/{oid}", h.UpdateOrganization)
-					r.Delete("/{oid}", h.DeleteOrganization)
-					r.Get("/{oid}/members", h.ListOrgMembers)
-					r.Post("/{oid}/members", h.AddOrgMember)
-					r.Delete("/{oid}/members/{uid}", h.RemoveOrgMember)
-					r.Get("/{oid}/events", h.ListOrgEvents)
-				})
-
-				// Events
-				r.Route("/events", func(r chi.Router) {
-					r.Get("/", h.ListEvents)
-					r.Post("/", h.CreateEvent)
-					r.Get("/org/{oid}", h.ListEventsByOrg)
-					r.Get("/{eid}", h.GetEvent)
-					r.Put("/{eid}", h.UpdateEvent)
-					r.Delete("/{eid}", h.DeleteEvent)
-					r.Get("/{eid}/registrations", h.ListEventRegistrations)
-					r.Post("/{eid}/register", h.RegisterForEvent)
-					r.Delete("/{eid}/register", h.UnregisterFromEvent)
-				})
-
-				// Bot token management (human auth only)
-				r.Route("/bot/tokens", func(r chi.Router) {
-					r.Get("/", h.ListBotTokens)
-					r.Post("/", h.CreateBotToken)
-					r.Delete("/{token_id}", h.RevokeBotToken)
-				})
-			})
+			mountProtectedRoutes(r, h, jwtSecret)
 
 			// Bot routes (M2M auth)
 			r.Group(func(r chi.Router) {
@@ -132,6 +131,10 @@ func New(h *handler.Handler, queries database.Querier, jwtSecret string, allowed
 				})
 			})
 		})
+	})
+
+	r.Route("/v1", func(r chi.Router) {
+		mountProtectedRoutes(r, h, jwtSecret)
 	})
 
 	return r
