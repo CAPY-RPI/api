@@ -113,7 +113,7 @@ func BenchmarkGetUser(b *testing.B) {
 	b.ResetTimer()
 	b.ReportAllocs()
 	for i := 0; i < b.N; i++ {
-		req, _ := http.NewRequest("GET", benchServer.URL+"/v1/users/"+benchUserID, nil)
+		req, _ := http.NewRequest("GET", benchServer.URL+"/api/v1/users/"+benchUserID, nil)
 		req.AddCookie(&http.Cookie{Name: "capy_auth", Value: benchJWTToken})
 		resp, err := benchClient.Do(req)
 		if err != nil {
@@ -130,7 +130,7 @@ func BenchmarkListOrganizations(b *testing.B) {
 	b.ResetTimer()
 	b.ReportAllocs()
 	for i := 0; i < b.N; i++ {
-		req, _ := http.NewRequest("GET", benchServer.URL+"/v1/organizations", nil)
+		req, _ := http.NewRequest("GET", benchServer.URL+"/api/v1/organizations", nil)
 		req.AddCookie(&http.Cookie{Name: "capy_auth", Value: benchJWTToken})
 		resp, err := benchClient.Do(req)
 		if err != nil {
@@ -152,7 +152,7 @@ func BenchmarkCreateOrganization(b *testing.B) {
 			"slug": fmt.Sprintf("bench-org-%d", i),
 		}
 		jsonBody, _ := json.Marshal(body)
-		req, _ := http.NewRequest("POST", benchServer.URL+"/v1/organizations", bytes.NewBuffer(jsonBody))
+		req, _ := http.NewRequest("POST", benchServer.URL+"/api/v1/organizations", bytes.NewBuffer(jsonBody))
 		req.AddCookie(&http.Cookie{Name: "capy_auth", Value: benchJWTToken})
 		req.Header.Set("Content-Type", "application/json")
 		resp, err := benchClient.Do(req)
@@ -170,7 +170,7 @@ func BenchmarkGetOrganization(b *testing.B) {
 	b.ResetTimer()
 	b.ReportAllocs()
 	for i := 0; i < b.N; i++ {
-		req, _ := http.NewRequest("GET", benchServer.URL+"/v1/organizations/"+benchOrgID, nil)
+		req, _ := http.NewRequest("GET", benchServer.URL+"/api/v1/organizations/"+benchOrgID, nil)
 		req.AddCookie(&http.Cookie{Name: "capy_auth", Value: benchJWTToken})
 		resp, err := benchClient.Do(req)
 		if err != nil {
@@ -187,7 +187,7 @@ func BenchmarkListEvents(b *testing.B) {
 	b.ResetTimer()
 	b.ReportAllocs()
 	for i := 0; i < b.N; i++ {
-		req, _ := http.NewRequest("GET", benchServer.URL+"/v1/events", nil)
+		req, _ := http.NewRequest("GET", benchServer.URL+"/api/v1/events", nil)
 		req.AddCookie(&http.Cookie{Name: "capy_auth", Value: benchJWTToken})
 		resp, err := benchClient.Do(req)
 		if err != nil {
@@ -210,7 +210,7 @@ func BenchmarkCreateEvent(b *testing.B) {
 			"org_id":      benchOrgID,
 		}
 		jsonBody, _ := json.Marshal(body)
-		req, _ := http.NewRequest("POST", benchServer.URL+"/v1/events", bytes.NewBuffer(jsonBody))
+		req, _ := http.NewRequest("POST", benchServer.URL+"/api/v1/events", bytes.NewBuffer(jsonBody))
 		req.AddCookie(&http.Cookie{Name: "capy_auth", Value: benchJWTToken})
 		req.Header.Set("Content-Type", "application/json")
 		resp, err := benchClient.Do(req)
@@ -228,7 +228,7 @@ func BenchmarkGetEvent(b *testing.B) {
 	b.ResetTimer()
 	b.ReportAllocs()
 	for i := 0; i < b.N; i++ {
-		req, _ := http.NewRequest("GET", benchServer.URL+"/v1/events/"+benchEventID, nil)
+		req, _ := http.NewRequest("GET", benchServer.URL+"/api/v1/events/"+benchEventID, nil)
 		req.AddCookie(&http.Cookie{Name: "capy_auth", Value: benchJWTToken})
 		resp, err := benchClient.Do(req)
 		if err != nil {
