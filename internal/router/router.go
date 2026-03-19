@@ -20,7 +20,7 @@ func New(h *handler.Handler, queries database.Querier, jwtSecret string, allowed
 	}
 	r.Use(chimiddleware.Recoverer)
 	r.Use(chimiddleware.RequestID)
-	r.Use(middleware.CORS(allowedOrigins))
+	r.Use(middleware.CORS(allowedOrigins, h.Config.Env == "development"))
 
 	// API routes
 	r.Route("/api", func(r chi.Router) {

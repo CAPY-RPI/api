@@ -17,6 +17,7 @@ func TestCORS(t *testing.T) {
 		origin         string
 		method         string
 		setupOrigins   []string
+		isDev          bool
 		expectedOrigin string
 		expectedCreds  string
 	}{
@@ -25,6 +26,7 @@ func TestCORS(t *testing.T) {
 			origin:         "https://app.example.com",
 			method:         "GET",
 			setupOrigins:   allowedOrigins,
+			isDev:          false,
 			expectedOrigin: "https://app.example.com",
 			expectedCreds:  "true",
 		},
@@ -33,6 +35,7 @@ func TestCORS(t *testing.T) {
 			origin:         "https://evil.com",
 			method:         "GET",
 			setupOrigins:   allowedOrigins,
+			isDev:          false,
 			expectedOrigin: "",
 			expectedCreds:  "",
 		},
@@ -41,6 +44,7 @@ func TestCORS(t *testing.T) {
 			origin:         "",
 			method:         "GET",
 			setupOrigins:   allowedOrigins,
+			isDev:          false,
 			expectedOrigin: "",
 			expectedCreds:  "",
 		},
@@ -49,6 +53,7 @@ func TestCORS(t *testing.T) {
 			origin:         "https://app.example.com",
 			method:         "OPTIONS",
 			setupOrigins:   allowedOrigins,
+			isDev:          false,
 			expectedOrigin: "https://app.example.com",
 			expectedCreds:  "true",
 		},
@@ -57,14 +62,33 @@ func TestCORS(t *testing.T) {
 			origin:         "https://random.com",
 			method:         "GET",
 			setupOrigins:   []string{}, // Empty = allow all
+			isDev:          false,      // Though typically true in dev
 			expectedOrigin: "https://random.com",
 			expectedCreds:  "true",
+		},
+		{
+			name:           "AllowedLocalhostInDev",
+			origin:         "http://localhost:5173",
+			method:         "GET",
+			setupOrigins:   []string{"https://app.example.com"},
+			isDev:          true,
+			expectedOrigin: "http://localhost:5173",
+			expectedCreds:  "true",
+		},
+		{
+			name:           "BlockedLocalhostInProd",
+			origin:         "http://localhost:3000",
+			method:         "GET",
+			setupOrigins:   []string{"http://localhost:3000", "https://app.example.com"},
+			isDev:          false,
+			expectedOrigin: "",
+			expectedCreds:  "",
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			handler := middleware.CORS(tt.setupOrigins)(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			handler := middleware.CORS(tt.setupOrigins, tt.isDev)(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 				w.WriteHeader(http.StatusOK)
 			}))
 

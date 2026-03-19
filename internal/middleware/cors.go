@@ -1,26 +1,40 @@
 package middleware
 
-import "net/http"
+import (
+	"net/http"
+	"strings"
+)
 
 // CORS adds CORS headers for cross-origin requests
-func CORS(allowedOrigins []string) func(http.Handler) http.Handler {
+func CORS(allowedOrigins []string, isDev bool) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			origin := r.Header.Get("Origin")
 			allowed := false
 
-			// Allow if origin is in allowlist
-			for _, o := range allowedOrigins {
-				if o == origin {
-					allowed = true
-					break
+			// In development, allow any localhost or 127.0.0.1 origin
+			isLocal := strings.HasPrefix(origin, "http://localhost") || strings.HasPrefix(origin, "http://127.0.0.1")
+			if isDev && isLocal {
+				allowed = true
+			}
+
+			// In production, explicitly block localhost/127.0.0.1 even if in allowlist
+			if !isDev && isLocal {
+				allowed = false
+			} else if !allowed {
+				// Allow if origin is in allowlist
+				for _, o := range allowedOrigins {
+					if o == origin {
+						allowed = true
+						break
+					}
 				}
 			}
 
 			// If no allowed origins specified, allow all (development mode)
 			// But for credentials to work with *, strict browsers block it.
 			// So good practice: if development, echo back origin.
-			if len(allowedOrigins) == 0 {
+			if !allowed && len(allowedOrigins) == 0 {
 				allowed = true
 			}
 
