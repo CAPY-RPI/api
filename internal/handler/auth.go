@@ -641,7 +641,19 @@ func (h *Handler) requireFacultyClaims(w http.ResponseWriter, r *http.Request) (
 		return nil, false
 	}
 
-	if claims.Role != string(database.UserRoleFaculty) {
+	uid, err := uuid.Parse(claims.UserID)
+	if err != nil {
+		h.respondError(w, http.StatusUnauthorized, "Invalid user ID in token")
+		return nil, false
+	}
+
+	user, err := h.queries.GetUserByID(r.Context(), uid)
+	if err != nil {
+		h.handleDBError(w, err)
+		return nil, false
+	}
+
+	if !user.Role.Valid || user.Role.UserRole != database.UserRoleFaculty {
 		h.respondError(w, http.StatusForbidden, "Faculty role required")
 		return nil, false
 	}

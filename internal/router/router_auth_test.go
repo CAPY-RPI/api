@@ -31,6 +31,12 @@ func TestBotTokenLifecycle(t *testing.T) {
 	facultyID := uuid.New()
 	tokenID := uuid.New()
 	var storedHash string
+	facultyUser := database.User{
+		Uid:  facultyID,
+		Role: database.NullUserRole{UserRole: database.UserRoleFaculty, Valid: true},
+	}
+
+	mockQueries.On("GetUserByID", mock.Anything, facultyID).Return(facultyUser, nil).Times(3)
 
 	mockQueries.On("CreateBotToken", mock.Anything, mock.MatchedBy(func(arg database.CreateBotTokenParams) bool {
 		storedHash = arg.TokenHash
@@ -212,6 +218,12 @@ func TestBotTokenManagementRequiresFaculty(t *testing.T) {
 
 	userID := uuid.New()
 	tokenID := uuid.New()
+	studentUser := database.User{
+		Uid:  userID,
+		Role: database.NullUserRole{UserRole: database.UserRoleStudent, Valid: true},
+	}
+
+	mockQueries.On("GetUserByID", mock.Anything, userID).Return(studentUser, nil).Times(3)
 
 	createReq := httptest.NewRequest(http.MethodPost, "/api/v1/bot/tokens", bytes.NewBufferString(`{"name":"deploy-bot"}`))
 	createReq.Header.Set("Authorization", "Bearer "+makeJWT(t, userID, string(database.UserRoleStudent)))
@@ -230,6 +242,27 @@ func TestBotTokenManagementRequiresFaculty(t *testing.T) {
 	revokeRes := httptest.NewRecorder()
 	routerUnderTest.ServeHTTP(revokeRes, revokeReq)
 	assert.Equal(t, http.StatusForbidden, revokeRes.Code)
+}
+
+func TestBotTokenManagementUsesDatabaseRole(t *testing.T) {
+	mockQueries := mocks.NewQuerier(t)
+	routerUnderTest := newTestRouter(mockQueries)
+
+	facultyID := uuid.New()
+	facultyUser := database.User{
+		Uid:  facultyID,
+		Role: database.NullUserRole{UserRole: database.UserRoleFaculty, Valid: true},
+	}
+
+	mockQueries.On("GetUserByID", mock.Anything, facultyID).Return(facultyUser, nil).Once()
+	mockQueries.On("ListBotTokens", mock.Anything).Return([]database.ListBotTokensRow{}, nil).Once()
+
+	req := httptest.NewRequest(http.MethodGet, "/api/v1/bot/tokens", nil)
+	req.Header.Set("Authorization", "Bearer "+makeJWT(t, facultyID, string(database.UserRoleStudent)))
+	res := httptest.NewRecorder()
+	routerUnderTest.ServeHTTP(res, req)
+
+	assert.Equal(t, http.StatusOK, res.Code)
 }
 
 func newTestRouter(queries database.Querier) http.Handler {
