@@ -17,6 +17,9 @@ import (
 	"github.com/yeqown/go-qrcode/writer/standard"
 )
 
+const QR_FG_COLOR = "#067b76"
+const QR_BG_COLOR = "#fcfdfe"
+
 // CreateLink creates a new dynamic link
 // @Summary      Create link
 // @Description  Creates a new dynamic link for an organization. Requires org_admin role.
@@ -278,15 +281,21 @@ func (h *Handler) GetQRCode(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	qrc, err := qrcode.New(link.EndpointUrl)
+	qrc, err := qrcode.NewWith(link.EndpointUrl)
 	if err != nil {
 		slog.Error("failed to generate QR code", "error", err)
 		h.respondError(w, http.StatusInternalServerError, "Failed to generate QR code")
 		return
 	}
 
+	qrcOpts := []standard.ImageOption{
+		standard.WithBgColorRGBHex(QR_BG_COLOR),
+		standard.WithFgColorRGBHex(QR_FG_COLOR),
+		standard.WithCircleShape(),
+	}
+
 	w.Header().Set("Content-Type", "image/png")
-	wr := standard.NewWithWriter(nopWriteCloser{w})
+	wr := standard.NewWithWriter(nopWriteCloser{w}, qrcOpts...)
 	if err != nil {
 		slog.Error("failed to create standard writer for QR code", "error", err)
 		h.respondError(w, http.StatusInternalServerError, "Failed to create QR code writer")
