@@ -503,7 +503,21 @@ func (q *Queries) GetUserOrganizations(ctx context.Context, uid uuid.UUID) ([]Ge
 }
 
 const isEventAdmin = `-- name: IsEventAdmin :one
-SELECT is_admin FROM event_registrations WHERE uid = $1 AND eid = $2
+SELECT EXISTS (
+    SELECT 1
+    FROM event_registrations er
+    WHERE er.uid = $1
+      AND er.eid = $2
+      AND er.is_admin = TRUE
+)
+OR EXISTS (
+    SELECT 1
+    FROM event_hosting eh
+    JOIN org_members om ON om.oid = eh.oid
+    WHERE eh.eid = $2
+      AND om.uid = $1
+      AND om.is_admin = TRUE
+)
 `
 
 type IsEventAdminParams struct {

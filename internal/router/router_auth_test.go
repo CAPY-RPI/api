@@ -28,19 +28,19 @@ func TestBotTokenLifecycle(t *testing.T) {
 	mockQueries := mocks.NewQuerier(t)
 	routerUnderTest := newTestRouter(mockQueries)
 
-	facultyID := uuid.New()
+	devID := uuid.New()
 	tokenID := uuid.New()
 	var storedHash string
-	facultyUser := database.User{
-		Uid:  facultyID,
-		Role: database.NullUserRole{UserRole: database.UserRoleFaculty, Valid: true},
+	devUser := database.User{
+		Uid:  devID,
+		Role: database.NullUserRole{UserRole: database.UserRoleDev, Valid: true},
 	}
 
-	mockQueries.On("GetUserByID", mock.Anything, facultyID).Return(facultyUser, nil).Times(3)
+	mockQueries.On("GetUserByID", mock.Anything, devID).Return(devUser, nil).Times(3)
 
 	mockQueries.On("CreateBotToken", mock.Anything, mock.MatchedBy(func(arg database.CreateBotTokenParams) bool {
 		storedHash = arg.TokenHash
-		return arg.Name == "deploy-bot" && arg.CreatedBy == facultyID && arg.ExpiresAt.Valid
+		return arg.Name == "deploy-bot" && arg.CreatedBy == devID && arg.ExpiresAt.Valid
 	})).Return(database.BotToken{
 		TokenID:   tokenID,
 		Name:      "deploy-bot",
@@ -51,7 +51,7 @@ func TestBotTokenLifecycle(t *testing.T) {
 
 	createReqBody := []byte(`{"name":"deploy-bot","expires_at":"2030-01-02T03:04:05Z"}`)
 	createReq := httptest.NewRequest(http.MethodPost, "/api/v1/bot/tokens", bytes.NewReader(createReqBody))
-	createReq.Header.Set("Authorization", "Bearer "+makeJWT(t, facultyID, string(database.UserRoleFaculty)))
+	createReq.Header.Set("Authorization", "Bearer "+makeJWT(t, devID, string(database.UserRoleDev)))
 	createRes := httptest.NewRecorder()
 	routerUnderTest.ServeHTTP(createRes, createReq)
 	require.Equal(t, http.StatusCreated, createRes.Code)
@@ -72,7 +72,7 @@ func TestBotTokenLifecycle(t *testing.T) {
 	}, nil).Once()
 
 	listReq := httptest.NewRequest(http.MethodGet, "/api/v1/bot/tokens", nil)
-	listReq.Header.Set("Authorization", "Bearer "+makeJWT(t, facultyID, string(database.UserRoleFaculty)))
+	listReq.Header.Set("Authorization", "Bearer "+makeJWT(t, devID, string(database.UserRoleDev)))
 	listRes := httptest.NewRecorder()
 	routerUnderTest.ServeHTTP(listRes, listReq)
 	require.Equal(t, http.StatusOK, listRes.Code)
@@ -109,7 +109,7 @@ func TestBotTokenLifecycle(t *testing.T) {
 	mockQueries.On("RevokeBotToken", mock.Anything, tokenID).Return(nil).Once()
 
 	revokeReq := httptest.NewRequest(http.MethodDelete, "/api/v1/bot/tokens/"+tokenID.String(), nil)
-	revokeReq.Header.Set("Authorization", "Bearer "+makeJWT(t, facultyID, string(database.UserRoleFaculty)))
+	revokeReq.Header.Set("Authorization", "Bearer "+makeJWT(t, devID, string(database.UserRoleDev)))
 	revokeRes := httptest.NewRecorder()
 	routerUnderTest.ServeHTTP(revokeRes, revokeReq)
 	require.Equal(t, http.StatusNoContent, revokeRes.Code)
@@ -204,7 +204,7 @@ func TestBotRouteAuthBoundaries(t *testing.T) {
 		routerUnderTest := newTestRouter(mockQueries)
 
 		req := httptest.NewRequest(http.MethodGet, "/api/v1/bot/me", nil)
-		req.Header.Set("Authorization", "Bearer "+makeJWT(t, uuid.New(), string(database.UserRoleFaculty)))
+		req.Header.Set("Authorization", "Bearer "+makeJWT(t, uuid.New(), string(database.UserRoleDev)))
 		res := httptest.NewRecorder()
 		routerUnderTest.ServeHTTP(res, req)
 
@@ -212,7 +212,7 @@ func TestBotRouteAuthBoundaries(t *testing.T) {
 	})
 }
 
-func TestBotTokenManagementRequiresFaculty(t *testing.T) {
+func TestBotTokenManagementRequiresDev(t *testing.T) {
 	mockQueries := mocks.NewQuerier(t)
 	routerUnderTest := newTestRouter(mockQueries)
 
@@ -248,17 +248,17 @@ func TestBotTokenManagementUsesDatabaseRole(t *testing.T) {
 	mockQueries := mocks.NewQuerier(t)
 	routerUnderTest := newTestRouter(mockQueries)
 
-	facultyID := uuid.New()
-	facultyUser := database.User{
-		Uid:  facultyID,
-		Role: database.NullUserRole{UserRole: database.UserRoleFaculty, Valid: true},
+	devID := uuid.New()
+	devUser := database.User{
+		Uid:  devID,
+		Role: database.NullUserRole{UserRole: database.UserRoleDev, Valid: true},
 	}
 
-	mockQueries.On("GetUserByID", mock.Anything, facultyID).Return(facultyUser, nil).Once()
+	mockQueries.On("GetUserByID", mock.Anything, devID).Return(devUser, nil).Once()
 	mockQueries.On("ListBotTokens", mock.Anything).Return([]database.ListBotTokensRow{}, nil).Once()
 
 	req := httptest.NewRequest(http.MethodGet, "/api/v1/bot/tokens", nil)
-	req.Header.Set("Authorization", "Bearer "+makeJWT(t, facultyID, string(database.UserRoleStudent)))
+	req.Header.Set("Authorization", "Bearer "+makeJWT(t, devID, string(database.UserRoleStudent)))
 	res := httptest.NewRecorder()
 	routerUnderTest.ServeHTTP(res, req)
 
@@ -283,7 +283,6 @@ func makeJWT(t *testing.T, userID uuid.UUID, role string) string {
 
 	claims := middleware.UserClaims{
 		UserID: userID.String(),
-		Role:   role,
 		RegisteredClaims: jwt.RegisteredClaims{
 			ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Hour)),
 		},

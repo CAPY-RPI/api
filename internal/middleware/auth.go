@@ -19,7 +19,6 @@ const (
 type UserClaims struct {
 	UserID string `json:"uid"`
 	Email  string `json:"email"`
-	Role   string `json:"role"`
 	jwt.RegisteredClaims
 }
 

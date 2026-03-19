@@ -6,6 +6,7 @@ import (
 
 	"github.com/capyrpi/api/internal/database"
 	"github.com/capyrpi/api/internal/dto"
+	"github.com/capyrpi/api/internal/middleware"
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgtype"
@@ -63,6 +64,10 @@ func (h *Handler) CreateEvent(w http.ResponseWriter, r *http.Request) {
 
 	if req.OrgID == uuid.Nil {
 		h.respondError(w, http.StatusBadRequest, "org_id is required")
+		return
+	}
+
+	if _, ok := h.requireOrgAdmin(w, r, req.OrgID); !ok {
 		return
 	}
 
@@ -138,6 +143,10 @@ func (h *Handler) UpdateEvent(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if _, ok := h.requireEventAdmin(w, r, eid); !ok {
+		return
+	}
+
 	var req dto.UpdateEventRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		h.respondError(w, http.StatusBadRequest, "Invalid request body")
@@ -175,6 +184,10 @@ func (h *Handler) DeleteEvent(w http.ResponseWriter, r *http.Request) {
 	eid, err := uuid.Parse(eidStr)
 	if err != nil {
 		h.respondError(w, http.StatusBadRequest, "Invalid event ID")
+		return
+	}
+
+	if _, ok := h.requireEventAdmin(w, r, eid); !ok {
 		return
 	}
 
@@ -254,14 +267,34 @@ func (h *Handler) RegisterForEvent(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// TODO: Get user ID from context if not provided (for human auth)
-	if req.UID == nil {
-		h.respondError(w, http.StatusBadRequest, "uid is required")
-		return
+	var targetUID uuid.UUID
+	switch middleware.GetAuthType(r.Context()) {
+	case "bot":
+		if req.UID == nil {
+			h.respondError(w, http.StatusBadRequest, "uid is required")
+			return
+		}
+		targetUID = *req.UID
+	default:
+		authenticatedUID, _, ok := h.requireAuthenticatedUser(w, r)
+		if !ok {
+			return
+		}
+		if req.UID == nil {
+			h.respondError(w, http.StatusBadRequest, "uid is required")
+			return
+		}
+
+		targetUID = *req.UID
+		if targetUID != authenticatedUID {
+			if _, ok := h.requireEventAdmin(w, r, eid); !ok {
+				return
+			}
+		}
 	}
 
 	if err := h.queries.RegisterForEvent(r.Context(), database.RegisterForEventParams{
-		Uid:         *req.UID,
+		Uid:         targetUID,
 		Eid:         eid,
 		IsAttending: pgtype.Bool{Bool: req.IsAttending, Valid: true},
 	}); err != nil {
@@ -293,18 +326,40 @@ func (h *Handler) UnregisterFromEvent(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Get UID from query param or context
-	uidStr := r.URL.Query().Get("uid")
-	if uidStr == "" {
-		// TODO: Get from auth context
-		h.respondError(w, http.StatusBadRequest, "uid is required")
-		return
-	}
+	var uid uuid.UUID
+	switch middleware.GetAuthType(r.Context()) {
+	case "bot":
+		uidStr := r.URL.Query().Get("uid")
+		if uidStr == "" {
+			h.respondError(w, http.StatusBadRequest, "uid is required")
+			return
+		}
 
-	uid, err := uuid.Parse(uidStr)
-	if err != nil {
-		h.respondError(w, http.StatusBadRequest, "Invalid user ID")
-		return
+		uid, err = uuid.Parse(uidStr)
+		if err != nil {
+			h.respondError(w, http.StatusBadRequest, "Invalid user ID")
+			return
+		}
+	default:
+		authenticatedUID, _, ok := h.requireAuthenticatedUser(w, r)
+		if !ok {
+			return
+		}
+
+		uid = authenticatedUID
+		if uidStr := r.URL.Query().Get("uid"); uidStr != "" {
+			targetUID, err := uuid.Parse(uidStr)
+			if err != nil {
+				h.respondError(w, http.StatusBadRequest, "Invalid user ID")
+				return
+			}
+			if targetUID != authenticatedUID {
+				if _, ok := h.requireEventAdmin(w, r, eid); !ok {
+					return
+				}
+			}
+			uid = targetUID
+		}
 	}
 
 	if err := h.queries.UnregisterFromEvent(r.Context(), database.UnregisterFromEventParams{

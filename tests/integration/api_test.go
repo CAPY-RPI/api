@@ -711,10 +711,10 @@ func TestBotRoutes(t *testing.T) {
 	client := server.Client()
 
 	ctx := context.Background()
-	faculty, err := q.CreateUser(ctx, database.CreateUserParams{
+	devUser, err := q.CreateUser(ctx, database.CreateUserParams{
 		FirstName: "Bot",
 		LastName:  "Admin",
-		Role:      database.NullUserRole{UserRole: database.UserRoleFaculty, Valid: true},
+		Role:      database.NullUserRole{UserRole: database.UserRoleDev, Valid: true},
 	})
 	require.NoError(t, err)
 
@@ -725,7 +725,7 @@ func TestBotRoutes(t *testing.T) {
 	})
 	require.NoError(t, err)
 
-	botToken := createIntegrationBotToken(t, client, server.URL, cfg.JWT.Secret, faculty.Uid)
+	botToken := createIntegrationBotToken(t, client, server.URL, cfg.JWT.Secret, devUser.Uid)
 
 	meReq, _ := http.NewRequest(http.MethodGet, server.URL+"/api/v1/bot/me", nil)
 	meReq.Header.Set("X-Bot-Token", botToken)
@@ -947,12 +947,11 @@ func TestBotRoutes(t *testing.T) {
 	require.Equal(t, http.StatusNoContent, deleteOrgResp.StatusCode)
 }
 
-func createIntegrationBotToken(t *testing.T, client *http.Client, serverURL, jwtSecret string, facultyID uuid.UUID) string {
+func createIntegrationBotToken(t *testing.T, client *http.Client, serverURL, jwtSecret string, devUserID uuid.UUID) string {
 	t.Helper()
 
 	claims := middleware.UserClaims{
-		UserID: facultyID.String(),
-		Role:   string(database.UserRoleFaculty),
+		UserID: devUserID.String(),
 		RegisteredClaims: jwt.RegisteredClaims{
 			ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Hour)),
 		},

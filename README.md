@@ -124,16 +124,34 @@ make test-all
 ## Development Scripts
 Helper scripts are located in the `scripts/` directory.
 
-### Create Development User
-Seeds a user into the DB and generates a valid JWT for testing.
+### Create User
+Seeds or updates a user in the database and prints a JWT for that user. `--email` is required; the other fields have defaults.
 ```bash
-go run scripts/create_dev_user/main.go
+go run scripts/create_user/main.go --email dev@example.com --role dev
 ```
 
-### Generate Token
-Manually generates a JWT for an existing user (by email).
+### Run DB-Connected Scripts Without Go in the API Image
+If you are running the API and Postgres with Docker Compose, the API container does not include the Go toolchain. To run local Go scripts that need database access, start a one-off Go container on the same Compose network and mount the repository into it.
+
+Current local network:
 ```bash
-go run scripts/generate_token/main.go
+api_default
+```
+
+Example:
+```bash
+docker run --rm \
+  --network api_default \
+  -v "$PWD":/app \
+  -w /app \
+  --env-file .env \
+  golang:1.25 \
+  go run scripts/create_user/main.go --email dev@example.com --role dev
+```
+
+If your Compose project name is different, the network name will usually be `<project>_default`. You can check it with:
+```bash
+docker network ls
 ```
 
 ## Project Structure

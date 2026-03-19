@@ -60,6 +60,11 @@ func (h *Handler) UpdateUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	authenticatedUser, ok := h.requireSelfOrDev(w, r, uid)
+	if !ok {
+		return
+	}
+
 	var req dto.UpdateUserRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		h.respondError(w, http.StatusBadRequest, "Invalid request body")
@@ -68,6 +73,10 @@ func (h *Handler) UpdateUser(w http.ResponseWriter, r *http.Request) {
 
 	var role database.NullUserRole
 	if req.Role != nil {
+		if !authenticatedUser.Role.Valid || authenticatedUser.Role.UserRole != database.UserRoleDev {
+			h.respondError(w, http.StatusForbidden, "Only dev may update user roles")
+			return
+		}
 		role = database.NullUserRole{UserRole: database.UserRole(*req.Role), Valid: true}
 	}
 
@@ -106,6 +115,10 @@ func (h *Handler) DeleteUser(w http.ResponseWriter, r *http.Request) {
 	uid, err := uuid.Parse(uidStr)
 	if err != nil {
 		h.respondError(w, http.StatusBadRequest, "Invalid user ID")
+		return
+	}
+
+	if _, ok := h.requireSelfOrDev(w, r, uid); !ok {
 		return
 	}
 

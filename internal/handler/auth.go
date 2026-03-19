@@ -311,7 +311,7 @@ func (h *Handler) RefreshToken(w http.ResponseWriter, r *http.Request) {
 
 // ListBotTokens lists all bot tokens
 // @Summary      List bot tokens
-// @Description  Returns all bot tokens (requires faculty role)
+// @Description  Returns all bot tokens (requires dev role)
 // @Tags         bot
 // @Accept       json
 // @Produce      json
@@ -320,7 +320,7 @@ func (h *Handler) RefreshToken(w http.ResponseWriter, r *http.Request) {
 // @Security     CookieAuth
 // @Router       /bot/tokens [get]
 func (h *Handler) ListBotTokens(w http.ResponseWriter, r *http.Request) {
-	if !h.requireFaculty(w, r) {
+	if !h.requireDev(w, r) {
 		return
 	}
 
@@ -346,7 +346,7 @@ func (h *Handler) ListBotTokens(w http.ResponseWriter, r *http.Request) {
 
 // CreateBotToken creates a new bot token
 // @Summary      Create bot token
-// @Description  Creates a new bot token (requires faculty role). The raw token is returned only once and must be stored by the caller.
+// @Description  Creates a new bot token (requires dev role). The raw token is returned only once and must be stored by the caller.
 // @Tags         bot
 // @Accept       json
 // @Produce      json
@@ -357,7 +357,7 @@ func (h *Handler) ListBotTokens(w http.ResponseWriter, r *http.Request) {
 // @Security     CookieAuth
 // @Router       /bot/tokens [post]
 func (h *Handler) CreateBotToken(w http.ResponseWriter, r *http.Request) {
-	claims, ok := h.requireFacultyClaims(w, r)
+	claims, ok := h.requireDevClaims(w, r)
 	if !ok {
 		return
 	}
@@ -412,7 +412,7 @@ func (h *Handler) CreateBotToken(w http.ResponseWriter, r *http.Request) {
 
 // RevokeBotToken revokes a bot token
 // @Summary      Revoke bot token
-// @Description  Revokes a bot token (requires faculty role)
+// @Description  Revokes a bot token (requires dev role)
 // @Tags         bot
 // @Accept       json
 // @Produce      json
@@ -423,7 +423,7 @@ func (h *Handler) CreateBotToken(w http.ResponseWriter, r *http.Request) {
 // @Security     CookieAuth
 // @Router       /bot/tokens/{token_id} [delete]
 func (h *Handler) RevokeBotToken(w http.ResponseWriter, r *http.Request) {
-	if !h.requireFaculty(w, r) {
+	if !h.requireDev(w, r) {
 		return
 	}
 
@@ -475,7 +475,6 @@ func (h *Handler) generateJWT(user database.User) (string, error) {
 	claims := &middleware.UserClaims{
 		UserID: user.Uid.String(),
 		Email:  getEmail(user),
-		Role:   string(user.Role.UserRole),
 		RegisteredClaims: jwt.RegisteredClaims{
 			ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Duration(h.Config.JWT.ExpiryHours) * time.Hour)),
 			IssuedAt:  jwt.NewNumericDate(time.Now()),
@@ -585,7 +584,8 @@ func (h *Handler) verifyStateCookie(w http.ResponseWriter, r *http.Request, stat
 }
 
 func (h *Handler) upsertUser(ctx context.Context, email, firstName, lastName string) (database.User, error) {
-	pgEmail := toPgTextFromString(email)
+	normalizedEmail := normalizeEmail(email)
+	pgEmail := toPgTextFromString(normalizedEmail)
 
 	// Check if user exists
 	user, err := h.queries.GetUserByEmail(ctx, pgEmail)
@@ -603,7 +603,7 @@ func (h *Handler) upsertUser(ctx context.Context, email, firstName, lastName str
 		LastName:      lastName,
 		PersonalEmail: pgEmail, // Default to personal email for oauth
 		SchoolEmail:   pgtype.Text{Valid: false},
-		Role:          database.NullUserRole{UserRole: database.UserRoleStudent, Valid: true}, // Default role
+		Role:          database.NullUserRole{UserRole: database.UserRoleStudent, Valid: true},
 	})
 }
 
@@ -627,36 +627,4 @@ func generateSecureToken(length int) (string, error) {
 
 func formatBotToken(tokenID uuid.UUID, secret string) string {
 	return tokenID.String() + "." + secret
-}
-
-func (h *Handler) requireFaculty(w http.ResponseWriter, r *http.Request) bool {
-	_, ok := h.requireFacultyClaims(w, r)
-	return ok
-}
-
-func (h *Handler) requireFacultyClaims(w http.ResponseWriter, r *http.Request) (*middleware.UserClaims, bool) {
-	claims, ok := middleware.GetUserClaims(r.Context())
-	if !ok {
-		h.respondError(w, http.StatusUnauthorized, "Not authenticated")
-		return nil, false
-	}
-
-	uid, err := uuid.Parse(claims.UserID)
-	if err != nil {
-		h.respondError(w, http.StatusUnauthorized, "Invalid user ID in token")
-		return nil, false
-	}
-
-	user, err := h.queries.GetUserByID(r.Context(), uid)
-	if err != nil {
-		h.handleDBError(w, err)
-		return nil, false
-	}
-
-	if !user.Role.Valid || user.Role.UserRole != database.UserRoleFaculty {
-		h.respondError(w, http.StatusForbidden, "Faculty role required")
-		return nil, false
-	}
-
-	return claims, true
 }
