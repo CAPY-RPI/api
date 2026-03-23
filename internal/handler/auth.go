@@ -403,7 +403,7 @@ func (h *Handler) CreateBotToken(w http.ResponseWriter, r *http.Request) {
 	h.respondJSON(w, http.StatusCreated, BotTokenResponse{
 		TokenID:   token.TokenID,
 		Name:      token.Name,
-		Token:     formatBotToken(token.TokenID, rawToken), // Only returned on creation
+		Token:     rawToken, // Only returned on creation
 		CreatedAt: token.CreatedAt.Time,
 		ExpiresAt: fromPgTimestamp(token.ExpiresAt),
 		IsActive:  token.IsActive.Bool,
