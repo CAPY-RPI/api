@@ -130,6 +130,12 @@ Seeds or updates a user in the database and prints a JWT for that user. `--email
 go run scripts/create_user/main.go --email dev@example.com --role dev
 ```
 
+### Create Bot Token
+Creates a bot token in the database and prints the full `token_id.secret` value once for use with the `X-Bot-Token` header. `--name` and `--created-by` are required; `--hours 0` means the token does not expire.
+```bash
+go run scripts/create_bot_token/main.go --name my-bot --created-by 00000000-0000-0000-0000-000000000001 --hours 24
+```
+
 ### Run DB-Connected Scripts Without Go in the API Image
 If you are running the API and Postgres with Docker Compose, the API container does not include the Go toolchain. To run local Go scripts that need database access, start a one-off Go container on the same Compose network and mount the repository into it.
 
@@ -147,6 +153,17 @@ docker run --rm \
   --env-file .env \
   golang:1.25 \
   go run scripts/create_user/main.go --email dev@example.com --role dev
+```
+
+Bot token example:
+```bash
+docker run --rm \
+  --network api_default \
+  -v "$PWD":/app \
+  -w /app \
+  --env-file .env \
+  golang:1.25 \
+  go run scripts/create_bot_token/main.go --name my-bot --created-by 00000000-0000-0000-0000-000000000001 --hours 24
 ```
 
 If your Compose project name is different, the network name will usually be `<project>_default`. You can check it with:
