@@ -143,6 +143,10 @@ func (h *Handler) UpdateOrganization(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if _, ok := h.requireOrgAdmin(w, r, oid); !ok {
+		return
+	}
+
 	var req dto.UpdateOrganizationRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		h.respondError(w, http.StatusBadRequest, "Invalid request body")
@@ -178,6 +182,10 @@ func (h *Handler) DeleteOrganization(w http.ResponseWriter, r *http.Request) {
 	oid, err := uuid.Parse(oidStr)
 	if err != nil {
 		h.respondError(w, http.StatusBadRequest, "Invalid organization ID")
+		return
+	}
+
+	if _, ok := h.requireOrgAdmin(w, r, oid); !ok {
 		return
 	}
 
@@ -251,6 +259,10 @@ func (h *Handler) AddOrgMember(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if _, ok := h.requireOrgAdmin(w, r, oid); !ok {
+		return
+	}
+
 	var req dto.AddMemberRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		h.respondError(w, http.StatusBadRequest, "Invalid request body")
@@ -287,6 +299,10 @@ func (h *Handler) RemoveOrgMember(w http.ResponseWriter, r *http.Request) {
 	oid, err := uuid.Parse(oidStr)
 	if err != nil {
 		h.respondError(w, http.StatusBadRequest, "Invalid organization ID")
+		return
+	}
+
+	if _, ok := h.requireOrgAdmin(w, r, oid); !ok {
 		return
 	}
 

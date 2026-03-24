@@ -20,6 +20,7 @@ import (
 	"github.com/capyrpi/api/internal/router"
 	"github.com/capyrpi/api/internal/testutils"
 	"github.com/golang-jwt/jwt/v5"
+	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -695,4 +696,282 @@ func TestAddDuplicateUser(t *testing.T) {
 
 	schoolUser, err := q.GetUserByEmail(ctx, pgtype.Text{String: "testuser@rpi.edu", Valid: true})
 	assert.Equal(t, addedUser.Uid, schoolUser.Uid)
+}
+
+func TestBotRoutes(t *testing.T) {
+	pool := testutils.SetupTestDB(t)
+	defer pool.Close()
+
+	q := database.New(pool)
+	cfg := &config.Config{JWT: config.JWTConfig{Secret: "test-secret", ExpiryHours: 1}}
+	h := handler.New(q, cfg)
+	r := router.New(h, q, cfg.JWT.Secret, []string{})
+	server := httptest.NewServer(r)
+	defer server.Close()
+	client := server.Client()
+
+	ctx := context.Background()
+	devUser, err := q.CreateUser(ctx, database.CreateUserParams{
+		FirstName: "Bot",
+		LastName:  "Admin",
+		Role:      database.NullUserRole{UserRole: database.UserRoleDev, Valid: true},
+	})
+	require.NoError(t, err)
+
+	member, err := q.CreateUser(ctx, database.CreateUserParams{
+		FirstName: "Bot",
+		LastName:  "Member",
+		Role:      database.NullUserRole{UserRole: database.UserRoleStudent, Valid: true},
+	})
+	require.NoError(t, err)
+
+	botToken := createIntegrationBotToken(t, client, server.URL, cfg.JWT.Secret, devUser.Uid)
+
+	meReq, _ := http.NewRequest(http.MethodGet, server.URL+"/api/v1/bot/me", nil)
+	meReq.Header.Set("X-Bot-Token", botToken)
+	meResp, err := client.Do(meReq)
+	require.NoError(t, err)
+	defer meResp.Body.Close()
+	require.Equal(t, http.StatusOK, meResp.StatusCode)
+
+	var botMe handler.BotMeResponse
+	require.NoError(t, json.NewDecoder(meResp.Body).Decode(&botMe))
+	assert.Equal(t, "bot", botMe.AuthType)
+
+	orgCreateReq, _ := http.NewRequest(http.MethodPost, server.URL+"/api/v1/bot/organizations", bytes.NewBufferString(`{"name":"Bot Org"}`))
+	orgCreateReq.Header.Set("Content-Type", "application/json")
+	orgCreateReq.Header.Set("X-Bot-Token", botToken)
+	orgCreateResp, err := client.Do(orgCreateReq)
+	require.NoError(t, err)
+	defer orgCreateResp.Body.Close()
+	require.Equal(t, http.StatusCreated, orgCreateResp.StatusCode)
+
+	var createdOrg dto.OrganizationResponse
+	require.NoError(t, json.NewDecoder(orgCreateResp.Body).Decode(&createdOrg))
+	assert.Equal(t, "Bot Org", createdOrg.Name)
+
+	orgListReq, _ := http.NewRequest(http.MethodGet, server.URL+"/api/v1/bot/organizations", nil)
+	orgListReq.Header.Set("X-Bot-Token", botToken)
+	orgListResp, err := client.Do(orgListReq)
+	require.NoError(t, err)
+	defer orgListResp.Body.Close()
+	require.Equal(t, http.StatusOK, orgListResp.StatusCode)
+
+	var orgs []dto.OrganizationResponse
+	require.NoError(t, json.NewDecoder(orgListResp.Body).Decode(&orgs))
+	require.NotEmpty(t, orgs)
+
+	orgGetReq, _ := http.NewRequest(http.MethodGet, fmt.Sprintf("%s/api/v1/bot/organizations/%s", server.URL, createdOrg.OID), nil)
+	orgGetReq.Header.Set("X-Bot-Token", botToken)
+	orgGetResp, err := client.Do(orgGetReq)
+	require.NoError(t, err)
+	defer orgGetResp.Body.Close()
+	require.Equal(t, http.StatusOK, orgGetResp.StatusCode)
+
+	var fetchedOrg dto.OrganizationResponse
+	require.NoError(t, json.NewDecoder(orgGetResp.Body).Decode(&fetchedOrg))
+	assert.Equal(t, createdOrg.OID, fetchedOrg.OID)
+
+	orgUpdateReq, _ := http.NewRequest(http.MethodPut, fmt.Sprintf("%s/api/v1/bot/organizations/%s", server.URL, createdOrg.OID), bytes.NewBufferString(`{"name":"Bot Org Updated"}`))
+	orgUpdateReq.Header.Set("Content-Type", "application/json")
+	orgUpdateReq.Header.Set("X-Bot-Token", botToken)
+	orgUpdateResp, err := client.Do(orgUpdateReq)
+	require.NoError(t, err)
+	defer orgUpdateResp.Body.Close()
+	require.Equal(t, http.StatusOK, orgUpdateResp.StatusCode)
+
+	var updatedOrg dto.OrganizationResponse
+	require.NoError(t, json.NewDecoder(orgUpdateResp.Body).Decode(&updatedOrg))
+	assert.Equal(t, "Bot Org Updated", updatedOrg.Name)
+
+	memberListReq, _ := http.NewRequest(http.MethodGet, fmt.Sprintf("%s/api/v1/bot/organizations/%s/members", server.URL, createdOrg.OID), nil)
+	memberListReq.Header.Set("X-Bot-Token", botToken)
+	memberListResp, err := client.Do(memberListReq)
+	require.NoError(t, err)
+	defer memberListResp.Body.Close()
+	require.Equal(t, http.StatusOK, memberListResp.StatusCode)
+
+	var initialMembers []dto.OrgMemberResponse
+	require.NoError(t, json.NewDecoder(memberListResp.Body).Decode(&initialMembers))
+	assert.Len(t, initialMembers, 0)
+
+	addMemberReq, _ := http.NewRequest(http.MethodPost, fmt.Sprintf("%s/api/v1/bot/organizations/%s/members", server.URL, createdOrg.OID), bytes.NewBufferString(fmt.Sprintf(`{"uid":"%s","is_admin":false}`, member.Uid)))
+	addMemberReq.Header.Set("Content-Type", "application/json")
+	addMemberReq.Header.Set("X-Bot-Token", botToken)
+	addMemberResp, err := client.Do(addMemberReq)
+	require.NoError(t, err)
+	defer addMemberResp.Body.Close()
+	require.Equal(t, http.StatusCreated, addMemberResp.StatusCode)
+
+	memberListReq, _ = http.NewRequest(http.MethodGet, fmt.Sprintf("%s/api/v1/bot/organizations/%s/members", server.URL, createdOrg.OID), nil)
+	memberListReq.Header.Set("X-Bot-Token", botToken)
+	memberListResp, err = client.Do(memberListReq)
+	require.NoError(t, err)
+	defer memberListResp.Body.Close()
+	require.Equal(t, http.StatusOK, memberListResp.StatusCode)
+
+	var orgMembers []dto.OrgMemberResponse
+	require.NoError(t, json.NewDecoder(memberListResp.Body).Decode(&orgMembers))
+	require.Len(t, orgMembers, 1)
+	assert.Equal(t, member.Uid, orgMembers[0].UID)
+
+	userReq, _ := http.NewRequest(http.MethodGet, fmt.Sprintf("%s/api/v1/bot/users/%s", server.URL, member.Uid), nil)
+	userReq.Header.Set("X-Bot-Token", botToken)
+	userResp, err := client.Do(userReq)
+	require.NoError(t, err)
+	defer userResp.Body.Close()
+	require.Equal(t, http.StatusOK, userResp.StatusCode)
+
+	var user dto.UserResponse
+	require.NoError(t, json.NewDecoder(userResp.Body).Decode(&user))
+	assert.Equal(t, member.Uid, user.UID)
+
+	userOrgsReq, _ := http.NewRequest(http.MethodGet, fmt.Sprintf("%s/api/v1/bot/users/%s/organizations", server.URL, member.Uid), nil)
+	userOrgsReq.Header.Set("X-Bot-Token", botToken)
+	userOrgsResp, err := client.Do(userOrgsReq)
+	require.NoError(t, err)
+	defer userOrgsResp.Body.Close()
+	require.Equal(t, http.StatusOK, userOrgsResp.StatusCode)
+
+	var userOrgs []dto.OrganizationResponse
+	require.NoError(t, json.NewDecoder(userOrgsResp.Body).Decode(&userOrgs))
+	require.Len(t, userOrgs, 1)
+	assert.Equal(t, createdOrg.OID, userOrgs[0].OID)
+
+	eventTime := time.Now().Add(24 * time.Hour).UTC().Format(time.RFC3339)
+	eventCreateReq, _ := http.NewRequest(http.MethodPost, server.URL+"/api/v1/bot/events", bytes.NewBufferString(fmt.Sprintf(`{"org_id":"%s","location":"Bot Hall","description":"Bot Event","event_time":"%s"}`, createdOrg.OID, eventTime)))
+	eventCreateReq.Header.Set("Content-Type", "application/json")
+	eventCreateReq.Header.Set("X-Bot-Token", botToken)
+	eventCreateResp, err := client.Do(eventCreateReq)
+	require.NoError(t, err)
+	defer eventCreateResp.Body.Close()
+	require.Equal(t, http.StatusCreated, eventCreateResp.StatusCode)
+
+	var createdEvent dto.EventResponse
+	require.NoError(t, json.NewDecoder(eventCreateResp.Body).Decode(&createdEvent))
+	require.NotEqual(t, uuid.Nil, createdEvent.EID)
+
+	eventListReq, _ := http.NewRequest(http.MethodGet, server.URL+"/api/v1/bot/events", nil)
+	eventListReq.Header.Set("X-Bot-Token", botToken)
+	eventListResp, err := client.Do(eventListReq)
+	require.NoError(t, err)
+	defer eventListResp.Body.Close()
+	require.Equal(t, http.StatusOK, eventListResp.StatusCode)
+
+	var events []dto.EventResponse
+	require.NoError(t, json.NewDecoder(eventListResp.Body).Decode(&events))
+	require.NotEmpty(t, events)
+
+	eventGetReq, _ := http.NewRequest(http.MethodGet, fmt.Sprintf("%s/api/v1/bot/events/%s", server.URL, createdEvent.EID), nil)
+	eventGetReq.Header.Set("X-Bot-Token", botToken)
+	eventGetResp, err := client.Do(eventGetReq)
+	require.NoError(t, err)
+	defer eventGetResp.Body.Close()
+	require.Equal(t, http.StatusOK, eventGetResp.StatusCode)
+
+	var fetchedEvent dto.EventResponse
+	require.NoError(t, json.NewDecoder(eventGetResp.Body).Decode(&fetchedEvent))
+	assert.Equal(t, createdEvent.EID, fetchedEvent.EID)
+
+	eventUpdateReq, _ := http.NewRequest(http.MethodPut, fmt.Sprintf("%s/api/v1/bot/events/%s", server.URL, createdEvent.EID), bytes.NewBufferString(`{"location":"Bot Hall Updated","description":"Updated Bot Event"}`))
+	eventUpdateReq.Header.Set("Content-Type", "application/json")
+	eventUpdateReq.Header.Set("X-Bot-Token", botToken)
+	eventUpdateResp, err := client.Do(eventUpdateReq)
+	require.NoError(t, err)
+	defer eventUpdateResp.Body.Close()
+	require.Equal(t, http.StatusOK, eventUpdateResp.StatusCode)
+
+	var updatedEvent dto.EventResponse
+	require.NoError(t, json.NewDecoder(eventUpdateResp.Body).Decode(&updatedEvent))
+	require.NotNil(t, updatedEvent.Location)
+	assert.Equal(t, "Bot Hall Updated", *updatedEvent.Location)
+
+	registerReq, _ := http.NewRequest(http.MethodPost, fmt.Sprintf("%s/api/v1/bot/events/%s/register", server.URL, createdEvent.EID), bytes.NewBufferString(fmt.Sprintf(`{"uid":"%s","is_attending":true}`, member.Uid)))
+	registerReq.Header.Set("Content-Type", "application/json")
+	registerReq.Header.Set("X-Bot-Token", botToken)
+	registerResp, err := client.Do(registerReq)
+	require.NoError(t, err)
+	defer registerResp.Body.Close()
+	require.Equal(t, http.StatusCreated, registerResp.StatusCode)
+
+	regListReq, _ := http.NewRequest(http.MethodGet, fmt.Sprintf("%s/api/v1/bot/events/%s/registrations", server.URL, createdEvent.EID), nil)
+	regListReq.Header.Set("X-Bot-Token", botToken)
+	regListResp, err := client.Do(regListReq)
+	require.NoError(t, err)
+	defer regListResp.Body.Close()
+	require.Equal(t, http.StatusOK, regListResp.StatusCode)
+
+	var regs []dto.EventRegistrationResponse
+	require.NoError(t, json.NewDecoder(regListResp.Body).Decode(&regs))
+	require.Len(t, regs, 1)
+	assert.Equal(t, member.Uid, regs[0].UID)
+
+	userEventsReq, _ := http.NewRequest(http.MethodGet, fmt.Sprintf("%s/api/v1/bot/users/%s/events", server.URL, member.Uid), nil)
+	userEventsReq.Header.Set("X-Bot-Token", botToken)
+	userEventsResp, err := client.Do(userEventsReq)
+	require.NoError(t, err)
+	defer userEventsResp.Body.Close()
+	require.Equal(t, http.StatusOK, userEventsResp.StatusCode)
+
+	var userEvents []dto.EventResponse
+	require.NoError(t, json.NewDecoder(userEventsResp.Body).Decode(&userEvents))
+	require.Len(t, userEvents, 1)
+	assert.Equal(t, createdEvent.EID, userEvents[0].EID)
+
+	unregisterReq, _ := http.NewRequest(http.MethodDelete, fmt.Sprintf("%s/api/v1/bot/events/%s/register?uid=%s", server.URL, createdEvent.EID, member.Uid), nil)
+	unregisterReq.Header.Set("X-Bot-Token", botToken)
+	unregisterResp, err := client.Do(unregisterReq)
+	require.NoError(t, err)
+	defer unregisterResp.Body.Close()
+	require.Equal(t, http.StatusNoContent, unregisterResp.StatusCode)
+
+	removeMemberReq, _ := http.NewRequest(http.MethodDelete, fmt.Sprintf("%s/api/v1/bot/organizations/%s/members/%s", server.URL, createdOrg.OID, member.Uid), nil)
+	removeMemberReq.Header.Set("X-Bot-Token", botToken)
+	removeMemberResp, err := client.Do(removeMemberReq)
+	require.NoError(t, err)
+	defer removeMemberResp.Body.Close()
+	require.Equal(t, http.StatusNoContent, removeMemberResp.StatusCode)
+
+	deleteEventReq, _ := http.NewRequest(http.MethodDelete, fmt.Sprintf("%s/api/v1/bot/events/%s", server.URL, createdEvent.EID), nil)
+	deleteEventReq.Header.Set("X-Bot-Token", botToken)
+	deleteEventResp, err := client.Do(deleteEventReq)
+	require.NoError(t, err)
+	defer deleteEventResp.Body.Close()
+	require.Equal(t, http.StatusNoContent, deleteEventResp.StatusCode)
+
+	deleteOrgReq, _ := http.NewRequest(http.MethodDelete, fmt.Sprintf("%s/api/v1/bot/organizations/%s", server.URL, createdOrg.OID), nil)
+	deleteOrgReq.Header.Set("X-Bot-Token", botToken)
+	deleteOrgResp, err := client.Do(deleteOrgReq)
+	require.NoError(t, err)
+	defer deleteOrgResp.Body.Close()
+	require.Equal(t, http.StatusNoContent, deleteOrgResp.StatusCode)
+}
+
+func createIntegrationBotToken(t *testing.T, client *http.Client, serverURL, jwtSecret string, devUserID uuid.UUID) string {
+	t.Helper()
+
+	claims := middleware.UserClaims{
+		UserID: devUserID.String(),
+		RegisteredClaims: jwt.RegisteredClaims{
+			ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Hour)),
+		},
+	}
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+	tokenString, err := token.SignedString([]byte(jwtSecret))
+	require.NoError(t, err)
+
+	req, _ := http.NewRequest(http.MethodPost, serverURL+"/api/v1/bot/tokens", bytes.NewBufferString(`{"name":"integration-bot"}`))
+	req.Header.Set("Authorization", "Bearer "+tokenString)
+	req.Header.Set("Content-Type", "application/json")
+
+	resp, err := client.Do(req)
+	require.NoError(t, err)
+	defer resp.Body.Close()
+	require.Equal(t, http.StatusCreated, resp.StatusCode)
+
+	var botTokenResp handler.BotTokenResponse
+	require.NoError(t, json.NewDecoder(resp.Body).Decode(&botTokenResp))
+	require.NotEmpty(t, botTokenResp.Token)
+
+	return botTokenResp.Token
 }

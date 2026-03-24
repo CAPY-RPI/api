@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"log/slog"
 	"net/http"
+	"strings"
 
 	"github.com/capyrpi/api/internal/config"
 	"github.com/capyrpi/api/internal/database"
@@ -28,6 +29,10 @@ func New(queries database.Querier, cfg *config.Config) *Handler {
 		googleAuth:    oauth.NewGoogleProvider(cfg.OAuth.Google.ClientID, cfg.OAuth.Google.ClientSecret, cfg.OAuth.Google.RedirectURL),
 		microsoftAuth: oauth.NewMicrosoftProvider(cfg.OAuth.Microsoft.ClientID, cfg.OAuth.Microsoft.ClientSecret, cfg.OAuth.Microsoft.RedirectURL, cfg.OAuth.Microsoft.TenantID),
 	}
+}
+
+func normalizeEmail(email string) string {
+	return strings.ToLower(strings.TrimSpace(email))
 }
 
 // ErrorResponse represents an API error

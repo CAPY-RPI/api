@@ -1,0 +1,2 @@
+-- PostgreSQL enums do not support dropping a value directly.
+-- No-op down migration.

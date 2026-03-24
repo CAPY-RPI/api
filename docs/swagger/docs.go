@@ -218,7 +218,7 @@ const docTemplate = `{
                         "BotToken": []
                     }
                 ],
-                "description": "Returns information about the current bot token",
+                "description": "Returns information about the current bot token. Authenticate with X-Bot-Token: <token_id>.<secret>, for example: curl -H 'X-Bot-Token: <token>' http://localhost:8080/api/v1/bot/me",
                 "consumes": [
                     "application/json"
                 ],
@@ -233,7 +233,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/handler.BotTokenResponse"
+                            "$ref": "#/definitions/handler.BotMeResponse"
                         }
                     },
                     "401": {
@@ -287,7 +287,7 @@ const docTemplate = `{
                         "CookieAuth": []
                     }
                 ],
-                "description": "Creates a new bot token (requires faculty role)",
+                "description": "Creates a new bot token (requires faculty role). The raw token is returned only once and must be stored by the caller.",
                 "consumes": [
                     "application/json"
                 ],
@@ -1821,7 +1821,24 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "token": {
-                    "description": "Only on creation",
+                    "description": "Only on creation. Store it immediately; it is not returned again.",
+                    "type": "string"
+                },
+                "token_id": {
+                    "type": "string"
+                }
+            }
+        },
+        "handler.BotMeResponse": {
+            "type": "object",
+            "properties": {
+                "auth_type": {
+                    "type": "string"
+                },
+                "expires_at": {
+                    "type": "string"
+                },
+                "name": {
                     "type": "string"
                 },
                 "token_id": {

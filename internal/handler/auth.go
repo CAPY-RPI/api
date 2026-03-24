@@ -45,6 +45,13 @@ type BotTokenResponse struct {
 	IsActive  bool       `json:"is_active"`
 }
 
+type BotMeResponse struct {
+	TokenID   uuid.UUID  `json:"token_id"`
+	Name      string     `json:"name"`
+	ExpiresAt *time.Time `json:"expires_at,omitempty"`
+	AuthType  string     `json:"auth_type"`
+}
+
 type CreateBotTokenRequest struct {
 	Name      string     `json:"name" validate:"required,min=1,max=100"`
 	ExpiresAt *time.Time `json:"expires_at,omitempty"`
@@ -304,7 +311,7 @@ func (h *Handler) RefreshToken(w http.ResponseWriter, r *http.Request) {
 
 // ListBotTokens lists all bot tokens
 // @Summary      List bot tokens
-// @Description  Returns all bot tokens (requires faculty role)
+// @Description  Returns all bot tokens (requires dev role)
 // @Tags         bot
 // @Accept       json
 // @Produce      json
@@ -313,7 +320,10 @@ func (h *Handler) RefreshToken(w http.ResponseWriter, r *http.Request) {
 // @Security     CookieAuth
 // @Router       /bot/tokens [get]
 func (h *Handler) ListBotTokens(w http.ResponseWriter, r *http.Request) {
-	// TODO: Check faculty role
+	if !h.requireDev(w, r) {
+		return
+	}
+
 	tokens, err := h.queries.ListBotTokens(r.Context())
 	if err != nil {
 		h.handleDBError(w, err)
@@ -336,7 +346,7 @@ func (h *Handler) ListBotTokens(w http.ResponseWriter, r *http.Request) {
 
 // CreateBotToken creates a new bot token
 // @Summary      Create bot token
-// @Description  Creates a new bot token (requires faculty role)
+// @Description  Creates a new bot token (requires dev role). The raw token is returned only once and must be stored by the caller.
 // @Tags         bot
 // @Accept       json
 // @Produce      json
@@ -347,13 +357,10 @@ func (h *Handler) ListBotTokens(w http.ResponseWriter, r *http.Request) {
 // @Security     CookieAuth
 // @Router       /bot/tokens [post]
 func (h *Handler) CreateBotToken(w http.ResponseWriter, r *http.Request) {
-	claims, ok := middleware.GetUserClaims(r.Context())
+	claims, ok := h.requireDevClaims(w, r)
 	if !ok {
-		h.respondError(w, http.StatusUnauthorized, "Not authenticated")
 		return
 	}
-
-	// TODO: Check faculty role
 
 	var req CreateBotTokenRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
@@ -366,15 +373,13 @@ func (h *Handler) CreateBotToken(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Generate random token
-	rawToken, err := generateSecureToken(32)
+	secret, err := generateSecureToken(32)
 	if err != nil {
 		h.respondError(w, http.StatusInternalServerError, "Failed to generate token")
 		return
 	}
 
-	// Hash the token for storage
-	hashedToken, err := bcrypt.GenerateFromPassword([]byte(rawToken), bcrypt.DefaultCost)
+	hashedToken, err := bcrypt.GenerateFromPassword([]byte(secret), bcrypt.DefaultCost)
 	if err != nil {
 		h.respondError(w, http.StatusInternalServerError, "Failed to hash token")
 		return
@@ -393,10 +398,12 @@ func (h *Handler) CreateBotToken(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	rawToken := formatBotToken(token.TokenID, secret)
+
 	h.respondJSON(w, http.StatusCreated, BotTokenResponse{
 		TokenID:   token.TokenID,
 		Name:      token.Name,
-		Token:     rawToken, // Only returned on creation!
+		Token:     rawToken, // Only returned on creation
 		CreatedAt: token.CreatedAt.Time,
 		ExpiresAt: fromPgTimestamp(token.ExpiresAt),
 		IsActive:  token.IsActive.Bool,
@@ -405,7 +412,7 @@ func (h *Handler) CreateBotToken(w http.ResponseWriter, r *http.Request) {
 
 // RevokeBotToken revokes a bot token
 // @Summary      Revoke bot token
-// @Description  Revokes a bot token (requires faculty role)
+// @Description  Revokes a bot token (requires dev role)
 // @Tags         bot
 // @Accept       json
 // @Produce      json
@@ -416,14 +423,16 @@ func (h *Handler) CreateBotToken(w http.ResponseWriter, r *http.Request) {
 // @Security     CookieAuth
 // @Router       /bot/tokens/{token_id} [delete]
 func (h *Handler) RevokeBotToken(w http.ResponseWriter, r *http.Request) {
+	if !h.requireDev(w, r) {
+		return
+	}
+
 	tokenIDStr := chi.URLParam(r, "token_id")
 	tokenID, err := uuid.Parse(tokenIDStr)
 	if err != nil {
 		h.respondError(w, http.StatusBadRequest, "Invalid token ID")
 		return
 	}
-
-	// TODO: Check faculty role
 
 	if err := h.queries.RevokeBotToken(r.Context(), tokenID); err != nil {
 		h.handleDBError(w, err)
@@ -435,19 +444,26 @@ func (h *Handler) RevokeBotToken(w http.ResponseWriter, r *http.Request) {
 
 // GetBotMe returns info about the current bot token
 // @Summary      Get bot info
-// @Description  Returns information about the current bot token
+// @Description  Returns information about the current bot token. Authenticate with X-Bot-Token: <token_id>.<secret>, for example: curl -H 'X-Bot-Token: <token>' http://localhost:8080/api/v1/bot/me
 // @Tags         bot
 // @Accept       json
 // @Produce      json
-// @Success      200   {object}  BotTokenResponse
+// @Success      200   {object}  BotMeResponse
 // @Failure      401   {object}  ErrorResponse
 // @Security     BotToken
 // @Router       /bot/me [get]
 func (h *Handler) GetBotMe(w http.ResponseWriter, r *http.Request) {
-	// Token info would be in context from M2M middleware
-	h.respondJSON(w, http.StatusOK, map[string]string{
-		"status": "authenticated",
-		"type":   "bot",
+	token, ok := middleware.GetBotToken(r.Context())
+	if !ok {
+		h.respondError(w, http.StatusUnauthorized, "Not authenticated")
+		return
+	}
+
+	h.respondJSON(w, http.StatusOK, BotMeResponse{
+		TokenID:   token.TokenID,
+		Name:      token.Name,
+		ExpiresAt: token.ExpiresAt,
+		AuthType:  middleware.GetAuthType(r.Context()),
 	})
 }
 
@@ -459,7 +475,6 @@ func (h *Handler) generateJWT(user database.User) (string, error) {
 	claims := &middleware.UserClaims{
 		UserID: user.Uid.String(),
 		Email:  getEmail(user),
-		Role:   string(user.Role.UserRole),
 		RegisteredClaims: jwt.RegisteredClaims{
 			ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Duration(h.Config.JWT.ExpiryHours) * time.Hour)),
 			IssuedAt:  jwt.NewNumericDate(time.Now()),
@@ -569,7 +584,8 @@ func (h *Handler) verifyStateCookie(w http.ResponseWriter, r *http.Request, stat
 }
 
 func (h *Handler) upsertUser(ctx context.Context, email, firstName, lastName string) (database.User, error) {
-	pgEmail := toPgTextFromString(email)
+	normalizedEmail := normalizeEmail(email)
+	pgEmail := toPgTextFromString(normalizedEmail)
 
 	// Check if user exists
 	user, err := h.queries.GetUserByEmail(ctx, pgEmail)
@@ -587,7 +603,7 @@ func (h *Handler) upsertUser(ctx context.Context, email, firstName, lastName str
 		LastName:      lastName,
 		PersonalEmail: pgEmail, // Default to personal email for oauth
 		SchoolEmail:   pgtype.Text{Valid: false},
-		Role:          database.NullUserRole{UserRole: database.UserRoleStudent, Valid: true}, // Default role
+		Role:          database.NullUserRole{UserRole: database.UserRoleStudent, Valid: true},
 	})
 }
 
@@ -607,4 +623,8 @@ func generateSecureToken(length int) (string, error) {
 		return "", err
 	}
 	return hex.EncodeToString(bytes), nil
+}
+
+func formatBotToken(tokenID uuid.UUID, secret string) string {
+	return tokenID.String() + "." + secret
 }

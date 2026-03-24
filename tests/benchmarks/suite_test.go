@@ -156,7 +156,6 @@ func setupTestData(ctx context.Context) {
 	claims := middleware.UserClaims{
 		UserID: benchUserID,
 		Email:  "bench@example.com",
-		Role:   "student",
 		RegisteredClaims: jwt.RegisteredClaims{
 			ExpiresAt: jwt.NewNumericDate(time.Now().Add(24 * time.Hour)),
 			IssuedAt:  jwt.NewNumericDate(time.Now()),

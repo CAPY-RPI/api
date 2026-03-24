@@ -19,6 +19,7 @@ const (
 	UserRoleAlumni   UserRole = "alumni"
 	UserRoleFaculty  UserRole = "faculty"
 	UserRoleExternal UserRole = "external"
+	UserRoleDev      UserRole = "dev"
 )
 
 func (e *UserRole) Scan(src interface{}) error {
