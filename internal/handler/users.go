@@ -40,7 +40,7 @@ func (h *Handler) GetUser(w http.ResponseWriter, r *http.Request) {
 
 // UpdateUser updates a user's profile
 // @Summary      Update user
-// @Description  Updates a user's profile. Users can only update their own profile.
+// @Description  Updates a user's profile. Only role changes require the caller to have the dev role.
 // @Tags         users
 // @Accept       json
 // @Produce      json
@@ -60,7 +60,7 @@ func (h *Handler) UpdateUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	authenticatedUser, ok := h.requireSelfOrDev(w, r, uid)
+	authenticatedUser, _, ok := h.requireAuthenticatedUserRecord(w, r)
 	if !ok {
 		return
 	}
@@ -71,13 +71,23 @@ func (h *Handler) UpdateUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	targetUser, err := h.queries.GetUserByID(r.Context(), uid)
+	if err != nil {
+		h.handleDBError(w, err)
+		return
+	}
+
 	var role database.NullUserRole
 	if req.Role != nil {
-		if !authenticatedUser.Role.Valid || authenticatedUser.Role.UserRole != database.UserRoleDev {
+		requestedRole := database.UserRole(*req.Role)
+		roleChanged := !targetUser.Role.Valid || targetUser.Role.UserRole != requestedRole
+		if roleChanged && (!authenticatedUser.Role.Valid || authenticatedUser.Role.UserRole != database.UserRoleDev) {
 			h.respondError(w, http.StatusForbidden, "Only dev may update user roles")
 			return
 		}
-		role = database.NullUserRole{UserRole: database.UserRole(*req.Role), Valid: true}
+		if roleChanged {
+			role = database.NullUserRole{UserRole: requestedRole, Valid: true}
+		}
 	}
 
 	user, err := h.queries.UpdateUser(r.Context(), database.UpdateUserParams{
