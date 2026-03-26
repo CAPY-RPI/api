@@ -75,9 +75,10 @@ func (h *Handler) GoogleAuth(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Set state cookie to verify callback
-	h.setStateCookie(w, state)
+	h.setStateCookie(w, r, state)
 
-	http.Redirect(w, r, h.googleAuth.GetAuthURL(state), http.StatusFound)
+	redirectURL := h.getOAuthRedirectURL(r, h.Config.OAuth.Google.RedirectURL)
+	http.Redirect(w, r, h.googleAuth.GetAuthURL(state, redirectURL), http.StatusFound)
 }
 
 // GoogleCallback handles Google OAuth callback
@@ -121,7 +122,7 @@ func (h *Handler) GoogleCallback(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	h.setAuthCookie(w, token)
+	h.setAuthCookie(w, r, token)
 	h.respondWithCloseWindow(w)
 }
 
@@ -138,8 +139,9 @@ func (h *Handler) MicrosoftAuth(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	h.setStateCookie(w, state)
-	http.Redirect(w, r, h.microsoftAuth.GetAuthURL(state), http.StatusFound)
+	h.setStateCookie(w, r, state)
+	redirectURL := h.getOAuthRedirectURL(r, h.Config.OAuth.Microsoft.RedirectURL)
+	http.Redirect(w, r, h.microsoftAuth.GetAuthURL(state, redirectURL), http.StatusFound)
 }
 
 // MicrosoftCallback handles Microsoft OAuth callback
@@ -188,7 +190,7 @@ func (h *Handler) MicrosoftCallback(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	h.setAuthCookie(w, token)
+	h.setAuthCookie(w, r, token)
 	h.respondWithCloseWindow(w)
 }
 
@@ -246,7 +248,7 @@ func (h *Handler) Logout(w http.ResponseWriter, r *http.Request) {
 		Name:     "capy_auth",
 		Value:    "",
 		Path:     "/",
-		Domain:   h.Config.Cookie.Domain,
+		Domain:   h.getCookieDomain(r),
 		MaxAge:   -1,
 		Secure:   h.Config.Cookie.Secure,
 		HttpOnly: true,
@@ -292,7 +294,7 @@ func (h *Handler) RefreshToken(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Set new cookie
-	h.setAuthCookie(w, token)
+	h.setAuthCookie(w, r, token)
 
 	h.respondJSON(w, http.StatusOK, AuthResponse{
 		User: UserAuthResponse{
@@ -486,12 +488,12 @@ func (h *Handler) generateJWT(user database.User) (string, error) {
 	return token.SignedString([]byte(h.Config.JWT.Secret))
 }
 
-func (h *Handler) setAuthCookie(w http.ResponseWriter, token string) {
+func (h *Handler) setAuthCookie(w http.ResponseWriter, r *http.Request, token string) {
 	http.SetCookie(w, &http.Cookie{
 		Name:     "capy_auth",
 		Value:    token,
 		Path:     "/",
-		Domain:   h.Config.Cookie.Domain,
+		Domain:   h.getCookieDomain(r),
 		MaxAge:   h.Config.JWT.ExpiryHours * 3600,
 		Secure:   h.Config.Cookie.Secure,
 		HttpOnly: true,
@@ -551,12 +553,12 @@ func (h *Handler) respondWithCloseWindow(w http.ResponseWriter) {
 `))
 }
 
-func (h *Handler) setStateCookie(w http.ResponseWriter, state string) {
+func (h *Handler) setStateCookie(w http.ResponseWriter, r *http.Request, state string) {
 	http.SetCookie(w, &http.Cookie{
 		Name:     "oauth_state",
 		Value:    state,
 		Path:     "/api/v1/auth",
-		Domain:   h.Config.Cookie.Domain,
+		Domain:   h.getCookieDomain(r),
 		MaxAge:   300, // 5 minutes
 		Secure:   h.Config.Cookie.Secure,
 		HttpOnly: true,
@@ -574,7 +576,7 @@ func (h *Handler) verifyStateCookie(w http.ResponseWriter, r *http.Request, stat
 		Name:     "oauth_state",
 		Value:    "",
 		Path:     "/api/v1/auth",
-		Domain:   h.Config.Cookie.Domain,
+		Domain:   h.getCookieDomain(r),
 		MaxAge:   -1,
 		Secure:   h.Config.Cookie.Secure,
 		HttpOnly: true,

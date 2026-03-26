@@ -47,11 +47,16 @@ func NewGoogleProvider(clientID, clientSecret, redirectURL string) *GoogleProvid
 }
 
 // GetAuthURL generates the OAuth authorization URL with state token
-func (p *GoogleProvider) GetAuthURL(state string) string {
-	return p.config.AuthCodeURL(state,
+// If redirectURLOverride is not empty, it will be used instead of the default config
+func (p *GoogleProvider) GetAuthURL(state string, redirectURLOverride string) string {
+	opts := []oauth2.AuthCodeOption{
 		oauth2.AccessTypeOffline,
 		oauth2.ApprovalForce,
-	)
+	}
+	if redirectURLOverride != "" {
+		opts = append(opts, oauth2.SetAuthURLParam("redirect_uri", redirectURLOverride))
+	}
+	return p.config.AuthCodeURL(state, opts...)
 }
 
 // ExchangeCode exchanges the authorization code for a token and fetches user info

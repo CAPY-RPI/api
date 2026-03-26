@@ -31,6 +31,38 @@ func New(queries database.Querier, cfg *config.Config) *Handler {
 	}
 }
 
+func (h *Handler) isLocalhost(r *http.Request) bool {
+	if h.Config.Env != "development" {
+		return false
+	}
+	host := r.Host
+	return strings.HasPrefix(host, "localhost") || strings.HasPrefix(host, "127.0.0.1")
+}
+
+func (h *Handler) getCookieDomain(r *http.Request) string {
+	if h.isLocalhost(r) {
+		return "localhost"
+	}
+	return h.Config.Cookie.Domain
+}
+
+func (h *Handler) getOAuthRedirectURL(r *http.Request, providerRedirectURL string) string {
+	if !h.isLocalhost(r) {
+		return ""
+	}
+
+	// If we're on localhost in dev mode, try to use localhost for the redirect URL
+	// We assume the port is the same as the current request
+	if strings.Contains(providerRedirectURL, "://") {
+		// Replace the host part with localhost:port
+		parts := strings.SplitN(providerRedirectURL, "/", 4)
+		if len(parts) >= 4 {
+			return "http://" + r.Host + "/" + parts[3]
+		}
+	}
+	return ""
+}
+
 func normalizeEmail(email string) string {
 	return strings.ToLower(strings.TrimSpace(email))
 }
