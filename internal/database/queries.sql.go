@@ -527,9 +527,9 @@ type IsEventAdminParams struct {
 
 func (q *Queries) IsEventAdmin(ctx context.Context, arg IsEventAdminParams) (pgtype.Bool, error) {
 	row := q.db.QueryRow(ctx, isEventAdmin, arg.Uid, arg.Eid)
-	var is_admin pgtype.Bool
-	err := row.Scan(&is_admin)
-	return is_admin, err
+	var column_1 pgtype.Bool
+	err := row.Scan(&column_1)
+	return column_1, err
 }
 
 const isOrgAdmin = `-- name: IsOrgAdmin :one

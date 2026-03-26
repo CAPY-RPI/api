@@ -104,7 +104,8 @@ func (h *Handler) GoogleCallback(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	userInfo, err := h.googleAuth.ExchangeCode(r.Context(), code)
+	redirectURL := h.getOAuthRedirectURL(r, h.Config.OAuth.Google.RedirectURL)
+	userInfo, err := h.googleAuth.ExchangeCode(r.Context(), code, redirectURL)
 	if err != nil {
 		h.respondError(w, http.StatusInternalServerError, "Failed to exchange code")
 		return
@@ -166,7 +167,8 @@ func (h *Handler) MicrosoftCallback(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	userInfo, err := h.microsoftAuth.ExchangeCode(r.Context(), code)
+	redirectURL := h.getOAuthRedirectURL(r, h.Config.OAuth.Microsoft.RedirectURL)
+	userInfo, err := h.microsoftAuth.ExchangeCode(r.Context(), code, redirectURL)
 	if err != nil {
 		h.respondError(w, http.StatusInternalServerError, "Failed to exchange code")
 		return

@@ -60,8 +60,17 @@ func (p *GoogleProvider) GetAuthURL(state string, redirectURLOverride string) st
 }
 
 // ExchangeCode exchanges the authorization code for a token and fetches user info
-func (p *GoogleProvider) ExchangeCode(ctx context.Context, code string) (*GoogleUserInfo, error) {
-	token, err := p.config.Exchange(ctx, code)
+// If redirectURLOverride is not empty, it will be used instead of the default config
+func (p *GoogleProvider) ExchangeCode(ctx context.Context, code string, redirectURLOverride string) (*GoogleUserInfo, error) {
+	conf := p.config
+	if redirectURLOverride != "" {
+		// Clone and override
+		c := *p.config
+		c.RedirectURL = redirectURLOverride
+		conf = &c
+	}
+
+	token, err := conf.Exchange(ctx, code)
 	if err != nil {
 		return nil, fmt.Errorf("failed to exchange code: %w", err)
 	}

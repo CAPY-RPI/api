@@ -12,9 +12,16 @@ func CORS(allowedOrigins []string, isDev bool) func(http.Handler) http.Handler {
 			origin := r.Header.Get("Origin")
 			allowed := false
 
-			// In development, allow any localhost or 127.0.0.1 origin
-			isLocal := strings.HasPrefix(origin, "http://localhost") || strings.HasPrefix(origin, "http://127.0.0.1")
-			if isDev && isLocal {
+			// Trust local development origins
+			isLocal := strings.HasPrefix(origin, "http://localhost") || 
+                       strings.HasPrefix(origin, "http://127.0.0.1") || 
+                       strings.HasPrefix(origin, "https://localhost")
+			
+			// In development, also trust origin if it matches X-Forwarded-Host
+			forwardedHost := r.Header.Get("X-Forwarded-Host")
+			isForwarded := forwardedHost != "" && strings.Contains(origin, forwardedHost)
+
+			if isDev && (isLocal || isForwarded) {
 				allowed = true
 			}
 
@@ -31,10 +38,8 @@ func CORS(allowedOrigins []string, isDev bool) func(http.Handler) http.Handler {
 				}
 			}
 
-			// If no allowed origins specified, allow all (development mode)
-			// But for credentials to work with *, strict browsers block it.
-			// So good practice: if development, echo back origin.
-			if !allowed && len(allowedOrigins) == 0 {
+			// If no allowed origins specified and we are in dev, allow all
+			if !allowed && isDev && len(allowedOrigins) == 0 {
 				allowed = true
 			}
 

@@ -20,6 +20,7 @@ func TestCORS(t *testing.T) {
 		isDev          bool
 		expectedOrigin string
 		expectedCreds  string
+		forwardedHost  string
 	}{
 		{
 			name:           "AllowedOrigin",
@@ -61,18 +62,28 @@ func TestCORS(t *testing.T) {
 			name:           "DevModeAllowAll",
 			origin:         "https://random.com",
 			method:         "GET",
-			setupOrigins:   []string{}, // Empty = allow all
-			isDev:          false,      // Though typically true in dev
+			setupOrigins:   []string{}, // Empty = allow all in dev
+			isDev:          true,
 			expectedOrigin: "https://random.com",
 			expectedCreds:  "true",
 		},
 		{
 			name:           "AllowedLocalhostInDev",
-			origin:         "http://localhost:5173",
+			origin:         "http://localhost:9999",
 			method:         "GET",
 			setupOrigins:   []string{"https://app.example.com"},
 			isDev:          true,
-			expectedOrigin: "http://localhost:5173",
+			expectedOrigin: "http://localhost:9999",
+			expectedCreds:  "true",
+		},
+		{
+			name:           "AllowedForwardedHostInDev",
+			origin:         "https://my-frontend.local",
+			method:         "GET",
+			setupOrigins:   []string{"https://app.example.com"},
+			isDev:          true,
+			forwardedHost:  "my-frontend.local",
+			expectedOrigin: "https://my-frontend.local",
 			expectedCreds:  "true",
 		},
 		{
@@ -95,6 +106,9 @@ func TestCORS(t *testing.T) {
 			req := httptest.NewRequest(tt.method, "/", nil)
 			if tt.origin != "" {
 				req.Header.Set("Origin", tt.origin)
+			}
+			if tt.forwardedHost != "" {
+				req.Header.Set("X-Forwarded-Host", tt.forwardedHost)
 			}
 
 			rr := httptest.NewRecorder()

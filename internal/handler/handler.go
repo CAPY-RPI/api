@@ -31,33 +31,85 @@ func New(queries database.Querier, cfg *config.Config) *Handler {
 	}
 }
 
-func (h *Handler) isLocalhost(r *http.Request) bool {
-	if h.Config.Env != "development" {
-		return false
+func (h *Handler) isDev(r *http.Request) bool {
+	// 1. Explicit dev/staging environment
+	if h.Config.Env == "development" || h.Config.Env == "staging" || h.Config.Env == "" {
+		return true
 	}
+
+	// 2. Custom dev header (use this to bypass Cloudflare rewriting X-Forwarded-Host)
+	if r.Header.Get("X-Dev-Host") != "" {
+		return true
+	}
+
+	// 3. Aggressively trust localhost/127.0.0.1 in forwarded host
+	fh := r.Header.Get("X-Forwarded-Host")
+	if strings.HasPrefix(fh, "localhost") || strings.HasPrefix(fh, "127.0.0.1") {
+		return true
+	}
+
+	// 4. Fallback to host-based checks for dev subdomains
 	host := r.Host
-	return strings.HasPrefix(host, "localhost") || strings.HasPrefix(host, "127.0.0.1")
+	if fh != "" {
+		host = fh
+	}
+	return strings.HasPrefix(host, "dev.") ||
+		strings.HasPrefix(r.Host, "dev.") ||
+		strings.HasPrefix(r.Host, "localhost") ||
+		strings.HasPrefix(r.Host, "127.0.0.1")
+}
+
+func (h *Handler) getActualHost(r *http.Request) string {
+	// 1. Pay attention to custom dev header first
+	if devHost := r.Header.Get("X-Dev-Host"); devHost != "" {
+		return devHost
+	}
+
+	// 2. Standard flow
+	if h.isDev(r) {
+		if forwardedHost := r.Header.Get("X-Forwarded-Host"); forwardedHost != "" {
+			return forwardedHost
+		}
+	}
+	return r.Host
+}
+
+func (h *Handler) getBaseURL(r *http.Request) string {
+	// 1. Pay attention to custom dev proto first
+	if devProto := r.Header.Get("X-Dev-Proto"); devProto != "" {
+		return devProto + "://" + h.getActualHost(r)
+	}
+
+	// 2. Standard flow
+	scheme := "http"
+	if r.TLS != nil || r.Header.Get("X-Forwarded-Proto") == "https" {
+		scheme = "https"
+	}
+	return scheme + "://" + h.getActualHost(r)
 }
 
 func (h *Handler) getCookieDomain(r *http.Request) string {
-	if h.isLocalhost(r) {
-		return "localhost"
+	if h.isDev(r) {
+		host := h.getActualHost(r)
+		if strings.Contains(host, ":") {
+			host, _, _ = strings.Cut(host, ":")
+		}
+		return host
 	}
 	return h.Config.Cookie.Domain
 }
 
 func (h *Handler) getOAuthRedirectURL(r *http.Request, providerRedirectURL string) string {
-	if !h.isLocalhost(r) {
+	if !h.isDev(r) {
 		return ""
 	}
 
-	// If we're on localhost in dev mode, try to use localhost for the redirect URL
-	// We assume the port is the same as the current request
+	// Use dynamic BaseURL if on a dev host
 	if strings.Contains(providerRedirectURL, "://") {
-		// Replace the host part with localhost:port
+		// Replace the host part with current dynamic BaseURL
 		parts := strings.SplitN(providerRedirectURL, "/", 4)
 		if len(parts) >= 4 {
-			return "http://" + r.Host + "/" + parts[3]
+			return h.getBaseURL(r) + "/" + parts[3]
 		}
 	}
 	return ""

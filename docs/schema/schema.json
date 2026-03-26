@@ -1144,7 +1144,8 @@
               "student",
               "alumni",
               "faculty",
-              "external"
+              "external",
+              "dev"
             ],
             "comment": ""
           }
@@ -71328,12 +71329,12 @@
       "insert_into_table": null
     },
     {
-      "text": "SELECT is_admin FROM event_registrations WHERE uid = $1 AND eid = $2",
+      "text": "SELECT EXISTS (\n    SELECT 1\n    FROM event_registrations er\n    WHERE er.uid = $1\n      AND er.eid = $2\n      AND er.is_admin = TRUE\n)\nOR EXISTS (\n    SELECT 1\n    FROM event_hosting eh\n    JOIN org_members om ON om.oid = eh.oid\n    WHERE eh.eid = $2\n      AND om.uid = $1\n      AND om.is_admin = TRUE\n)",
       "name": "IsEventAdmin",
       "cmd": ":one",
       "columns": [
         {
-          "name": "is_admin",
+          "name": "",
           "not_null": false,
           "is_array": false,
           "comment": "",
@@ -71341,20 +71342,16 @@
           "is_named_param": false,
           "is_func_call": false,
           "scope": "",
-          "table": {
-            "catalog": "",
-            "schema": "",
-            "name": "event_registrations"
-          },
+          "table": null,
           "table_alias": "",
           "type": {
             "catalog": "",
-            "schema": "pg_catalog",
+            "schema": "",
             "name": "bool"
           },
           "is_sqlc_slice": false,
           "embed_table": null,
-          "original_name": "is_admin",
+          "original_name": "",
           "unsigned": false,
           "array_dims": 0
         }

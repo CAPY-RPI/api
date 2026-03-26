@@ -40,7 +40,11 @@ import (
 // @name X-Bot-Token
 func main() {
 	// Setup structured logging
-	slog.SetDefault(slog.New(slog.NewJSONHandler(os.Stdout, nil)))
+	level := slog.LevelInfo
+	if os.Getenv("ENV") == "development" || os.Getenv("ENV") == "staging" || os.Getenv("ENV") == "" {
+		level = slog.LevelDebug
+	}
+	slog.SetDefault(slog.New(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{Level: level})))
 
 	// Load configuration
 	cfg, err := config.Load()
