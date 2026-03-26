@@ -91,33 +91,39 @@ func TestGetUser(t *testing.T) {
 
 func TestUpdateUser(t *testing.T) {
 	targetUID := uuid.New()
-	authenticatedUID := uuid.New()
+	otherUID := uuid.New()
 	firstName := "Updated"
 	currentRole := "student"
-	role := "faculty"
+	newRole := "faculty"
 
 	tests := []struct {
 		name           string
 		requestBody    dto.UpdateUserRequest
-		mockSetup      func(*mocks.Querier)
 		setupContext   func() context.Context
+		mockSetup      func(*mocks.Querier)
 		expectedStatus int
 	}{
 		{
-			name: "NonDevCanUpdateWhenSubmittedRoleMatchesCurrentRole",
+			name: "SelfCanUpdateWhenRoleUnchanged",
 			requestBody: dto.UpdateUserRequest{
 				FirstName: &firstName,
 				Role:      &currentRole,
 			},
+			setupContext: func() context.Context {
+				ctx := context.Background()
+				claims := &middleware.UserClaims{UserID: targetUID.String()}
+				ctx = context.WithValue(ctx, middleware.UserClaimsKey, claims)
+				return context.WithValue(ctx, middleware.AuthTypeKey, "human")
+			},
 			mockSetup: func(m *mocks.Querier) {
-				m.On("GetUserByID", mock.Anything, authenticatedUID).Return(database.User{
-					Uid:  authenticatedUID,
-					Role: database.NullUserRole{UserRole: database.UserRoleStudent, Valid: true},
-				}, nil)
 				m.On("GetUserByID", mock.Anything, targetUID).Return(database.User{
 					Uid:  targetUID,
 					Role: database.NullUserRole{UserRole: database.UserRoleStudent, Valid: true},
-				}, nil)
+				}, nil).Once()
+				m.On("GetUserByID", mock.Anything, targetUID).Return(database.User{
+					Uid:  targetUID,
+					Role: database.NullUserRole{UserRole: database.UserRoleStudent, Valid: true},
+				}, nil).Once()
 				m.On("UpdateUser", mock.Anything, mock.MatchedBy(func(arg database.UpdateUserParams) bool {
 					return arg.Uid == targetUID &&
 						arg.FirstName.Valid && arg.FirstName.String == firstName &&
@@ -129,45 +135,65 @@ func TestUpdateUser(t *testing.T) {
 					Role:      database.NullUserRole{UserRole: database.UserRoleStudent, Valid: true},
 				}, nil)
 			},
-			setupContext: func() context.Context {
-				ctx := context.Background()
-				claims := &middleware.UserClaims{UserID: authenticatedUID.String()}
-				ctx = context.WithValue(ctx, middleware.UserClaimsKey, claims)
-				return context.WithValue(ctx, middleware.AuthTypeKey, "human")
-			},
 			expectedStatus: http.StatusOK,
 		},
 		{
-			name: "NonDevCannotUpdateRole",
+			name: "NonDevCannotUpdateAnotherUser",
 			requestBody: dto.UpdateUserRequest{
-				Role: &role,
-			},
-			mockSetup: func(m *mocks.Querier) {
-				m.On("GetUserByID", mock.Anything, authenticatedUID).Return(database.User{
-					Uid:  authenticatedUID,
-					Role: database.NullUserRole{UserRole: database.UserRoleStudent, Valid: true},
-				}, nil)
-				m.On("GetUserByID", mock.Anything, targetUID).Return(database.User{
-					Uid:  targetUID,
-					Role: database.NullUserRole{UserRole: database.UserRoleStudent, Valid: true},
-				}, nil)
+				FirstName: &firstName,
+				Role:      &currentRole,
 			},
 			setupContext: func() context.Context {
 				ctx := context.Background()
-				claims := &middleware.UserClaims{UserID: authenticatedUID.String()}
+				claims := &middleware.UserClaims{UserID: otherUID.String()}
 				ctx = context.WithValue(ctx, middleware.UserClaimsKey, claims)
 				return context.WithValue(ctx, middleware.AuthTypeKey, "human")
+			},
+			mockSetup: func(m *mocks.Querier) {
+				m.On("GetUserByID", mock.Anything, otherUID).Return(database.User{
+					Uid:  otherUID,
+					Role: database.NullUserRole{UserRole: database.UserRoleStudent, Valid: true},
+				}, nil)
 			},
 			expectedStatus: http.StatusForbidden,
 		},
 		{
-			name: "DevCanUpdateRole",
+			name: "NonDevCannotChangeOwnRole",
 			requestBody: dto.UpdateUserRequest{
-				Role: &role,
+				Role: &newRole,
+			},
+			setupContext: func() context.Context {
+				ctx := context.Background()
+				claims := &middleware.UserClaims{UserID: targetUID.String()}
+				ctx = context.WithValue(ctx, middleware.UserClaimsKey, claims)
+				return context.WithValue(ctx, middleware.AuthTypeKey, "human")
 			},
 			mockSetup: func(m *mocks.Querier) {
-				m.On("GetUserByID", mock.Anything, authenticatedUID).Return(database.User{
-					Uid:  authenticatedUID,
+				m.On("GetUserByID", mock.Anything, targetUID).Return(database.User{
+					Uid:  targetUID,
+					Role: database.NullUserRole{UserRole: database.UserRoleStudent, Valid: true},
+				}, nil).Once()
+				m.On("GetUserByID", mock.Anything, targetUID).Return(database.User{
+					Uid:  targetUID,
+					Role: database.NullUserRole{UserRole: database.UserRoleStudent, Valid: true},
+				}, nil).Once()
+			},
+			expectedStatus: http.StatusForbidden,
+		},
+		{
+			name: "DevCanChangeAnotherUsersRole",
+			requestBody: dto.UpdateUserRequest{
+				Role: &newRole,
+			},
+			setupContext: func() context.Context {
+				ctx := context.Background()
+				claims := &middleware.UserClaims{UserID: otherUID.String()}
+				ctx = context.WithValue(ctx, middleware.UserClaimsKey, claims)
+				return context.WithValue(ctx, middleware.AuthTypeKey, "human")
+			},
+			mockSetup: func(m *mocks.Querier) {
+				m.On("GetUserByID", mock.Anything, otherUID).Return(database.User{
+					Uid:  otherUID,
 					Role: database.NullUserRole{UserRole: database.UserRoleDev, Valid: true},
 				}, nil)
 				m.On("GetUserByID", mock.Anything, targetUID).Return(database.User{
@@ -182,12 +208,6 @@ func TestUpdateUser(t *testing.T) {
 					Uid:  targetUID,
 					Role: database.NullUserRole{UserRole: database.UserRoleFaculty, Valid: true},
 				}, nil)
-			},
-			setupContext: func() context.Context {
-				ctx := context.Background()
-				claims := &middleware.UserClaims{UserID: authenticatedUID.String()}
-				ctx = context.WithValue(ctx, middleware.UserClaimsKey, claims)
-				return context.WithValue(ctx, middleware.AuthTypeKey, "human")
 			},
 			expectedStatus: http.StatusOK,
 		},

@@ -60,7 +60,7 @@ func (h *Handler) UpdateUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	authenticatedUser, _, ok := h.requireAuthenticatedUserRecord(w, r)
+	authenticatedUser, ok := h.requireSelfOrDev(w, r, uid)
 	if !ok {
 		return
 	}
