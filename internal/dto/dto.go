@@ -122,6 +122,34 @@ type RegisterEventRequest struct {
 }
 
 // ============================================================================
+// Link DTOs
+// ============================================================================
+
+type CreateLinkRequest struct {
+	EndpointURL string    `json:"endpoint_url" validate:"required,alphanumhyphen"`
+	DestURL     string    `json:"dest_url" validate:"required,url"`
+	OrgID       uuid.UUID `json:"org_id" validate:"required"`
+}
+
+type UpdateLinkRequest struct {
+	EndpointURL *string `json:"endpoint_url,omitempty" validate:"omitempty,alphanumhyphen"`
+	DestURL     *string `json:"dest_url,omitempty" validate:"omitempty,url"`
+}
+
+type LinkResponse struct {
+	LID         uuid.UUID  `json:"lid"`
+	EndpointURL string     `json:"endpoint_url"`
+	DestURL     string     `json:"dest_url"`
+	OrgID       uuid.UUID  `json:"org_id"`
+	CreatedAt   *time.Time `json:"created_at,omitempty"`
+}
+
+type VisitCountResponse struct {
+	LID   uuid.UUID `json:"lid"`
+	Count int64     `json:"count"`
+}
+
+// ============================================================================
 // Pagination
 // ============================================================================
 

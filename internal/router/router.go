@@ -32,6 +32,7 @@ func mountProtectedRoutes(r chi.Router, h *handler.Handler, jwtSecret string) {
 			r.Post("/{oid}/members", h.AddOrgMember)
 			r.Delete("/{oid}/members/{uid}", h.RemoveOrgMember)
 			r.Get("/{oid}/events", h.ListOrgEvents)
+			r.Get("/{oid}/links", h.ListOrgLinks)
 		})
 
 		r.Route("/events", func(r chi.Router) {
@@ -44,6 +45,14 @@ func mountProtectedRoutes(r chi.Router, h *handler.Handler, jwtSecret string) {
 			r.Get("/{eid}/registrations", h.ListEventRegistrations)
 			r.Post("/{eid}/register", h.RegisterForEvent)
 			r.Delete("/{eid}/register", h.UnregisterFromEvent)
+		})
+
+		// Links
+		r.Route("/links", func(r chi.Router) {
+			r.Post("/", h.CreateLink)
+			r.Put("/{lid}", h.UpdateLink)
+			r.Get("/{lid}/visits", h.GetTotalVisits)
+			r.Get("/{lid}/qrcode", h.GetQRCode)
 		})
 
 		r.Route("/bot/tokens", func(r chi.Router) {
@@ -70,6 +79,10 @@ func New(h *handler.Handler, queries database.Querier, jwtSecret string, allowed
 	r.Route("/api", func(r chi.Router) {
 		// Health check (public)
 		r.Get("/health", h.Health)
+
+		// Link resolution (public)
+		// TODO Use a global variable to link this with links.go
+		r.Get("/r/{endpoint_url}", h.ResolveLink)
 
 		// Swagger UI (public) - Only in non-production environments
 		if h.Config.Env != "production" {
@@ -118,6 +131,7 @@ func New(h *handler.Handler, queries database.Querier, jwtSecret string, allowed
 					r.Get("/organizations/{oid}/members", h.ListOrgMembers)
 					r.Post("/organizations/{oid}/members", h.AddOrgMember)
 					r.Delete("/organizations/{oid}/members/{uid}", h.RemoveOrgMember)
+					r.Get("/{oid}/links", h.ListOrgLinks)
 
 					// Events (full access)
 					r.Get("/events", h.ListEvents)
@@ -128,6 +142,14 @@ func New(h *handler.Handler, queries database.Querier, jwtSecret string, allowed
 					r.Get("/events/{eid}/registrations", h.ListEventRegistrations)
 					r.Post("/events/{eid}/register", h.RegisterForEvent)
 					r.Delete("/events/{eid}/register", h.UnregisterFromEvent)
+
+					// Links
+					r.Route("/links", func(r chi.Router) {
+						r.Post("/", h.CreateLink)
+						r.Put("/{lid}", h.UpdateLink)
+						r.Get("/{lid}/visits", h.GetTotalVisits)
+						r.Get("/{lid}/qrcode", h.GetQRCode)
+					})
 				})
 			})
 		})

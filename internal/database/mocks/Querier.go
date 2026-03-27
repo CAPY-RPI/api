@@ -110,6 +110,34 @@ func (_m *Querier) CreateEvent(ctx context.Context, arg database.CreateEventPara
 	return r0, r1
 }
 
+// CreateLink provides a mock function with given fields: ctx, arg
+func (_m *Querier) CreateLink(ctx context.Context, arg database.CreateLinkParams) (database.Link, error) {
+	ret := _m.Called(ctx, arg)
+
+	if len(ret) == 0 {
+		panic("no return value specified for CreateLink")
+	}
+
+	var r0 database.Link
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, database.CreateLinkParams) (database.Link, error)); ok {
+		return rf(ctx, arg)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, database.CreateLinkParams) database.Link); ok {
+		r0 = rf(ctx, arg)
+	} else {
+		r0 = ret.Get(0).(database.Link)
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, database.CreateLinkParams) error); ok {
+		r1 = rf(ctx, arg)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // CreateOrganization provides a mock function with given fields: ctx, name
 func (_m *Querier) CreateOrganization(ctx context.Context, name string) (database.Organization, error) {
 	ret := _m.Called(ctx, name)
@@ -177,6 +205,24 @@ func (_m *Querier) DeleteEvent(ctx context.Context, eid uuid.UUID) error {
 	var r0 error
 	if rf, ok := ret.Get(0).(func(context.Context, uuid.UUID) error); ok {
 		r0 = rf(ctx, eid)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
+// DeleteLink provides a mock function with given fields: ctx, lid
+func (_m *Querier) DeleteLink(ctx context.Context, lid uuid.UUID) error {
+	ret := _m.Called(ctx, lid)
+
+	if len(ret) == 0 {
+		panic("no return value specified for DeleteLink")
+	}
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(context.Context, uuid.UUID) error); ok {
+		r0 = rf(ctx, lid)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -306,6 +352,62 @@ func (_m *Querier) GetEventRegistrations(ctx context.Context, eid uuid.UUID) ([]
 	return r0, r1
 }
 
+// GetLinkByEndpointURL provides a mock function with given fields: ctx, endpointUrl
+func (_m *Querier) GetLinkByEndpointURL(ctx context.Context, endpointUrl string) (database.Link, error) {
+	ret := _m.Called(ctx, endpointUrl)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetLinkByEndpointURL")
+	}
+
+	var r0 database.Link
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, string) (database.Link, error)); ok {
+		return rf(ctx, endpointUrl)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, string) database.Link); ok {
+		r0 = rf(ctx, endpointUrl)
+	} else {
+		r0 = ret.Get(0).(database.Link)
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, string) error); ok {
+		r1 = rf(ctx, endpointUrl)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// GetLinkByLID provides a mock function with given fields: ctx, lid
+func (_m *Querier) GetLinkByLID(ctx context.Context, lid uuid.UUID) (database.Link, error) {
+	ret := _m.Called(ctx, lid)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetLinkByLID")
+	}
+
+	var r0 database.Link
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, uuid.UUID) (database.Link, error)); ok {
+		return rf(ctx, lid)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, uuid.UUID) database.Link); ok {
+		r0 = rf(ctx, lid)
+	} else {
+		r0 = ret.Get(0).(database.Link)
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, uuid.UUID) error); ok {
+		r1 = rf(ctx, lid)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // GetOrgMembers provides a mock function with given fields: ctx, oid
 func (_m *Querier) GetOrgMembers(ctx context.Context, oid uuid.UUID) ([]database.GetOrgMembersRow, error) {
 	ret := _m.Called(ctx, oid)
@@ -357,6 +459,34 @@ func (_m *Querier) GetOrganizationByID(ctx context.Context, oid uuid.UUID) (data
 
 	if rf, ok := ret.Get(1).(func(context.Context, uuid.UUID) error); ok {
 		r1 = rf(ctx, oid)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// GetTotalVisits provides a mock function with given fields: ctx, lid
+func (_m *Querier) GetTotalVisits(ctx context.Context, lid uuid.UUID) (int64, error) {
+	ret := _m.Called(ctx, lid)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetTotalVisits")
+	}
+
+	var r0 int64
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, uuid.UUID) (int64, error)); ok {
+		return rf(ctx, lid)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, uuid.UUID) int64); ok {
+		r0 = rf(ctx, lid)
+	} else {
+		r0 = ret.Get(0).(int64)
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, uuid.UUID) error); ok {
+		r1 = rf(ctx, lid)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -626,6 +756,36 @@ func (_m *Querier) ListEventsByOrg(ctx context.Context, arg database.ListEventsB
 	return r0, r1
 }
 
+// ListLinksByOrg provides a mock function with given fields: ctx, oid
+func (_m *Querier) ListLinksByOrg(ctx context.Context, oid uuid.UUID) ([]database.Link, error) {
+	ret := _m.Called(ctx, oid)
+
+	if len(ret) == 0 {
+		panic("no return value specified for ListLinksByOrg")
+	}
+
+	var r0 []database.Link
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, uuid.UUID) ([]database.Link, error)); ok {
+		return rf(ctx, oid)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, uuid.UUID) []database.Link); ok {
+		r0 = rf(ctx, oid)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]database.Link)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, uuid.UUID) error); ok {
+		r1 = rf(ctx, oid)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // ListOrganizations provides a mock function with given fields: ctx, arg
 func (_m *Querier) ListOrganizations(ctx context.Context, arg database.ListOrganizationsParams) ([]database.Organization, error) {
 	ret := _m.Called(ctx, arg)
@@ -678,6 +838,34 @@ func (_m *Querier) ListUsers(ctx context.Context, arg database.ListUsersParams) 
 	}
 
 	if rf, ok := ret.Get(1).(func(context.Context, database.ListUsersParams) error); ok {
+		r1 = rf(ctx, arg)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// LogLinkVisit provides a mock function with given fields: ctx, arg
+func (_m *Querier) LogLinkVisit(ctx context.Context, arg database.LogLinkVisitParams) (database.LinkVisit, error) {
+	ret := _m.Called(ctx, arg)
+
+	if len(ret) == 0 {
+		panic("no return value specified for LogLinkVisit")
+	}
+
+	var r0 database.LinkVisit
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, database.LogLinkVisitParams) (database.LinkVisit, error)); ok {
+		return rf(ctx, arg)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, database.LogLinkVisitParams) database.LinkVisit); ok {
+		r0 = rf(ctx, arg)
+	} else {
+		r0 = ret.Get(0).(database.LinkVisit)
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, database.LogLinkVisitParams) error); ok {
 		r1 = rf(ctx, arg)
 	} else {
 		r1 = ret.Error(1)
@@ -796,6 +984,34 @@ func (_m *Querier) UpdateEvent(ctx context.Context, arg database.UpdateEventPara
 	}
 
 	if rf, ok := ret.Get(1).(func(context.Context, database.UpdateEventParams) error); ok {
+		r1 = rf(ctx, arg)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// UpdateLink provides a mock function with given fields: ctx, arg
+func (_m *Querier) UpdateLink(ctx context.Context, arg database.UpdateLinkParams) (database.Link, error) {
+	ret := _m.Called(ctx, arg)
+
+	if len(ret) == 0 {
+		panic("no return value specified for UpdateLink")
+	}
+
+	var r0 database.Link
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, database.UpdateLinkParams) (database.Link, error)); ok {
+		return rf(ctx, arg)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, database.UpdateLinkParams) database.Link); ok {
+		r0 = rf(ctx, arg)
+	} else {
+		r0 = ret.Get(0).(database.Link)
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, database.UpdateLinkParams) error); ok {
 		r1 = rf(ctx, arg)
 	} else {
 		r1 = ret.Error(1)

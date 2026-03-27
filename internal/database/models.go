@@ -91,6 +91,21 @@ type EventRegistration struct {
 	DateRegistered pgtype.Date `json:"date_registered"`
 }
 
+type Link struct {
+	Lid         uuid.UUID        `json:"lid"`
+	EndpointUrl string           `json:"endpoint_url"`
+	DestUrl     string           `json:"dest_url"`
+	Oid         uuid.UUID        `json:"oid"`
+	CreatedAt   pgtype.Timestamp `json:"created_at"`
+}
+
+type LinkVisit struct {
+	Lvid      uuid.UUID        `json:"lvid"`
+	Lid       uuid.UUID        `json:"lid"`
+	Uid       pgtype.UUID      `json:"uid"`
+	CreatedAt pgtype.Timestamp `json:"created_at"`
+}
+
 type OrgMember struct {
 	Uid        uuid.UUID   `json:"uid"`
 	Oid        uuid.UUID   `json:"oid"`
