@@ -16,7 +16,7 @@ type Config struct {
 type ServerConfig struct {
 	Host           string   `env:"SERVER_HOST" env-default:"0.0.0.0"`
 	Port           string   `env:"SERVER_PORT" env-default:"8080"`
-	AllowedOrigins []string `env:"ALLOWED_ORIGINS" env-default:"http://localhost:3000,http://localhost:8080" env-separator:","`
+	AllowedOrigins []string `env:"ALLOWED_ORIGINS" env-default:"http://localhost:3000,http://localhost:8080,http://localhost:5173,http://127.0.0.1:3000,http://127.0.0.1:8080,http://127.0.0.1:5173" env-separator:","`
 }
 
 type DatabaseConfig struct {

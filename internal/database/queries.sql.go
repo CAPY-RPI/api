@@ -228,14 +228,14 @@ func (q *Queries) DeleteUser(ctx context.Context, uid uuid.UUID) error {
 	return err
 }
 
-const getBotTokenByHash = `-- name: GetBotTokenByHash :one
+const getBotTokenByID = `-- name: GetBotTokenByID :one
 
-SELECT token_id, token_hash, name, created_by, created_at, last_used_at, expires_at, is_active FROM bot_tokens WHERE token_hash = $1 AND is_active = true
+SELECT token_id, token_hash, name, created_by, created_at, last_used_at, expires_at, is_active FROM bot_tokens WHERE token_id = $1
 `
 
 // Bot Token Queries
-func (q *Queries) GetBotTokenByHash(ctx context.Context, tokenHash string) (BotToken, error) {
-	row := q.db.QueryRow(ctx, getBotTokenByHash, tokenHash)
+func (q *Queries) GetBotTokenByID(ctx context.Context, tokenID uuid.UUID) (BotToken, error) {
+	row := q.db.QueryRow(ctx, getBotTokenByID, tokenID)
 	var i BotToken
 	err := row.Scan(
 		&i.TokenID,
@@ -584,7 +584,21 @@ func (q *Queries) GetUserOrganizations(ctx context.Context, uid uuid.UUID) ([]Ge
 }
 
 const isEventAdmin = `-- name: IsEventAdmin :one
-SELECT is_admin FROM event_registrations WHERE uid = $1 AND eid = $2
+SELECT EXISTS (
+    SELECT 1
+    FROM event_registrations er
+    WHERE er.uid = $1
+      AND er.eid = $2
+      AND er.is_admin = TRUE
+)
+OR EXISTS (
+    SELECT 1
+    FROM event_hosting eh
+    JOIN org_members om ON om.oid = eh.oid
+    WHERE eh.eid = $2
+      AND om.uid = $1
+      AND om.is_admin = TRUE
+)
 `
 
 type IsEventAdminParams struct {
@@ -594,9 +608,9 @@ type IsEventAdminParams struct {
 
 func (q *Queries) IsEventAdmin(ctx context.Context, arg IsEventAdminParams) (pgtype.Bool, error) {
 	row := q.db.QueryRow(ctx, isEventAdmin, arg.Uid, arg.Eid)
-	var is_admin pgtype.Bool
-	err := row.Scan(&is_admin)
-	return is_admin, err
+	var column_1 pgtype.Bool
+	err := row.Scan(&column_1)
+	return column_1, err
 }
 
 const isOrgAdmin = `-- name: IsOrgAdmin :one

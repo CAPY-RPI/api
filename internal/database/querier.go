@@ -25,7 +25,7 @@ type Querier interface {
 	DeleteOrganization(ctx context.Context, oid uuid.UUID) error
 	DeleteUser(ctx context.Context, uid uuid.UUID) error
 	// Bot Token Queries
-	GetBotTokenByHash(ctx context.Context, tokenHash string) (BotToken, error)
+	GetBotTokenByID(ctx context.Context, tokenID uuid.UUID) (BotToken, error)
 	GetEventByID(ctx context.Context, eid uuid.UUID) (Event, error)
 	GetEventRegistrations(ctx context.Context, eid uuid.UUID) ([]GetEventRegistrationsRow, error)
 	GetLinkByEndpointURL(ctx context.Context, endpointUrl string) (Link, error)

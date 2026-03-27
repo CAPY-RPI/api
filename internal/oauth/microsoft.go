@@ -50,16 +50,30 @@ func NewMicrosoftProvider(clientID, clientSecret, redirectURL, tenantID string) 
 }
 
 // GetAuthURL generates the OAuth authorization URL with state token
-func (p *MicrosoftProvider) GetAuthURL(state string) string {
-	return p.config.AuthCodeURL(state,
+// If redirectURLOverride is not empty, it will be used instead of the default config
+func (p *MicrosoftProvider) GetAuthURL(state string, redirectURLOverride string) string {
+	opts := []oauth2.AuthCodeOption{
 		oauth2.AccessTypeOffline,
 		oauth2.ApprovalForce,
-	)
+	}
+	if redirectURLOverride != "" {
+		opts = append(opts, oauth2.SetAuthURLParam("redirect_uri", redirectURLOverride))
+	}
+	return p.config.AuthCodeURL(state, opts...)
 }
 
 // ExchangeCode exchanges the authorization code for a token and fetches user info
-func (p *MicrosoftProvider) ExchangeCode(ctx context.Context, code string) (*MicrosoftUserInfo, error) {
-	token, err := p.config.Exchange(ctx, code)
+// If redirectURLOverride is not empty, it will be used instead of the default config
+func (p *MicrosoftProvider) ExchangeCode(ctx context.Context, code string, redirectURLOverride string) (*MicrosoftUserInfo, error) {
+	conf := p.config
+	if redirectURLOverride != "" {
+		// Clone and override
+		c := *p.config
+		c.RedirectURL = redirectURLOverride
+		conf = &c
+	}
+
+	token, err := conf.Exchange(ctx, code)
 	if err != nil {
 		return nil, fmt.Errorf("failed to exchange code: %w", err)
 	}

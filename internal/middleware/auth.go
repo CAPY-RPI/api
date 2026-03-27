@@ -19,7 +19,6 @@ const (
 type UserClaims struct {
 	UserID string `json:"uid"`
 	Email  string `json:"email"`
-	Role   string `json:"role"`
 	jwt.RegisteredClaims
 }
 
@@ -41,15 +40,6 @@ func Auth(jwtSecret string) func(http.Handler) http.Handler {
 				if strings.HasPrefix(authHeader, "Bearer ") {
 					tokenString = strings.TrimPrefix(authHeader, "Bearer ")
 				}
-			}
-
-			// Check for bot token
-			botToken := r.Header.Get("X-Bot-Token")
-			if botToken != "" {
-				// Bot authentication will be handled separately
-				ctx := context.WithValue(r.Context(), AuthTypeKey, "bot")
-				next.ServeHTTP(w, r.WithContext(ctx))
-				return
 			}
 
 			if tokenString == "" {

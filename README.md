@@ -54,11 +54,11 @@ make docker
 
 ### 3. Run Migrations & Generate Code
 ```bash
-# If your DB is running via docker-compose on your host machine, override host:
-# export MIGRATE_DATABASE_URL=postgres://capy:devpassword@localhost:5432/capy_db?sslmode=disable or use make migrate-up-docker
 make migrate-up
 make generate
 ```
+
+`make migrate-up` runs all pending migrations in Docker on the Compose network by default. `make migrate-down` rolls back exactly one migration. `make migrate-version` shows the current version.
 
 Create a new migration:
 ```bash
@@ -100,6 +100,8 @@ make run
 # Health check: http://localhost:8080/health
 ```
 
+The API applies pending migrations automatically on startup before serving requests.
+
 ## Testing
 
 ### Unit Tests
@@ -122,16 +124,51 @@ make test-all
 ## Development Scripts
 Helper scripts are located in the `scripts/` directory.
 
-### Create Development User
-Seeds a user into the DB and generates a valid JWT for testing.
+### Create User
+Seeds or updates a user in the database and prints a JWT for that user. `--email` is required; the other fields have defaults.
 ```bash
-go run scripts/create_dev_user/main.go
+go run scripts/create_user/main.go --email dev@example.com --role dev
 ```
 
-### Generate Token
-Manually generates a JWT for an existing user (by email).
+### Create Bot Token
+Creates a bot token in the database and prints the full `token_id.secret` value once for use with the `X-Bot-Token` header. `--name` and `--created-by` are required; `--hours 0` means the token does not expire.
 ```bash
-go run scripts/generate_token/main.go
+go run scripts/create_bot_token/main.go --name my-bot --created-by 00000000-0000-0000-0000-000000000001 --hours 24
+```
+
+### Run DB-Connected Scripts Without Go in the API Image
+If you are running the API and Postgres with Docker Compose, the API container does not include the Go toolchain. To run local Go scripts that need database access, start a one-off Go container on the same Compose network and mount the repository into it.
+
+Current local network:
+```bash
+api_default
+```
+
+Example:
+```bash
+docker run --rm \
+  --network api_default \
+  -v "$PWD":/app \
+  -w /app \
+  --env-file .env \
+  golang:1.25 \
+  go run scripts/create_user/main.go --email dev@example.com --role dev
+```
+
+Bot token example:
+```bash
+docker run --rm \
+  --network api_default \
+  -v "$PWD":/app \
+  -w /app \
+  --env-file .env \
+  golang:1.25 \
+  go run scripts/create_bot_token/main.go --name my-bot --created-by 00000000-0000-0000-0000-000000000001 --hours 24
+```
+
+If your Compose project name is different, the network name will usually be `<project>_default`. You can check it with:
+```bash
+docker network ls
 ```
 
 ## Project Structure

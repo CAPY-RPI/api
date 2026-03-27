@@ -2,7 +2,7 @@
 -- Database Schema for CAPY (Club Assistant in Python)
 
 -- 1. ENUMs & Functions
-CREATE TYPE user_role AS ENUM ('student', 'alumni', 'faculty', 'external');
+CREATE TYPE user_role AS ENUM ('student', 'alumni', 'faculty', 'external', 'dev');
 
 CREATE OR REPLACE FUNCTION update_modified_column()
 RETURNS TRIGGER AS $$

@@ -266,27 +266,27 @@ func (_m *Querier) DeleteUser(ctx context.Context, uid uuid.UUID) error {
 	return r0
 }
 
-// GetBotTokenByHash provides a mock function with given fields: ctx, tokenHash
-func (_m *Querier) GetBotTokenByHash(ctx context.Context, tokenHash string) (database.BotToken, error) {
-	ret := _m.Called(ctx, tokenHash)
+// GetBotTokenByID provides a mock function with given fields: ctx, tokenID
+func (_m *Querier) GetBotTokenByID(ctx context.Context, tokenID uuid.UUID) (database.BotToken, error) {
+	ret := _m.Called(ctx, tokenID)
 
 	if len(ret) == 0 {
-		panic("no return value specified for GetBotTokenByHash")
+		panic("no return value specified for GetBotTokenByID")
 	}
 
 	var r0 database.BotToken
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, string) (database.BotToken, error)); ok {
-		return rf(ctx, tokenHash)
+	if rf, ok := ret.Get(0).(func(context.Context, uuid.UUID) (database.BotToken, error)); ok {
+		return rf(ctx, tokenID)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, string) database.BotToken); ok {
-		r0 = rf(ctx, tokenHash)
+	if rf, ok := ret.Get(0).(func(context.Context, uuid.UUID) database.BotToken); ok {
+		r0 = rf(ctx, tokenID)
 	} else {
 		r0 = ret.Get(0).(database.BotToken)
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, string) error); ok {
-		r1 = rf(ctx, tokenHash)
+	if rf, ok := ret.Get(1).(func(context.Context, uuid.UUID) error); ok {
+		r1 = rf(ctx, tokenID)
 	} else {
 		r1 = ret.Error(1)
 	}

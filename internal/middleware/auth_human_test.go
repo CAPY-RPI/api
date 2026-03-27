@@ -46,6 +46,15 @@ func TestAuth(t *testing.T) {
 			expectedStatus: http.StatusUnauthorized,
 		},
 		{
+			name: "BotHeaderDoesNotBypassHumanAuth",
+			tokenSetup: func() *http.Request {
+				req := httptest.NewRequest("GET", "/", nil)
+				req.Header.Set("X-Bot-Token", "ignored")
+				return req
+			},
+			expectedStatus: http.StatusUnauthorized,
+		},
+		{
 			name: "InvalidToken",
 			tokenSetup: func() *http.Request {
 				req := httptest.NewRequest("GET", "/", nil)

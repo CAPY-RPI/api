@@ -2,10 +2,14 @@ package middleware
 
 import (
 	"context"
+	"errors"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/capyrpi/api/internal/database"
+	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -13,65 +17,58 @@ const BotTokenKey contextKey = "bot_token"
 
 // BotTokenInfo contains information about the authenticated bot
 type BotTokenInfo struct {
-	TokenID string
-	Name    string
+	TokenID   uuid.UUID
+	Name      string
+	ExpiresAt *time.Time
 }
 
 // M2MAuth middleware validates bot tokens from X-Bot-Token header
 func M2MAuth(queries database.Querier) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			token := r.Header.Get("X-Bot-Token")
-			if token == "" {
+			rawToken := r.Header.Get("X-Bot-Token")
+			if rawToken == "" {
 				http.Error(w, "Missing X-Bot-Token header", http.StatusUnauthorized)
 				return
 			}
 
-			// Get all active tokens and check against hash
-			// Note: In production with many tokens, implement a token prefix lookup
-			tokens, err := queries.ListBotTokens(r.Context())
+			tokenID, secret, err := ParseBotToken(rawToken)
 			if err != nil {
-				http.Error(w, "Internal server error", http.StatusInternalServerError)
-				return
-			}
-
-			var matchedToken *database.ListBotTokensRow
-			for i, t := range tokens {
-				if !t.IsActive.Bool {
-					continue
-				}
-				// Check expiry
-				if t.ExpiresAt.Valid && t.ExpiresAt.Time.Before(time.Now()) {
-					continue
-				}
-				// Note: We need the full token row with hash for comparison
-				// This simplified version won't work as ListBotTokens doesn't return hash
-				// You'd need a GetBotTokenByHash query that iterates or uses prefix matching
-				_ = t
-				matchedToken = &tokens[i]
-				break
-			}
-
-			// For now, simplified validation - in real implementation:
-			// 1. Hash the provided token
-			// 2. Look up by hash in database
-			// 3. Verify expiry and active status
-			if matchedToken == nil {
-				// Try bcrypt comparison against stored hashes
-				// This requires fetching hashes which ListBotTokens doesn't do
 				http.Error(w, "Invalid bot token", http.StatusUnauthorized)
 				return
 			}
 
-			// Update last used timestamp (fire and forget)
-			go func() {
-				_ = queries.UpdateBotTokenLastUsed(context.Background(), matchedToken.TokenID)
-			}()
+			token, err := queries.GetBotTokenByID(r.Context(), tokenID)
+			if err != nil {
+				if errors.Is(err, pgx.ErrNoRows) {
+					http.Error(w, "Invalid bot token", http.StatusUnauthorized)
+					return
+				}
+				http.Error(w, "Internal server error", http.StatusInternalServerError)
+				return
+			}
 
-			// Add bot info to context
+			if !token.IsActive.Bool {
+				http.Error(w, "Bot token is inactive", http.StatusUnauthorized)
+				return
+			}
+
+			if token.ExpiresAt.Valid && token.ExpiresAt.Time.Before(time.Now()) {
+				http.Error(w, "Bot token is expired", http.StatusUnauthorized)
+				return
+			}
+
+			if !ValidateBotToken(secret, token.TokenHash) {
+				http.Error(w, "Invalid bot token", http.StatusUnauthorized)
+				return
+			}
+
+			_ = queries.UpdateBotTokenLastUsed(r.Context(), token.TokenID)
+
 			ctx := context.WithValue(r.Context(), BotTokenKey, &BotTokenInfo{
-				TokenID: matchedToken.TokenID.String(),
-				Name:    matchedToken.Name,
+				TokenID:   token.TokenID,
+				Name:      token.Name,
+				ExpiresAt: botTokenExpiry(token),
 			})
 			ctx = context.WithValue(ctx, AuthTypeKey, "bot")
 
@@ -90,4 +87,27 @@ func ValidateBotToken(rawToken, storedHash string) bool {
 func GetBotToken(ctx context.Context) (*BotTokenInfo, bool) {
 	info, ok := ctx.Value(BotTokenKey).(*BotTokenInfo)
 	return info, ok
+}
+
+func ParseBotToken(rawToken string) (uuid.UUID, string, error) {
+	tokenIDPart, secret, ok := strings.Cut(rawToken, ".")
+	if !ok || secret == "" {
+		return uuid.Nil, "", errors.New("invalid token format")
+	}
+
+	tokenID, err := uuid.Parse(tokenIDPart)
+	if err != nil {
+		return uuid.Nil, "", err
+	}
+
+	return tokenID, secret, nil
+}
+
+func botTokenExpiry(token database.BotToken) *time.Time {
+	if !token.ExpiresAt.Valid {
+		return nil
+	}
+
+	expiresAt := token.ExpiresAt.Time
+	return &expiresAt
 }

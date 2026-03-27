@@ -218,7 +218,7 @@ const docTemplate = `{
                         "BotToken": []
                     }
                 ],
-                "description": "Returns information about the current bot token",
+                "description": "Returns information about the current bot token. Authenticate with X-Bot-Token: \u003ctoken_id\u003e.\u003csecret\u003e, for example: curl -H 'X-Bot-Token: \u003ctoken\u003e' http://localhost:8080/api/v1/bot/me",
                 "consumes": [
                     "application/json"
                 ],
@@ -233,7 +233,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/handler.BotTokenResponse"
+                            "$ref": "#/definitions/handler.BotMeResponse"
                         }
                     },
                     "401": {
@@ -252,7 +252,7 @@ const docTemplate = `{
                         "CookieAuth": []
                     }
                 ],
-                "description": "Returns all bot tokens (requires faculty role)",
+                "description": "Returns all bot tokens (requires dev role)",
                 "consumes": [
                     "application/json"
                 ],
@@ -287,7 +287,7 @@ const docTemplate = `{
                         "CookieAuth": []
                     }
                 ],
-                "description": "Creates a new bot token (requires faculty role)",
+                "description": "Creates a new bot token (requires dev role). The raw token is returned only once and must be stored by the caller.",
                 "consumes": [
                     "application/json"
                 ],
@@ -338,7 +338,7 @@ const docTemplate = `{
                         "CookieAuth": []
                     }
                 ],
-                "description": "Revokes a bot token (requires faculty role)",
+                "description": "Revokes a bot token (requires dev role)",
                 "consumes": [
                     "application/json"
                 ],
@@ -1750,7 +1750,8 @@ const docTemplate = `{
                         "student",
                         "alumni",
                         "faculty",
-                        "external"
+                        "external",
+                        "dev"
                     ]
                 },
                 "school_email": {
@@ -1802,6 +1803,23 @@ const docTemplate = `{
                 },
                 "user": {
                     "$ref": "#/definitions/handler.UserAuthResponse"
+                }
+            }
+        },
+        "handler.BotMeResponse": {
+            "type": "object",
+            "properties": {
+                "auth_type": {
+                    "type": "string"
+                },
+                "expires_at": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "token_id": {
+                    "type": "string"
                 }
             }
         },
@@ -1894,8 +1912,8 @@ const docTemplate = `{
 // SwaggerInfo holds exported Swagger Info so clients can modify it
 var SwaggerInfo = &swag.Spec{
 	Version:          "1.0",
-	Host:             "api.capyrpi.org",
-	BasePath:         "/v1",
+	Host:             "capyrpi.org",
+	BasePath:         "/api/v1",
 	Schemes:          []string{},
 	Title:            "Capy API",
 	Description:      "API for Capy RPI Club Assistant",
