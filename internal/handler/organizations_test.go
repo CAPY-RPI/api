@@ -14,6 +14,7 @@ import (
 	"github.com/capyrpi/api/internal/dto"
 	"github.com/capyrpi/api/internal/handler"
 	"github.com/capyrpi/api/internal/middleware"
+	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -127,4 +128,32 @@ func TestListOrganizations(t *testing.T) {
 			assert.Equal(t, tt.expectedStatus, rr.Code)
 		})
 	}
+}
+
+func TestAddOrgMemberAllowsSelfJoin(t *testing.T) {
+	uid := uuid.New()
+	oid := uuid.New()
+
+	mockQueries := mocks.NewQuerier(t)
+	mockQueries.On("AddOrgMember", mock.Anything, mock.MatchedBy(func(arg database.AddOrgMemberParams) bool {
+		return arg.Oid == oid && arg.Uid == uid && arg.IsAdmin.Valid && !arg.IsAdmin.Bool
+	})).Return(nil)
+
+	h := handler.New(mockQueries, &config.Config{})
+
+	body, _ := json.Marshal(dto.AddMemberRequest{
+		UID:     uid,
+		IsAdmin: false,
+	})
+
+	req := httptest.NewRequest("POST", "/organizations/"+oid.String()+"/members", bytes.NewBuffer(body))
+	req = req.WithContext(context.WithValue(context.Background(), middleware.UserClaimsKey, &middleware.UserClaims{UserID: uid.String()}))
+	rctx := chi.NewRouteContext()
+	rctx.URLParams.Add("oid", oid.String())
+	req = req.WithContext(context.WithValue(req.Context(), chi.RouteCtxKey, rctx))
+
+	rr := httptest.NewRecorder()
+	http.HandlerFunc(h.AddOrgMember).ServeHTTP(rr, req)
+
+	assert.Equal(t, http.StatusCreated, rr.Code)
 }

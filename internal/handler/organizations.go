@@ -259,14 +259,28 @@ func (h *Handler) AddOrgMember(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if _, ok := h.requireOrgAdmin(w, r, oid); !ok {
-		return
-	}
-
 	var req dto.AddMemberRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		h.respondError(w, http.StatusBadRequest, "Invalid request body")
 		return
+	}
+
+	switch middleware.GetAuthType(r.Context()) {
+	case "bot":
+		// Bots retain full access to add members on behalf of users.
+	default:
+		authenticatedUID, _, ok := h.requireAuthenticatedUser(w, r)
+		if !ok {
+			return
+		}
+
+		// Allow self-join through the existing members endpoint, but never allow
+		// a human user to self-promote to admin.
+		if req.UID != authenticatedUID || req.IsAdmin {
+			if _, ok := h.requireOrgAdmin(w, r, oid); !ok {
+				return
+			}
+		}
 	}
 
 	if err := h.queries.AddOrgMember(r.Context(), database.AddOrgMemberParams{
