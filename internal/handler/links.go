@@ -20,6 +20,9 @@ import (
 const QR_FG_COLOR = "#067b76"
 const QR_BG_COLOR = "#fcfdfe"
 
+// TODO this should be a global variable, this is very brittle
+const PUBLIC_LINK_ENDPOINT = "www.capyrpi.org/api/r/"
+
 // CreateLink creates a new dynamic link
 // @Summary      Create link
 // @Description  Creates a new dynamic link for an organization. Requires org_admin role.
@@ -281,7 +284,7 @@ func (h *Handler) GetQRCode(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	qrc, err := qrcode.NewWith(link.EndpointUrl)
+	qrc, err := qrcode.NewWith(PUBLIC_LINK_ENDPOINT + link.EndpointUrl)
 	if err != nil {
 		slog.Error("failed to generate QR code", "error", err)
 		h.respondError(w, http.StatusInternalServerError, "Failed to generate QR code")
@@ -291,7 +294,7 @@ func (h *Handler) GetQRCode(w http.ResponseWriter, r *http.Request) {
 	qrcOpts := []standard.ImageOption{
 		standard.WithBgColorRGBHex(QR_BG_COLOR),
 		standard.WithFgColorRGBHex(QR_FG_COLOR),
-		standard.WithCircleShape(),
+		// standard.WithCircleShape(),
 	}
 
 	w.Header().Set("Content-Type", "image/png")

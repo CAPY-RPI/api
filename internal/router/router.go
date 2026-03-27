@@ -26,6 +26,7 @@ func New(h *handler.Handler, queries database.Querier, jwtSecret string, allowed
 	r.Get("/health", h.Health)
 
 	// Link resolution (public)
+	// TODO Use a global variable to link this with links.go
 	r.Get("/r/{endpoint_url}", h.ResolveLink)
 
 	// Swagger UI (public) - Only in non-production environments
