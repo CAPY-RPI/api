@@ -14,7 +14,7 @@ $$ language 'plpgsql';
 
 -- 2. Tables
 CREATE TABLE IF NOT EXISTS users (
-    uid UUID PRIMARY KEY DEFAULT uuidv4(),
+    uid UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     first_name TEXT NOT NULL,
     last_name TEXT NOT NULL,
     personal_email TEXT UNIQUE,
@@ -27,7 +27,7 @@ CREATE TABLE IF NOT EXISTS users (
 );
 
 CREATE TABLE IF NOT EXISTS organizations (
-    oid UUID PRIMARY KEY DEFAULT uuidv4(),
+    oid UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     name TEXT NOT NULL,
     date_created DATE DEFAULT CURRENT_DATE,
     date_modified DATE DEFAULT CURRENT_DATE
@@ -43,7 +43,7 @@ CREATE TABLE IF NOT EXISTS org_members (
 );
 
 CREATE TABLE IF NOT EXISTS events (
-    eid UUID PRIMARY KEY DEFAULT uuidv4(),
+    eid UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     location TEXT,
     event_time TIMESTAMP,
     description TEXT,
@@ -68,7 +68,7 @@ CREATE TABLE IF NOT EXISTS event_registrations (
 
 -- 3. Bot Tokens (global access for M2M authentication)
 CREATE TABLE IF NOT EXISTS bot_tokens (
-    token_id UUID PRIMARY KEY DEFAULT uuidv4(),
+    token_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     token_hash TEXT NOT NULL,              -- bcrypt hash of the token
     name TEXT NOT NULL,                    -- human-readable name for the bot
     created_by UUID NOT NULL REFERENCES users(uid),
@@ -79,7 +79,7 @@ CREATE TABLE IF NOT EXISTS bot_tokens (
 );
 
 CREATE TABLE IF NOT EXISTS links (
-    lid UUID PRIMARY KEY DEFAULT uuidv4(),
+    lid UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     endpoint_url TEXT NOT NULL UNIQUE,
     dest_url TEXT NOT NULL,
     oid UUID NOT NULL REFERENCES organizations(oid) ON DELETE CASCADE,
@@ -87,7 +87,7 @@ CREATE TABLE IF NOT EXISTS links (
 );
 
 CREATE TABLE IF NOT EXISTS link_visits (
-    lvid UUID PRIMARY KEY DEFAULT uuidv7(),
+    lvid UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     lid UUID NOT NULL REFERENCES links(lid) ON DELETE CASCADE,
     uid UUID REFERENCES users(uid) ON DELETE SET NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
