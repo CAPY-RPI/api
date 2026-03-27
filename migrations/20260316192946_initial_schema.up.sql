@@ -44,7 +44,6 @@ CREATE TABLE IF NOT EXISTS org_members (
 
 CREATE TABLE IF NOT EXISTS events (
     eid UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    title TEXT,
     location TEXT,
     event_time TIMESTAMP,
     description TEXT,
