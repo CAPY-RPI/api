@@ -70,6 +70,7 @@ type BotToken struct {
 
 type Event struct {
 	Eid          uuid.UUID        `json:"eid"`
+	Title        pgtype.Text      `json:"title"`
 	Location     pgtype.Text      `json:"location"`
 	EventTime    pgtype.Timestamp `json:"event_time"`
 	Description  pgtype.Text      `json:"description"`

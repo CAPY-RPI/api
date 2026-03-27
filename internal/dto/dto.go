@@ -83,6 +83,7 @@ type AddMemberRequest struct {
 // ============================================================================
 
 type CreateEventRequest struct {
+	Title       string     `json:"title,omitempty"`
 	Location    string     `json:"location,omitempty"`
 	EventTime   *time.Time `json:"event_time,omitempty"`
 	Description string     `json:"description,omitempty"`
@@ -90,6 +91,7 @@ type CreateEventRequest struct {
 }
 
 type UpdateEventRequest struct {
+	Title       *string    `json:"title,omitempty"`
 	Location    *string    `json:"location,omitempty"`
 	EventTime   *time.Time `json:"event_time,omitempty"`
 	Description *string    `json:"description,omitempty"`
@@ -97,6 +99,7 @@ type UpdateEventRequest struct {
 
 type EventResponse struct {
 	EID          uuid.UUID  `json:"eid"`
+	Title        *string    `json:"title,omitempty"`
 	Location     *string    `json:"location,omitempty"`
 	EventTime    *time.Time `json:"event_time,omitempty"`
 	Description  *string    `json:"description,omitempty"`

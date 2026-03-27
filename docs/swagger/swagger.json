@@ -1342,7 +1342,7 @@
                         "CookieAuth": []
                     }
                 ],
-                "description": "Updates a user's profile. Users can only update their own profile.",
+                "description": "Updates a user's profile. Only role changes require the caller to have the dev role.",
                 "consumes": [
                     "application/json"
                 ],
@@ -1569,6 +1569,9 @@
                 "org_id": {
                     "description": "Which org is hosting",
                     "type": "string"
+                },
+                "title": {
+                    "type": "string"
                 }
             }
         },
@@ -1631,6 +1634,9 @@
                     "type": "string"
                 },
                 "location": {
+                    "type": "string"
+                },
+                "title": {
                     "type": "string"
                 }
             }
@@ -1700,6 +1706,9 @@
                     "type": "string"
                 },
                 "location": {
+                    "type": "string"
+                },
+                "title": {
                     "type": "string"
                 }
             }

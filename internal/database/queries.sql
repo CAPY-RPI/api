@@ -87,13 +87,14 @@ ORDER BY e.event_time DESC
 LIMIT $2 OFFSET $3;
 
 -- name: CreateEvent :one
-INSERT INTO events (location, event_time, description)
-VALUES ($1, $2, $3)
+INSERT INTO events (title, location, event_time, description)
+VALUES ($1, $2, $3, $4)
 RETURNING *;
 
 -- name: UpdateEvent :one
 UPDATE events
-SET location = COALESCE(sqlc.narg('location'), location),
+SET title = COALESCE(sqlc.narg('title'), title),
+    location = COALESCE(sqlc.narg('location'), location),
     event_time = COALESCE(sqlc.narg('event_time'), event_time),
     description = COALESCE(sqlc.narg('description'), description)
 WHERE eid = $1

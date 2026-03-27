@@ -20,6 +20,8 @@ definitions:
       org_id:
         description: Which org is hosting
         type: string
+      title:
+        type: string
     required:
     - org_id
     type: object
@@ -63,6 +65,8 @@ definitions:
       event_time:
         type: string
       location:
+        type: string
+      title:
         type: string
     type: object
   dto.OrgMemberResponse:
@@ -108,6 +112,8 @@ definitions:
       event_time:
         type: string
       location:
+        type: string
+      title:
         type: string
     type: object
   dto.UpdateOrganizationRequest:
@@ -1120,7 +1126,8 @@ paths:
     put:
       consumes:
       - application/json
-      description: Updates a user's profile. Users can only update their own profile.
+      description: Updates a user's profile. Only role changes require the caller
+        to have the dev role.
       parameters:
       - description: User UUID
         in: path
