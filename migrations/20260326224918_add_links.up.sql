@@ -1,0 +1,14 @@
+CREATE TABLE IF NOT EXISTS links (
+    lid UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    endpoint_url TEXT NOT NULL UNIQUE,
+    dest_url TEXT NOT NULL,
+    oid UUID NOT NULL REFERENCES organizations(oid) ON DELETE CASCADE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS link_visits (
+    lvid UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    lid UUID NOT NULL REFERENCES links(lid) ON DELETE CASCADE,
+    uid UUID REFERENCES users(uid) ON DELETE SET NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);

@@ -48,7 +48,7 @@ func TestMain(m *testing.M) {
 	log.Printf("Using schema from: %s", schemaPath)
 
 	pgContainer, err := postgres.Run(ctx,
-		"postgres:18-alpine",
+		"postgres:16-alpine",
 		postgres.WithInitScripts(schemaPath),
 		postgres.WithDatabase("bench_db"),
 		postgres.WithUsername("bench"),

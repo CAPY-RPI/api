@@ -252,7 +252,7 @@ To run the full stack (API + Postgres + Cloudflare Tunnel), update your `.env` f
 ```yaml
 services:
   db:
-    image: postgres:18-alpine
+    image: postgres:16-alpine
     env_file:
       - .env
     environment:

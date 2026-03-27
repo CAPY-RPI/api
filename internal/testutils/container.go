@@ -54,7 +54,7 @@ func SetupTestDB(t *testing.T) *pgxpool.Pool {
 	schemaPath := filepath.Join(projectRoot, "schema.sql")
 
 	pgContainer, err := postgres.Run(ctx,
-		"postgres:18-alpine",
+		"postgres:16-alpine",
 		postgres.WithInitScripts(schemaPath),
 		postgres.WithDatabase("test_db"),
 		postgres.WithUsername("test"),

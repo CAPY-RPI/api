@@ -107,6 +107,8 @@ func New(h *handler.Handler, queries database.Querier, jwtSecret string, allowed
 				})
 			})
 
+			mountProtectedRoutes(r, h, jwtSecret)
+
 			// Bot routes (M2M auth)
 			r.Group(func(r chi.Router) {
 				r.Use(middleware.M2MAuth(queries))
