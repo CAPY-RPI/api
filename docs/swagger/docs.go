@@ -1348,7 +1348,7 @@ const docTemplate = `{
                         "CookieAuth": []
                     }
                 ],
-                "description": "Updates a user's profile. Users can only update their own profile.",
+                "description": "Updates a user's profile. Only role changes require the caller to have the dev role.",
                 "consumes": [
                     "application/json"
                 ],
@@ -1575,6 +1575,9 @@ const docTemplate = `{
                 "org_id": {
                     "description": "Which org is hosting",
                     "type": "string"
+                },
+                "title": {
+                    "type": "string"
                 }
             }
         },
@@ -1637,6 +1640,9 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "location": {
+                    "type": "string"
+                },
+                "title": {
                     "type": "string"
                 }
             }
@@ -1706,6 +1712,9 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "location": {
+                    "type": "string"
+                },
+                "title": {
                     "type": "string"
                 }
             }

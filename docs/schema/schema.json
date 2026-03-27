@@ -584,6 +584,32 @@
                 "array_dims": 0
               },
               {
+                "name": "title",
+                "not_null": false,
+                "is_array": false,
+                "comment": "",
+                "length": -1,
+                "is_named_param": false,
+                "is_func_call": false,
+                "scope": "",
+                "table": {
+                  "catalog": "",
+                  "schema": "",
+                  "name": "events"
+                },
+                "table_alias": "",
+                "type": {
+                  "catalog": "",
+                  "schema": "",
+                  "name": "text"
+                },
+                "is_sqlc_slice": false,
+                "embed_table": null,
+                "original_name": "",
+                "unsigned": false,
+                "array_dims": 0
+              },
+              {
                 "name": "location",
                 "not_null": false,
                 "is_array": false,
@@ -69461,7 +69487,7 @@
       "insert_into_table": null
     },
     {
-      "text": "SELECT eid, location, event_time, description, date_created, date_modified FROM events WHERE eid = $1",
+      "text": "SELECT eid, title, location, event_time, description, date_created, date_modified FROM events WHERE eid = $1",
       "name": "GetEventByID",
       "cmd": ":one",
       "columns": [
@@ -69488,6 +69514,32 @@
           "is_sqlc_slice": false,
           "embed_table": null,
           "original_name": "eid",
+          "unsigned": false,
+          "array_dims": 0
+        },
+        {
+          "name": "title",
+          "not_null": false,
+          "is_array": false,
+          "comment": "",
+          "length": -1,
+          "is_named_param": false,
+          "is_func_call": false,
+          "scope": "",
+          "table": {
+            "catalog": "",
+            "schema": "",
+            "name": "events"
+          },
+          "table_alias": "",
+          "type": {
+            "catalog": "",
+            "schema": "",
+            "name": "text"
+          },
+          "is_sqlc_slice": false,
+          "embed_table": null,
+          "original_name": "title",
           "unsigned": false,
           "array_dims": 0
         },
@@ -69658,7 +69710,7 @@
       "insert_into_table": null
     },
     {
-      "text": "SELECT eid, location, event_time, description, date_created, date_modified FROM events ORDER BY event_time DESC LIMIT $1 OFFSET $2",
+      "text": "SELECT eid, title, location, event_time, description, date_created, date_modified FROM events ORDER BY event_time DESC LIMIT $1 OFFSET $2",
       "name": "ListEvents",
       "cmd": ":many",
       "columns": [
@@ -69685,6 +69737,32 @@
           "is_sqlc_slice": false,
           "embed_table": null,
           "original_name": "eid",
+          "unsigned": false,
+          "array_dims": 0
+        },
+        {
+          "name": "title",
+          "not_null": false,
+          "is_array": false,
+          "comment": "",
+          "length": -1,
+          "is_named_param": false,
+          "is_func_call": false,
+          "scope": "",
+          "table": {
+            "catalog": "",
+            "schema": "",
+            "name": "events"
+          },
+          "table_alias": "",
+          "type": {
+            "catalog": "",
+            "schema": "",
+            "name": "text"
+          },
+          "is_sqlc_slice": false,
+          "embed_table": null,
+          "original_name": "title",
           "unsigned": false,
           "array_dims": 0
         },
@@ -69876,7 +69954,7 @@
       "insert_into_table": null
     },
     {
-      "text": "SELECT e.eid, e.location, e.event_time, e.description, e.date_created, e.date_modified\nFROM events e\nJOIN event_hosting eh ON e.eid = eh.eid\nWHERE eh.oid = $1\nORDER BY e.event_time DESC\nLIMIT $2 OFFSET $3",
+      "text": "SELECT e.eid, e.title, e.location, e.event_time, e.description, e.date_created, e.date_modified\nFROM events e\nJOIN event_hosting eh ON e.eid = eh.eid\nWHERE eh.oid = $1\nORDER BY e.event_time DESC\nLIMIT $2 OFFSET $3",
       "name": "ListEventsByOrg",
       "cmd": ":many",
       "columns": [
@@ -69903,6 +69981,32 @@
           "is_sqlc_slice": false,
           "embed_table": null,
           "original_name": "eid",
+          "unsigned": false,
+          "array_dims": 0
+        },
+        {
+          "name": "title",
+          "not_null": false,
+          "is_array": false,
+          "comment": "",
+          "length": -1,
+          "is_named_param": false,
+          "is_func_call": false,
+          "scope": "",
+          "table": {
+            "catalog": "",
+            "schema": "",
+            "name": "events"
+          },
+          "table_alias": "",
+          "type": {
+            "catalog": "",
+            "schema": "",
+            "name": "text"
+          },
+          "is_sqlc_slice": false,
+          "embed_table": null,
+          "original_name": "title",
           "unsigned": false,
           "array_dims": 0
         },
@@ -70123,7 +70227,7 @@
       "insert_into_table": null
     },
     {
-      "text": "INSERT INTO events (location, event_time, description)\nVALUES ($1, $2, $3)\nRETURNING eid, location, event_time, description, date_created, date_modified",
+      "text": "INSERT INTO events (title, location, event_time, description)\nVALUES ($1, $2, $3, $4)\nRETURNING eid, title, location, event_time, description, date_created, date_modified",
       "name": "CreateEvent",
       "cmd": ":one",
       "columns": [
@@ -70150,6 +70254,32 @@
           "is_sqlc_slice": false,
           "embed_table": null,
           "original_name": "eid",
+          "unsigned": false,
+          "array_dims": 0
+        },
+        {
+          "name": "title",
+          "not_null": false,
+          "is_array": false,
+          "comment": "",
+          "length": -1,
+          "is_named_param": false,
+          "is_func_call": false,
+          "scope": "",
+          "table": {
+            "catalog": "",
+            "schema": "",
+            "name": "events"
+          },
+          "table_alias": "",
+          "type": {
+            "catalog": "",
+            "schema": "",
+            "name": "text"
+          },
+          "is_sqlc_slice": false,
+          "embed_table": null,
+          "original_name": "title",
           "unsigned": false,
           "array_dims": 0
         },
@@ -70288,6 +70418,35 @@
         {
           "number": 1,
           "column": {
+            "name": "title",
+            "not_null": false,
+            "is_array": false,
+            "comment": "",
+            "length": -1,
+            "is_named_param": false,
+            "is_func_call": false,
+            "scope": "",
+            "table": {
+              "catalog": "",
+              "schema": "public",
+              "name": "events"
+            },
+            "table_alias": "",
+            "type": {
+              "catalog": "",
+              "schema": "",
+              "name": "text"
+            },
+            "is_sqlc_slice": false,
+            "embed_table": null,
+            "original_name": "title",
+            "unsigned": false,
+            "array_dims": 0
+          }
+        },
+        {
+          "number": 2,
+          "column": {
             "name": "location",
             "not_null": false,
             "is_array": false,
@@ -70315,7 +70474,7 @@
           }
         },
         {
-          "number": 2,
+          "number": 3,
           "column": {
             "name": "event_time",
             "not_null": false,
@@ -70344,7 +70503,7 @@
           }
         },
         {
-          "number": 3,
+          "number": 4,
           "column": {
             "name": "description",
             "not_null": false,
@@ -70382,7 +70541,7 @@
       }
     },
     {
-      "text": "UPDATE events\nSET location = COALESCE($2, location),\n    event_time = COALESCE($3, event_time),\n    description = COALESCE($4, description)\nWHERE eid = $1\nRETURNING eid, location, event_time, description, date_created, date_modified",
+      "text": "UPDATE events\nSET title = COALESCE($2, title),\n    location = COALESCE($3, location),\n    event_time = COALESCE($4, event_time),\n    description = COALESCE($5, description)\nWHERE eid = $1\nRETURNING eid, title, location, event_time, description, date_created, date_modified",
       "name": "UpdateEvent",
       "cmd": ":one",
       "columns": [
@@ -70409,6 +70568,32 @@
           "is_sqlc_slice": false,
           "embed_table": null,
           "original_name": "eid",
+          "unsigned": false,
+          "array_dims": 0
+        },
+        {
+          "name": "title",
+          "not_null": false,
+          "is_array": false,
+          "comment": "",
+          "length": -1,
+          "is_named_param": false,
+          "is_func_call": false,
+          "scope": "",
+          "table": {
+            "catalog": "",
+            "schema": "",
+            "name": "events"
+          },
+          "table_alias": "",
+          "type": {
+            "catalog": "",
+            "schema": "",
+            "name": "text"
+          },
+          "is_sqlc_slice": false,
+          "embed_table": null,
+          "original_name": "title",
           "unsigned": false,
           "array_dims": 0
         },
@@ -70576,6 +70761,35 @@
         {
           "number": 2,
           "column": {
+            "name": "title",
+            "not_null": false,
+            "is_array": false,
+            "comment": "",
+            "length": -1,
+            "is_named_param": true,
+            "is_func_call": false,
+            "scope": "",
+            "table": {
+              "catalog": "",
+              "schema": "public",
+              "name": "events"
+            },
+            "table_alias": "",
+            "type": {
+              "catalog": "",
+              "schema": "",
+              "name": "text"
+            },
+            "is_sqlc_slice": false,
+            "embed_table": null,
+            "original_name": "title",
+            "unsigned": false,
+            "array_dims": 0
+          }
+        },
+        {
+          "number": 3,
+          "column": {
             "name": "location",
             "not_null": false,
             "is_array": false,
@@ -70603,7 +70817,7 @@
           }
         },
         {
-          "number": 3,
+          "number": 4,
           "column": {
             "name": "event_time",
             "not_null": false,
@@ -70632,7 +70846,7 @@
           }
         },
         {
-          "number": 4,
+          "number": 5,
           "column": {
             "name": "description",
             "not_null": false,
@@ -71421,7 +71635,7 @@
       "insert_into_table": null
     },
     {
-      "text": "SELECT e.eid, e.location, e.event_time, e.description, e.date_created, e.date_modified, er.is_attending, er.is_admin, er.date_registered\nFROM events e\nJOIN event_registrations er ON e.eid = er.eid\nWHERE er.uid = $1\nORDER BY e.event_time DESC",
+      "text": "SELECT e.eid, e.title, e.location, e.event_time, e.description, e.date_created, e.date_modified, er.is_attending, er.is_admin, er.date_registered\nFROM events e\nJOIN event_registrations er ON e.eid = er.eid\nWHERE er.uid = $1\nORDER BY e.event_time DESC",
       "name": "GetUserEvents",
       "cmd": ":many",
       "columns": [
@@ -71448,6 +71662,32 @@
           "is_sqlc_slice": false,
           "embed_table": null,
           "original_name": "eid",
+          "unsigned": false,
+          "array_dims": 0
+        },
+        {
+          "name": "title",
+          "not_null": false,
+          "is_array": false,
+          "comment": "",
+          "length": -1,
+          "is_named_param": false,
+          "is_func_call": false,
+          "scope": "",
+          "table": {
+            "catalog": "",
+            "schema": "",
+            "name": "events"
+          },
+          "table_alias": "",
+          "type": {
+            "catalog": "",
+            "schema": "",
+            "name": "text"
+          },
+          "is_sqlc_slice": false,
+          "embed_table": null,
+          "original_name": "title",
           "unsigned": false,
           "array_dims": 0
         },

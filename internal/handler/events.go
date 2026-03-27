@@ -72,6 +72,7 @@ func (h *Handler) CreateEvent(w http.ResponseWriter, r *http.Request) {
 	}
 
 	event, err := h.queries.CreateEvent(r.Context(), database.CreateEventParams{
+		Title:       toPgTextFromString(req.Title),
 		Location:    toPgTextFromString(req.Location),
 		EventTime:   toPgTimestamp(req.EventTime),
 		Description: toPgTextFromString(req.Description),
@@ -155,6 +156,7 @@ func (h *Handler) UpdateEvent(w http.ResponseWriter, r *http.Request) {
 
 	event, err := h.queries.UpdateEvent(r.Context(), database.UpdateEventParams{
 		Eid:         eid,
+		Title:       toPgText(req.Title),
 		Location:    toPgText(req.Location),
 		EventTime:   toPgTimestamp(req.EventTime),
 		Description: toPgText(req.Description),
@@ -418,6 +420,7 @@ func (h *Handler) ListEventsByOrg(w http.ResponseWriter, r *http.Request) {
 func toEventResponse(event database.Event) dto.EventResponse {
 	return dto.EventResponse{
 		EID:          event.Eid,
+		Title:        fromPgText(event.Title),
 		Location:     fromPgText(event.Location),
 		EventTime:    fromPgTimestamp(event.EventTime),
 		Description:  fromPgText(event.Description),

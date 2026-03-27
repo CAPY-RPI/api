@@ -205,6 +205,7 @@ func (h *Handler) GetUserEvents(w http.ResponseWriter, r *http.Request) {
 	for i, event := range events {
 		response[i] = dto.EventResponse{
 			EID:         event.Eid,
+			Title:       fromPgText(event.Title),
 			Location:    fromPgText(event.Location),
 			EventTime:   fromPgTimestamp(event.EventTime),
 			Description: fromPgText(event.Description),
