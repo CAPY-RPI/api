@@ -80,9 +80,13 @@ func (q *Queries) CreateBotToken(ctx context.Context, arg CreateBotTokenParams) 
 }
 
 const createEvent = `-- name: CreateEvent :one
-INSERT INTO events (title, location, event_time, description)
-VALUES ($1, $2, $3, $4)
-RETURNING eid, title, location, event_time, description, date_created, date_modified
+WITH updated AS (
+    INSERT INTO events (title, location, event_time, description)
+    VALUES ($1, $2, $3, $4)
+    RETURNING eid, location, event_time, description, date_created, date_modified, title
+)
+SELECT v.eid, v.location, v.event_time, v.description, v.date_created, v.date_modified, v.title, v.org_ids FROM events_with_org_ids v
+WHERE v.eid = (SELECT eid FROM updated)
 `
 
 type CreateEventParams struct {
@@ -92,22 +96,23 @@ type CreateEventParams struct {
 	Description pgtype.Text      `json:"description"`
 }
 
-func (q *Queries) CreateEvent(ctx context.Context, arg CreateEventParams) (Event, error) {
+func (q *Queries) CreateEvent(ctx context.Context, arg CreateEventParams) (EventsWithOrgID, error) {
 	row := q.db.QueryRow(ctx, createEvent,
 		arg.Title,
 		arg.Location,
 		arg.EventTime,
 		arg.Description,
 	)
-	var i Event
+	var i EventsWithOrgID
 	err := row.Scan(
 		&i.Eid,
-		&i.Title,
 		&i.Location,
 		&i.EventTime,
 		&i.Description,
 		&i.DateCreated,
 		&i.DateModified,
+		&i.Title,
+		&i.OrgIds,
 	)
 	return i, err
 }
@@ -258,20 +263,21 @@ func (q *Queries) GetBotTokenByID(ctx context.Context, tokenID uuid.UUID) (BotTo
 }
 
 const getEventByID = `-- name: GetEventByID :one
-SELECT eid, title, location, event_time, description, date_created, date_modified FROM events WHERE eid = $1
+SELECT eid, location, event_time, description, date_created, date_modified, title, org_ids FROM events_with_org_ids WHERE eid = $1
 `
 
-func (q *Queries) GetEventByID(ctx context.Context, eid uuid.UUID) (Event, error) {
+func (q *Queries) GetEventByID(ctx context.Context, eid uuid.UUID) (EventsWithOrgID, error) {
 	row := q.db.QueryRow(ctx, getEventByID, eid)
-	var i Event
+	var i EventsWithOrgID
 	err := row.Scan(
 		&i.Eid,
-		&i.Title,
 		&i.Location,
 		&i.EventTime,
 		&i.Description,
 		&i.DateCreated,
 		&i.DateModified,
+		&i.Title,
+		&i.OrgIds,
 	)
 	return i, err
 }
@@ -498,8 +504,8 @@ func (q *Queries) GetUserByID(ctx context.Context, uid uuid.UUID) (User, error) 
 }
 
 const getUserEvents = `-- name: GetUserEvents :many
-SELECT e.eid, e.title, e.location, e.event_time, e.description, e.date_created, e.date_modified, er.is_attending, er.is_admin, er.date_registered
-FROM events e
+SELECT e.eid, e.location, e.event_time, e.description, e.date_created, e.date_modified, e.title, e.org_ids, er.is_attending, er.is_admin, er.date_registered
+FROM events_with_org_ids e
 JOIN event_registrations er ON e.eid = er.eid
 WHERE er.uid = $1
 ORDER BY e.event_time DESC
@@ -507,12 +513,13 @@ ORDER BY e.event_time DESC
 
 type GetUserEventsRow struct {
 	Eid            uuid.UUID        `json:"eid"`
-	Title          pgtype.Text      `json:"title"`
 	Location       pgtype.Text      `json:"location"`
 	EventTime      pgtype.Timestamp `json:"event_time"`
 	Description    pgtype.Text      `json:"description"`
 	DateCreated    pgtype.Date      `json:"date_created"`
 	DateModified   pgtype.Date      `json:"date_modified"`
+	Title          pgtype.Text      `json:"title"`
+	OrgIds         []uuid.UUID      `json:"org_ids"`
 	IsAttending    pgtype.Bool      `json:"is_attending"`
 	IsAdmin        pgtype.Bool      `json:"is_admin"`
 	DateRegistered pgtype.Date      `json:"date_registered"`
@@ -529,12 +536,13 @@ func (q *Queries) GetUserEvents(ctx context.Context, uid uuid.UUID) ([]GetUserEv
 		var i GetUserEventsRow
 		if err := rows.Scan(
 			&i.Eid,
-			&i.Title,
 			&i.Location,
 			&i.EventTime,
 			&i.Description,
 			&i.DateCreated,
 			&i.DateModified,
+			&i.Title,
+			&i.OrgIds,
 			&i.IsAttending,
 			&i.IsAdmin,
 			&i.DateRegistered,
@@ -684,7 +692,7 @@ func (q *Queries) ListBotTokens(ctx context.Context) ([]ListBotTokensRow, error)
 }
 
 const listEvents = `-- name: ListEvents :many
-SELECT eid, title, location, event_time, description, date_created, date_modified FROM events ORDER BY event_time DESC LIMIT $1 OFFSET $2
+SELECT eid, location, event_time, description, date_created, date_modified, title, org_ids FROM events_with_org_ids ORDER BY event_time DESC LIMIT $1 OFFSET $2
 `
 
 type ListEventsParams struct {
@@ -692,23 +700,24 @@ type ListEventsParams struct {
 	Offset int32 `json:"offset"`
 }
 
-func (q *Queries) ListEvents(ctx context.Context, arg ListEventsParams) ([]Event, error) {
+func (q *Queries) ListEvents(ctx context.Context, arg ListEventsParams) ([]EventsWithOrgID, error) {
 	rows, err := q.db.Query(ctx, listEvents, arg.Limit, arg.Offset)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	items := []Event{}
+	items := []EventsWithOrgID{}
 	for rows.Next() {
-		var i Event
+		var i EventsWithOrgID
 		if err := rows.Scan(
 			&i.Eid,
-			&i.Title,
 			&i.Location,
 			&i.EventTime,
 			&i.Description,
 			&i.DateCreated,
 			&i.DateModified,
+			&i.Title,
+			&i.OrgIds,
 		); err != nil {
 			return nil, err
 		}
@@ -721,8 +730,8 @@ func (q *Queries) ListEvents(ctx context.Context, arg ListEventsParams) ([]Event
 }
 
 const listEventsByOrg = `-- name: ListEventsByOrg :many
-SELECT e.eid, e.title, e.location, e.event_time, e.description, e.date_created, e.date_modified
-FROM events e
+SELECT e.eid, e.location, e.event_time, e.description, e.date_created, e.date_modified, e.title, e.org_ids
+FROM events_with_org_ids e
 JOIN event_hosting eh ON e.eid = eh.eid
 WHERE eh.oid = $1
 ORDER BY e.event_time DESC
@@ -735,23 +744,24 @@ type ListEventsByOrgParams struct {
 	Offset int32     `json:"offset"`
 }
 
-func (q *Queries) ListEventsByOrg(ctx context.Context, arg ListEventsByOrgParams) ([]Event, error) {
+func (q *Queries) ListEventsByOrg(ctx context.Context, arg ListEventsByOrgParams) ([]EventsWithOrgID, error) {
 	rows, err := q.db.Query(ctx, listEventsByOrg, arg.Oid, arg.Limit, arg.Offset)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	items := []Event{}
+	items := []EventsWithOrgID{}
 	for rows.Next() {
-		var i Event
+		var i EventsWithOrgID
 		if err := rows.Scan(
 			&i.Eid,
-			&i.Title,
 			&i.Location,
 			&i.EventTime,
 			&i.Description,
 			&i.DateCreated,
 			&i.DateModified,
+			&i.Title,
+			&i.OrgIds,
 		); err != nil {
 			return nil, err
 		}
@@ -954,13 +964,17 @@ func (q *Queries) UpdateBotTokenLastUsed(ctx context.Context, tokenID uuid.UUID)
 }
 
 const updateEvent = `-- name: UpdateEvent :one
-UPDATE events
-SET title = COALESCE($2, title),
-    location = COALESCE($3, location),
-    event_time = COALESCE($4, event_time),
-    description = COALESCE($5, description)
-WHERE eid = $1
-RETURNING eid, title, location, event_time, description, date_created, date_modified
+WITH updated AS (
+    UPDATE events
+    SET title = COALESCE($2, title),
+        location = COALESCE($3, location),
+        event_time = COALESCE($4, event_time),
+        description = COALESCE($5, description)
+    WHERE eid = $1
+    RETURNING eid, location, event_time, description, date_created, date_modified, title
+)
+SELECT v.eid, v.location, v.event_time, v.description, v.date_created, v.date_modified, v.title, v.org_ids FROM events_with_org_ids v
+WHERE v.eid = $1
 `
 
 type UpdateEventParams struct {
@@ -971,7 +985,7 @@ type UpdateEventParams struct {
 	Description pgtype.Text      `json:"description"`
 }
 
-func (q *Queries) UpdateEvent(ctx context.Context, arg UpdateEventParams) (Event, error) {
+func (q *Queries) UpdateEvent(ctx context.Context, arg UpdateEventParams) (EventsWithOrgID, error) {
 	row := q.db.QueryRow(ctx, updateEvent,
 		arg.Eid,
 		arg.Title,
@@ -979,15 +993,16 @@ func (q *Queries) UpdateEvent(ctx context.Context, arg UpdateEventParams) (Event
 		arg.EventTime,
 		arg.Description,
 	)
-	var i Event
+	var i EventsWithOrgID
 	err := row.Scan(
 		&i.Eid,
-		&i.Title,
 		&i.Location,
 		&i.EventTime,
 		&i.Description,
 		&i.DateCreated,
 		&i.DateModified,
+		&i.Title,
+		&i.OrgIds,
 	)
 	return i, err
 }

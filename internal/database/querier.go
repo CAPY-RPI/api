@@ -15,7 +15,7 @@ type Querier interface {
 	AddEventHost(ctx context.Context, arg AddEventHostParams) error
 	AddOrgMember(ctx context.Context, arg AddOrgMemberParams) error
 	CreateBotToken(ctx context.Context, arg CreateBotTokenParams) (BotToken, error)
-	CreateEvent(ctx context.Context, arg CreateEventParams) (Event, error)
+	CreateEvent(ctx context.Context, arg CreateEventParams) (EventsWithOrgID, error)
 	// Link Queries
 	CreateLink(ctx context.Context, arg CreateLinkParams) (Link, error)
 	CreateOrganization(ctx context.Context, name string) (Organization, error)
@@ -26,7 +26,7 @@ type Querier interface {
 	DeleteUser(ctx context.Context, uid uuid.UUID) error
 	// Bot Token Queries
 	GetBotTokenByID(ctx context.Context, tokenID uuid.UUID) (BotToken, error)
-	GetEventByID(ctx context.Context, eid uuid.UUID) (Event, error)
+	GetEventByID(ctx context.Context, eid uuid.UUID) (EventsWithOrgID, error)
 	GetEventRegistrations(ctx context.Context, eid uuid.UUID) ([]GetEventRegistrationsRow, error)
 	GetLinkByEndpointURL(ctx context.Context, endpointUrl string) (Link, error)
 	GetLinkByLID(ctx context.Context, lid uuid.UUID) (Link, error)
@@ -40,8 +40,8 @@ type Querier interface {
 	IsEventAdmin(ctx context.Context, arg IsEventAdminParams) (pgtype.Bool, error)
 	IsOrgAdmin(ctx context.Context, arg IsOrgAdminParams) (pgtype.Bool, error)
 	ListBotTokens(ctx context.Context) ([]ListBotTokensRow, error)
-	ListEvents(ctx context.Context, arg ListEventsParams) ([]Event, error)
-	ListEventsByOrg(ctx context.Context, arg ListEventsByOrgParams) ([]Event, error)
+	ListEvents(ctx context.Context, arg ListEventsParams) ([]EventsWithOrgID, error)
+	ListEventsByOrg(ctx context.Context, arg ListEventsByOrgParams) ([]EventsWithOrgID, error)
 	ListLinksByOrg(ctx context.Context, oid uuid.UUID) ([]Link, error)
 	ListOrganizations(ctx context.Context, arg ListOrganizationsParams) ([]Organization, error)
 	ListUsers(ctx context.Context, arg ListUsersParams) ([]User, error)
@@ -51,7 +51,7 @@ type Querier interface {
 	RevokeBotToken(ctx context.Context, tokenID uuid.UUID) error
 	UnregisterFromEvent(ctx context.Context, arg UnregisterFromEventParams) error
 	UpdateBotTokenLastUsed(ctx context.Context, tokenID uuid.UUID) error
-	UpdateEvent(ctx context.Context, arg UpdateEventParams) (Event, error)
+	UpdateEvent(ctx context.Context, arg UpdateEventParams) (EventsWithOrgID, error)
 	UpdateLink(ctx context.Context, arg UpdateLinkParams) (Link, error)
 	UpdateOrganization(ctx context.Context, arg UpdateOrganizationParams) (Organization, error)
 	UpdateUser(ctx context.Context, arg UpdateUserParams) (User, error)

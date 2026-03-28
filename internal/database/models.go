@@ -70,12 +70,12 @@ type BotToken struct {
 
 type Event struct {
 	Eid          uuid.UUID        `json:"eid"`
-	Title        pgtype.Text      `json:"title"`
 	Location     pgtype.Text      `json:"location"`
 	EventTime    pgtype.Timestamp `json:"event_time"`
 	Description  pgtype.Text      `json:"description"`
 	DateCreated  pgtype.Date      `json:"date_created"`
 	DateModified pgtype.Date      `json:"date_modified"`
+	Title        pgtype.Text      `json:"title"`
 }
 
 type EventHosting struct {
@@ -89,6 +89,17 @@ type EventRegistration struct {
 	IsAttending    pgtype.Bool `json:"is_attending"`
 	IsAdmin        pgtype.Bool `json:"is_admin"`
 	DateRegistered pgtype.Date `json:"date_registered"`
+}
+
+type EventsWithOrgID struct {
+	Eid          uuid.UUID        `json:"eid"`
+	Location     pgtype.Text      `json:"location"`
+	EventTime    pgtype.Timestamp `json:"event_time"`
+	Description  pgtype.Text      `json:"description"`
+	DateCreated  pgtype.Date      `json:"date_created"`
+	DateModified pgtype.Date      `json:"date_modified"`
+	Title        pgtype.Text      `json:"title"`
+	OrgIds       []uuid.UUID      `json:"org_ids"`
 }
 
 type Link struct {
@@ -119,6 +130,32 @@ type Organization struct {
 	Name         string      `json:"name"`
 	DateCreated  pgtype.Date `json:"date_created"`
 	DateModified pgtype.Date `json:"date_modified"`
+}
+
+type TelemetryCompletion struct {
+	ID            int64              `json:"id"`
+	CorrelationID string             `json:"correlation_id"`
+	Timestamp     pgtype.Timestamptz `json:"timestamp"`
+	ReceivedAt    pgtype.Timestamptz `json:"received_at"`
+	CommandName   string             `json:"command_name"`
+	Status        string             `json:"status"`
+	DurationMs    pgtype.Numeric     `json:"duration_ms"`
+	ErrorType     pgtype.Text        `json:"error_type"`
+}
+
+type TelemetryInteraction struct {
+	ID              int64              `json:"id"`
+	CorrelationID   string             `json:"correlation_id"`
+	Timestamp       pgtype.Timestamptz `json:"timestamp"`
+	ReceivedAt      pgtype.Timestamptz `json:"received_at"`
+	InteractionType string             `json:"interaction_type"`
+	UserID          int64              `json:"user_id"`
+	CommandName     pgtype.Text        `json:"command_name"`
+	GuildID         pgtype.Int8        `json:"guild_id"`
+	GuildName       pgtype.Text        `json:"guild_name"`
+	ChannelID       int64              `json:"channel_id"`
+	Options         []byte             `json:"options"`
+	BotVersion      string             `json:"bot_version"`
 }
 
 type User struct {
