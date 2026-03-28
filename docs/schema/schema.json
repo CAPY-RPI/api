@@ -3,7 +3,7 @@
     "version": "2",
     "engine": "postgresql",
     "schema": [
-      "schema.sql"
+      "migrations"
     ],
     "queries": [
       "internal/database/queries.sql"
