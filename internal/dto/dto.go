@@ -98,13 +98,14 @@ type UpdateEventRequest struct {
 }
 
 type EventResponse struct {
-	EID          uuid.UUID  `json:"eid"`
-	Title        *string    `json:"title,omitempty"`
-	Location     *string    `json:"location,omitempty"`
-	EventTime    *time.Time `json:"event_time,omitempty"`
-	Description  *string    `json:"description,omitempty"`
-	DateCreated  *time.Time `json:"date_created,omitempty"`
-	DateModified *time.Time `json:"date_modified,omitempty"`
+	EID           uuid.UUID   `json:"eid"`
+	Organizations []uuid.UUID `json:"oids"`
+	Title         *string     `json:"title,omitempty"`
+	Location      *string     `json:"location,omitempty"`
+	EventTime     *time.Time  `json:"event_time,omitempty"`
+	Description   *string     `json:"description,omitempty"`
+	DateCreated   *time.Time  `json:"date_created,omitempty"`
+	DateModified  *time.Time  `json:"date_modified,omitempty"`
 }
 
 type EventRegistrationResponse struct {

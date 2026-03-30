@@ -417,14 +417,16 @@ func (h *Handler) ListEventsByOrg(w http.ResponseWriter, r *http.Request) {
 }
 
 // Helper functions
-func toEventResponse(event database.Event) dto.EventResponse {
+func toEventResponse(event database.EventsWithOrgID) dto.EventResponse {
+
 	return dto.EventResponse{
-		EID:          event.Eid,
-		Title:        fromPgText(event.Title),
-		Location:     fromPgText(event.Location),
-		EventTime:    fromPgTimestamp(event.EventTime),
-		Description:  fromPgText(event.Description),
-		DateCreated:  fromPgDate(event.DateCreated),
-		DateModified: fromPgDate(event.DateModified),
+		EID:           event.Eid,
+		Organizations: event.OrgIds,
+		Title:         fromPgText(event.Title),
+		Location:      fromPgText(event.Location),
+		EventTime:     fromPgTimestamp(event.EventTime),
+		Description:   fromPgText(event.Description),
+		DateCreated:   fromPgDate(event.DateCreated),
+		DateModified:  fromPgDate(event.DateModified),
 	}
 }

@@ -37,6 +37,12 @@ migrate-version:
 	test -n "$$db_url" || (echo "Set MIGRATE_DATABASE_URL or DATABASE_URL (or add DATABASE_URL to .env)" && exit 1); \
 	docker run --rm --network $(COMPOSE_NETWORK) -v "$(CURDIR)/$(MIGRATIONS_DIR):/migrations" $(MIGRATE_DOCKER_IMAGE) -path /migrations -database "$$db_url" version
 
+migrate-force:
+	@test -n "$(version)" || (echo "Usage: make migrate-version version=20260327180817" && exit 1)
+	@db_url="$${MIGRATE_DATABASE_URL:-$${DATABASE_URL:-$$(grep -E '^DATABASE_URL=' .env 2>/dev/null | head -n1 | cut -d= -f2-)}}"; \
+	test -n "$$db_url" || (echo "Set MIGRATE_DATABASE_URL or DATABASE_URL (or add DATABASE_URL to .env)" && exit 1); \
+	docker run --rm --network $(COMPOSE_NETWORK) -v "$(CURDIR)/$(MIGRATIONS_DIR):/migrations" $(MIGRATE_DOCKER_IMAGE) -path /migrations -database "$$db_url" force $(version)
+
 # Build
 build: generate
 	go build -o bin/capy-server ./cmd/server

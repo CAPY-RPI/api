@@ -73,32 +73,40 @@ WHERE om.uid = $1
 ORDER BY o.name;
 
 -- name: GetEventByID :one
-SELECT * FROM events WHERE eid = $1;
+SELECT * FROM events_with_org_ids WHERE eid = $1;
 
 -- name: ListEvents :many
-SELECT * FROM events ORDER BY event_time DESC LIMIT $1 OFFSET $2;
+SELECT * FROM events_with_org_ids ORDER BY event_time DESC LIMIT $1 OFFSET $2;
 
 -- name: ListEventsByOrg :many
 SELECT e.*
-FROM events e
+FROM events_with_org_ids e
 JOIN event_hosting eh ON e.eid = eh.eid
 WHERE eh.oid = $1
 ORDER BY e.event_time DESC
 LIMIT $2 OFFSET $3;
 
 -- name: CreateEvent :one
-INSERT INTO events (title, location, event_time, description)
-VALUES ($1, $2, $3, $4)
-RETURNING *;
+WITH updated AS (
+    INSERT INTO events (title, location, event_time, description)
+    VALUES ($1, $2, $3, $4)
+    RETURNING *
+)
+SELECT v.* FROM events_with_org_ids v
+WHERE v.eid = (SELECT eid FROM updated);
 
 -- name: UpdateEvent :one
-UPDATE events
-SET title = COALESCE(sqlc.narg('title'), title),
-    location = COALESCE(sqlc.narg('location'), location),
-    event_time = COALESCE(sqlc.narg('event_time'), event_time),
-    description = COALESCE(sqlc.narg('description'), description)
-WHERE eid = $1
-RETURNING *;
+WITH updated AS (
+    UPDATE events
+    SET title = COALESCE(sqlc.narg('title'), title),
+        location = COALESCE(sqlc.narg('location'), location),
+        event_time = COALESCE(sqlc.narg('event_time'), event_time),
+        description = COALESCE(sqlc.narg('description'), description)
+    WHERE eid = $1
+    RETURNING *
+)
+SELECT v.* FROM events_with_org_ids v
+WHERE v.eid = $1;
 
 -- name: DeleteEvent :exec
 DELETE FROM events WHERE eid = $1;
@@ -142,7 +150,7 @@ OR EXISTS (
 
 -- name: GetUserEvents :many
 SELECT e.*, er.is_attending, er.is_admin, er.date_registered
-FROM events e
+FROM events_with_org_ids e
 JOIN event_registrations er ON e.eid = er.eid
 WHERE er.uid = $1
 ORDER BY e.event_time DESC;

@@ -1,0 +1,1 @@
+DROP VIEW events_with_org_ids

@@ -584,32 +584,6 @@
                 "array_dims": 0
               },
               {
-                "name": "title",
-                "not_null": false,
-                "is_array": false,
-                "comment": "",
-                "length": -1,
-                "is_named_param": false,
-                "is_func_call": false,
-                "scope": "",
-                "table": {
-                  "catalog": "",
-                  "schema": "",
-                  "name": "events"
-                },
-                "table_alias": "",
-                "type": {
-                  "catalog": "",
-                  "schema": "",
-                  "name": "text"
-                },
-                "is_sqlc_slice": false,
-                "embed_table": null,
-                "original_name": "",
-                "unsigned": false,
-                "array_dims": 0
-              },
-              {
                 "name": "location",
                 "not_null": false,
                 "is_array": false,
@@ -732,6 +706,32 @@
                   "catalog": "",
                   "schema": "",
                   "name": "date"
+                },
+                "is_sqlc_slice": false,
+                "embed_table": null,
+                "original_name": "",
+                "unsigned": false,
+                "array_dims": 0
+              },
+              {
+                "name": "title",
+                "not_null": false,
+                "is_array": false,
+                "comment": "",
+                "length": -1,
+                "is_named_param": false,
+                "is_func_call": false,
+                "scope": "",
+                "table": {
+                  "catalog": "",
+                  "schema": "",
+                  "name": "events"
+                },
+                "table_alias": "",
+                "type": {
+                  "catalog": "",
+                  "schema": "",
+                  "name": "text"
                 },
                 "is_sqlc_slice": false,
                 "embed_table": null,
@@ -1166,6 +1166,546 @@
             "rel": {
               "catalog": "",
               "schema": "",
+              "name": "telemetry_interactions"
+            },
+            "columns": [
+              {
+                "name": "id",
+                "not_null": true,
+                "is_array": false,
+                "comment": "",
+                "length": -1,
+                "is_named_param": false,
+                "is_func_call": false,
+                "scope": "",
+                "table": {
+                  "catalog": "",
+                  "schema": "",
+                  "name": "telemetry_interactions"
+                },
+                "table_alias": "",
+                "type": {
+                  "catalog": "",
+                  "schema": "",
+                  "name": "bigserial"
+                },
+                "is_sqlc_slice": false,
+                "embed_table": null,
+                "original_name": "",
+                "unsigned": false,
+                "array_dims": 0
+              },
+              {
+                "name": "correlation_id",
+                "not_null": true,
+                "is_array": false,
+                "comment": "",
+                "length": -1,
+                "is_named_param": false,
+                "is_func_call": false,
+                "scope": "",
+                "table": {
+                  "catalog": "",
+                  "schema": "",
+                  "name": "telemetry_interactions"
+                },
+                "table_alias": "",
+                "type": {
+                  "catalog": "",
+                  "schema": "pg_catalog",
+                  "name": "varchar"
+                },
+                "is_sqlc_slice": false,
+                "embed_table": null,
+                "original_name": "",
+                "unsigned": false,
+                "array_dims": 0
+              },
+              {
+                "name": "timestamp",
+                "not_null": true,
+                "is_array": false,
+                "comment": "",
+                "length": -1,
+                "is_named_param": false,
+                "is_func_call": false,
+                "scope": "",
+                "table": {
+                  "catalog": "",
+                  "schema": "",
+                  "name": "telemetry_interactions"
+                },
+                "table_alias": "",
+                "type": {
+                  "catalog": "",
+                  "schema": "",
+                  "name": "timestamptz"
+                },
+                "is_sqlc_slice": false,
+                "embed_table": null,
+                "original_name": "",
+                "unsigned": false,
+                "array_dims": 0
+              },
+              {
+                "name": "received_at",
+                "not_null": true,
+                "is_array": false,
+                "comment": "",
+                "length": -1,
+                "is_named_param": false,
+                "is_func_call": false,
+                "scope": "",
+                "table": {
+                  "catalog": "",
+                  "schema": "",
+                  "name": "telemetry_interactions"
+                },
+                "table_alias": "",
+                "type": {
+                  "catalog": "",
+                  "schema": "",
+                  "name": "timestamptz"
+                },
+                "is_sqlc_slice": false,
+                "embed_table": null,
+                "original_name": "",
+                "unsigned": false,
+                "array_dims": 0
+              },
+              {
+                "name": "interaction_type",
+                "not_null": true,
+                "is_array": false,
+                "comment": "",
+                "length": -1,
+                "is_named_param": false,
+                "is_func_call": false,
+                "scope": "",
+                "table": {
+                  "catalog": "",
+                  "schema": "",
+                  "name": "telemetry_interactions"
+                },
+                "table_alias": "",
+                "type": {
+                  "catalog": "",
+                  "schema": "pg_catalog",
+                  "name": "varchar"
+                },
+                "is_sqlc_slice": false,
+                "embed_table": null,
+                "original_name": "",
+                "unsigned": false,
+                "array_dims": 0
+              },
+              {
+                "name": "user_id",
+                "not_null": true,
+                "is_array": false,
+                "comment": "",
+                "length": -1,
+                "is_named_param": false,
+                "is_func_call": false,
+                "scope": "",
+                "table": {
+                  "catalog": "",
+                  "schema": "",
+                  "name": "telemetry_interactions"
+                },
+                "table_alias": "",
+                "type": {
+                  "catalog": "",
+                  "schema": "pg_catalog",
+                  "name": "int8"
+                },
+                "is_sqlc_slice": false,
+                "embed_table": null,
+                "original_name": "",
+                "unsigned": false,
+                "array_dims": 0
+              },
+              {
+                "name": "command_name",
+                "not_null": false,
+                "is_array": false,
+                "comment": "",
+                "length": -1,
+                "is_named_param": false,
+                "is_func_call": false,
+                "scope": "",
+                "table": {
+                  "catalog": "",
+                  "schema": "",
+                  "name": "telemetry_interactions"
+                },
+                "table_alias": "",
+                "type": {
+                  "catalog": "",
+                  "schema": "pg_catalog",
+                  "name": "varchar"
+                },
+                "is_sqlc_slice": false,
+                "embed_table": null,
+                "original_name": "",
+                "unsigned": false,
+                "array_dims": 0
+              },
+              {
+                "name": "guild_id",
+                "not_null": false,
+                "is_array": false,
+                "comment": "",
+                "length": -1,
+                "is_named_param": false,
+                "is_func_call": false,
+                "scope": "",
+                "table": {
+                  "catalog": "",
+                  "schema": "",
+                  "name": "telemetry_interactions"
+                },
+                "table_alias": "",
+                "type": {
+                  "catalog": "",
+                  "schema": "pg_catalog",
+                  "name": "int8"
+                },
+                "is_sqlc_slice": false,
+                "embed_table": null,
+                "original_name": "",
+                "unsigned": false,
+                "array_dims": 0
+              },
+              {
+                "name": "guild_name",
+                "not_null": false,
+                "is_array": false,
+                "comment": "",
+                "length": -1,
+                "is_named_param": false,
+                "is_func_call": false,
+                "scope": "",
+                "table": {
+                  "catalog": "",
+                  "schema": "",
+                  "name": "telemetry_interactions"
+                },
+                "table_alias": "",
+                "type": {
+                  "catalog": "",
+                  "schema": "pg_catalog",
+                  "name": "varchar"
+                },
+                "is_sqlc_slice": false,
+                "embed_table": null,
+                "original_name": "",
+                "unsigned": false,
+                "array_dims": 0
+              },
+              {
+                "name": "channel_id",
+                "not_null": true,
+                "is_array": false,
+                "comment": "",
+                "length": -1,
+                "is_named_param": false,
+                "is_func_call": false,
+                "scope": "",
+                "table": {
+                  "catalog": "",
+                  "schema": "",
+                  "name": "telemetry_interactions"
+                },
+                "table_alias": "",
+                "type": {
+                  "catalog": "",
+                  "schema": "pg_catalog",
+                  "name": "int8"
+                },
+                "is_sqlc_slice": false,
+                "embed_table": null,
+                "original_name": "",
+                "unsigned": false,
+                "array_dims": 0
+              },
+              {
+                "name": "options",
+                "not_null": true,
+                "is_array": false,
+                "comment": "",
+                "length": -1,
+                "is_named_param": false,
+                "is_func_call": false,
+                "scope": "",
+                "table": {
+                  "catalog": "",
+                  "schema": "",
+                  "name": "telemetry_interactions"
+                },
+                "table_alias": "",
+                "type": {
+                  "catalog": "",
+                  "schema": "",
+                  "name": "jsonb"
+                },
+                "is_sqlc_slice": false,
+                "embed_table": null,
+                "original_name": "",
+                "unsigned": false,
+                "array_dims": 0
+              },
+              {
+                "name": "bot_version",
+                "not_null": true,
+                "is_array": false,
+                "comment": "",
+                "length": -1,
+                "is_named_param": false,
+                "is_func_call": false,
+                "scope": "",
+                "table": {
+                  "catalog": "",
+                  "schema": "",
+                  "name": "telemetry_interactions"
+                },
+                "table_alias": "",
+                "type": {
+                  "catalog": "",
+                  "schema": "pg_catalog",
+                  "name": "varchar"
+                },
+                "is_sqlc_slice": false,
+                "embed_table": null,
+                "original_name": "",
+                "unsigned": false,
+                "array_dims": 0
+              }
+            ],
+            "comment": ""
+          },
+          {
+            "rel": {
+              "catalog": "",
+              "schema": "",
+              "name": "telemetry_completions"
+            },
+            "columns": [
+              {
+                "name": "id",
+                "not_null": true,
+                "is_array": false,
+                "comment": "",
+                "length": -1,
+                "is_named_param": false,
+                "is_func_call": false,
+                "scope": "",
+                "table": {
+                  "catalog": "",
+                  "schema": "",
+                  "name": "telemetry_completions"
+                },
+                "table_alias": "",
+                "type": {
+                  "catalog": "",
+                  "schema": "",
+                  "name": "bigserial"
+                },
+                "is_sqlc_slice": false,
+                "embed_table": null,
+                "original_name": "",
+                "unsigned": false,
+                "array_dims": 0
+              },
+              {
+                "name": "correlation_id",
+                "not_null": true,
+                "is_array": false,
+                "comment": "",
+                "length": -1,
+                "is_named_param": false,
+                "is_func_call": false,
+                "scope": "",
+                "table": {
+                  "catalog": "",
+                  "schema": "",
+                  "name": "telemetry_completions"
+                },
+                "table_alias": "",
+                "type": {
+                  "catalog": "",
+                  "schema": "pg_catalog",
+                  "name": "varchar"
+                },
+                "is_sqlc_slice": false,
+                "embed_table": null,
+                "original_name": "",
+                "unsigned": false,
+                "array_dims": 0
+              },
+              {
+                "name": "timestamp",
+                "not_null": true,
+                "is_array": false,
+                "comment": "",
+                "length": -1,
+                "is_named_param": false,
+                "is_func_call": false,
+                "scope": "",
+                "table": {
+                  "catalog": "",
+                  "schema": "",
+                  "name": "telemetry_completions"
+                },
+                "table_alias": "",
+                "type": {
+                  "catalog": "",
+                  "schema": "",
+                  "name": "timestamptz"
+                },
+                "is_sqlc_slice": false,
+                "embed_table": null,
+                "original_name": "",
+                "unsigned": false,
+                "array_dims": 0
+              },
+              {
+                "name": "received_at",
+                "not_null": true,
+                "is_array": false,
+                "comment": "",
+                "length": -1,
+                "is_named_param": false,
+                "is_func_call": false,
+                "scope": "",
+                "table": {
+                  "catalog": "",
+                  "schema": "",
+                  "name": "telemetry_completions"
+                },
+                "table_alias": "",
+                "type": {
+                  "catalog": "",
+                  "schema": "",
+                  "name": "timestamptz"
+                },
+                "is_sqlc_slice": false,
+                "embed_table": null,
+                "original_name": "",
+                "unsigned": false,
+                "array_dims": 0
+              },
+              {
+                "name": "command_name",
+                "not_null": true,
+                "is_array": false,
+                "comment": "",
+                "length": -1,
+                "is_named_param": false,
+                "is_func_call": false,
+                "scope": "",
+                "table": {
+                  "catalog": "",
+                  "schema": "",
+                  "name": "telemetry_completions"
+                },
+                "table_alias": "",
+                "type": {
+                  "catalog": "",
+                  "schema": "pg_catalog",
+                  "name": "varchar"
+                },
+                "is_sqlc_slice": false,
+                "embed_table": null,
+                "original_name": "",
+                "unsigned": false,
+                "array_dims": 0
+              },
+              {
+                "name": "status",
+                "not_null": true,
+                "is_array": false,
+                "comment": "",
+                "length": -1,
+                "is_named_param": false,
+                "is_func_call": false,
+                "scope": "",
+                "table": {
+                  "catalog": "",
+                  "schema": "",
+                  "name": "telemetry_completions"
+                },
+                "table_alias": "",
+                "type": {
+                  "catalog": "",
+                  "schema": "pg_catalog",
+                  "name": "varchar"
+                },
+                "is_sqlc_slice": false,
+                "embed_table": null,
+                "original_name": "",
+                "unsigned": false,
+                "array_dims": 0
+              },
+              {
+                "name": "duration_ms",
+                "not_null": false,
+                "is_array": false,
+                "comment": "",
+                "length": -1,
+                "is_named_param": false,
+                "is_func_call": false,
+                "scope": "",
+                "table": {
+                  "catalog": "",
+                  "schema": "",
+                  "name": "telemetry_completions"
+                },
+                "table_alias": "",
+                "type": {
+                  "catalog": "",
+                  "schema": "pg_catalog",
+                  "name": "numeric"
+                },
+                "is_sqlc_slice": false,
+                "embed_table": null,
+                "original_name": "",
+                "unsigned": false,
+                "array_dims": 0
+              },
+              {
+                "name": "error_type",
+                "not_null": false,
+                "is_array": false,
+                "comment": "",
+                "length": -1,
+                "is_named_param": false,
+                "is_func_call": false,
+                "scope": "",
+                "table": {
+                  "catalog": "",
+                  "schema": "",
+                  "name": "telemetry_completions"
+                },
+                "table_alias": "",
+                "type": {
+                  "catalog": "",
+                  "schema": "pg_catalog",
+                  "name": "varchar"
+                },
+                "is_sqlc_slice": false,
+                "embed_table": null,
+                "original_name": "",
+                "unsigned": false,
+                "array_dims": 0
+              }
+            ],
+            "comment": ""
+          },
+          {
+            "rel": {
+              "catalog": "",
+              "schema": "",
               "name": "links"
             },
             "columns": [
@@ -1412,6 +1952,224 @@
                 "original_name": "",
                 "unsigned": false,
                 "array_dims": 0
+              }
+            ],
+            "comment": ""
+          },
+          {
+            "rel": {
+              "catalog": "",
+              "schema": "",
+              "name": "events_with_org_ids"
+            },
+            "columns": [
+              {
+                "name": "eid",
+                "not_null": true,
+                "is_array": false,
+                "comment": "",
+                "length": -1,
+                "is_named_param": false,
+                "is_func_call": false,
+                "scope": "",
+                "table": {
+                  "catalog": "",
+                  "schema": "",
+                  "name": "events_with_org_ids"
+                },
+                "table_alias": "",
+                "type": {
+                  "catalog": "",
+                  "schema": "",
+                  "name": "uuid"
+                },
+                "is_sqlc_slice": false,
+                "embed_table": null,
+                "original_name": "",
+                "unsigned": false,
+                "array_dims": 0
+              },
+              {
+                "name": "location",
+                "not_null": false,
+                "is_array": false,
+                "comment": "",
+                "length": -1,
+                "is_named_param": false,
+                "is_func_call": false,
+                "scope": "",
+                "table": {
+                  "catalog": "",
+                  "schema": "",
+                  "name": "events_with_org_ids"
+                },
+                "table_alias": "",
+                "type": {
+                  "catalog": "",
+                  "schema": "",
+                  "name": "text"
+                },
+                "is_sqlc_slice": false,
+                "embed_table": null,
+                "original_name": "",
+                "unsigned": false,
+                "array_dims": 0
+              },
+              {
+                "name": "event_time",
+                "not_null": false,
+                "is_array": false,
+                "comment": "",
+                "length": -1,
+                "is_named_param": false,
+                "is_func_call": false,
+                "scope": "",
+                "table": {
+                  "catalog": "",
+                  "schema": "",
+                  "name": "events_with_org_ids"
+                },
+                "table_alias": "",
+                "type": {
+                  "catalog": "",
+                  "schema": "",
+                  "name": "pg_catalog.timestamp"
+                },
+                "is_sqlc_slice": false,
+                "embed_table": null,
+                "original_name": "",
+                "unsigned": false,
+                "array_dims": 0
+              },
+              {
+                "name": "description",
+                "not_null": false,
+                "is_array": false,
+                "comment": "",
+                "length": -1,
+                "is_named_param": false,
+                "is_func_call": false,
+                "scope": "",
+                "table": {
+                  "catalog": "",
+                  "schema": "",
+                  "name": "events_with_org_ids"
+                },
+                "table_alias": "",
+                "type": {
+                  "catalog": "",
+                  "schema": "",
+                  "name": "text"
+                },
+                "is_sqlc_slice": false,
+                "embed_table": null,
+                "original_name": "",
+                "unsigned": false,
+                "array_dims": 0
+              },
+              {
+                "name": "date_created",
+                "not_null": false,
+                "is_array": false,
+                "comment": "",
+                "length": -1,
+                "is_named_param": false,
+                "is_func_call": false,
+                "scope": "",
+                "table": {
+                  "catalog": "",
+                  "schema": "",
+                  "name": "events_with_org_ids"
+                },
+                "table_alias": "",
+                "type": {
+                  "catalog": "",
+                  "schema": "",
+                  "name": "date"
+                },
+                "is_sqlc_slice": false,
+                "embed_table": null,
+                "original_name": "",
+                "unsigned": false,
+                "array_dims": 0
+              },
+              {
+                "name": "date_modified",
+                "not_null": false,
+                "is_array": false,
+                "comment": "",
+                "length": -1,
+                "is_named_param": false,
+                "is_func_call": false,
+                "scope": "",
+                "table": {
+                  "catalog": "",
+                  "schema": "",
+                  "name": "events_with_org_ids"
+                },
+                "table_alias": "",
+                "type": {
+                  "catalog": "",
+                  "schema": "",
+                  "name": "date"
+                },
+                "is_sqlc_slice": false,
+                "embed_table": null,
+                "original_name": "",
+                "unsigned": false,
+                "array_dims": 0
+              },
+              {
+                "name": "title",
+                "not_null": false,
+                "is_array": false,
+                "comment": "",
+                "length": -1,
+                "is_named_param": false,
+                "is_func_call": false,
+                "scope": "",
+                "table": {
+                  "catalog": "",
+                  "schema": "",
+                  "name": "events_with_org_ids"
+                },
+                "table_alias": "",
+                "type": {
+                  "catalog": "",
+                  "schema": "",
+                  "name": "text"
+                },
+                "is_sqlc_slice": false,
+                "embed_table": null,
+                "original_name": "",
+                "unsigned": false,
+                "array_dims": 0
+              },
+              {
+                "name": "org_ids",
+                "not_null": true,
+                "is_array": true,
+                "comment": "",
+                "length": -1,
+                "is_named_param": false,
+                "is_func_call": false,
+                "scope": "",
+                "table": {
+                  "catalog": "",
+                  "schema": "",
+                  "name": "events_with_org_ids"
+                },
+                "table_alias": "",
+                "type": {
+                  "catalog": "",
+                  "schema": "",
+                  "name": "uuid"
+                },
+                "is_sqlc_slice": false,
+                "embed_table": null,
+                "original_name": "",
+                "unsigned": false,
+                "array_dims": 1
               }
             ],
             "comment": ""
@@ -69741,7 +70499,7 @@
       "insert_into_table": null
     },
     {
-      "text": "SELECT eid, title, location, event_time, description, date_created, date_modified FROM events WHERE eid = $1",
+      "text": "SELECT eid, location, event_time, description, date_created, date_modified, title, org_ids FROM events_with_org_ids WHERE eid = $1",
       "name": "GetEventByID",
       "cmd": ":one",
       "columns": [
@@ -69757,7 +70515,7 @@
           "table": {
             "catalog": "",
             "schema": "",
-            "name": "events"
+            "name": "events_with_org_ids"
           },
           "table_alias": "",
           "type": {
@@ -69768,32 +70526,6 @@
           "is_sqlc_slice": false,
           "embed_table": null,
           "original_name": "eid",
-          "unsigned": false,
-          "array_dims": 0
-        },
-        {
-          "name": "title",
-          "not_null": false,
-          "is_array": false,
-          "comment": "",
-          "length": -1,
-          "is_named_param": false,
-          "is_func_call": false,
-          "scope": "",
-          "table": {
-            "catalog": "",
-            "schema": "",
-            "name": "events"
-          },
-          "table_alias": "",
-          "type": {
-            "catalog": "",
-            "schema": "",
-            "name": "text"
-          },
-          "is_sqlc_slice": false,
-          "embed_table": null,
-          "original_name": "title",
           "unsigned": false,
           "array_dims": 0
         },
@@ -69809,7 +70541,7 @@
           "table": {
             "catalog": "",
             "schema": "",
-            "name": "events"
+            "name": "events_with_org_ids"
           },
           "table_alias": "",
           "type": {
@@ -69835,13 +70567,13 @@
           "table": {
             "catalog": "",
             "schema": "",
-            "name": "events"
+            "name": "events_with_org_ids"
           },
           "table_alias": "",
           "type": {
             "catalog": "",
-            "schema": "pg_catalog",
-            "name": "timestamp"
+            "schema": "",
+            "name": "pg_catalog.timestamp"
           },
           "is_sqlc_slice": false,
           "embed_table": null,
@@ -69861,7 +70593,7 @@
           "table": {
             "catalog": "",
             "schema": "",
-            "name": "events"
+            "name": "events_with_org_ids"
           },
           "table_alias": "",
           "type": {
@@ -69887,7 +70619,7 @@
           "table": {
             "catalog": "",
             "schema": "",
-            "name": "events"
+            "name": "events_with_org_ids"
           },
           "table_alias": "",
           "type": {
@@ -69913,7 +70645,7 @@
           "table": {
             "catalog": "",
             "schema": "",
-            "name": "events"
+            "name": "events_with_org_ids"
           },
           "table_alias": "",
           "type": {
@@ -69926,6 +70658,58 @@
           "original_name": "date_modified",
           "unsigned": false,
           "array_dims": 0
+        },
+        {
+          "name": "title",
+          "not_null": false,
+          "is_array": false,
+          "comment": "",
+          "length": -1,
+          "is_named_param": false,
+          "is_func_call": false,
+          "scope": "",
+          "table": {
+            "catalog": "",
+            "schema": "",
+            "name": "events_with_org_ids"
+          },
+          "table_alias": "",
+          "type": {
+            "catalog": "",
+            "schema": "",
+            "name": "text"
+          },
+          "is_sqlc_slice": false,
+          "embed_table": null,
+          "original_name": "title",
+          "unsigned": false,
+          "array_dims": 0
+        },
+        {
+          "name": "org_ids",
+          "not_null": true,
+          "is_array": true,
+          "comment": "",
+          "length": -1,
+          "is_named_param": false,
+          "is_func_call": false,
+          "scope": "",
+          "table": {
+            "catalog": "",
+            "schema": "",
+            "name": "events_with_org_ids"
+          },
+          "table_alias": "",
+          "type": {
+            "catalog": "",
+            "schema": "",
+            "name": "uuid"
+          },
+          "is_sqlc_slice": false,
+          "embed_table": null,
+          "original_name": "org_ids",
+          "unsigned": false,
+          "array_dims": 1
         }
       ],
       "params": [
@@ -69943,7 +70727,7 @@
             "table": {
               "catalog": "",
               "schema": "",
-              "name": "events"
+              "name": "events_with_org_ids"
             },
             "table_alias": "",
             "type": {
@@ -69964,7 +70748,7 @@
       "insert_into_table": null
     },
     {
-      "text": "SELECT eid, title, location, event_time, description, date_created, date_modified FROM events ORDER BY event_time DESC LIMIT $1 OFFSET $2",
+      "text": "SELECT eid, location, event_time, description, date_created, date_modified, title, org_ids FROM events_with_org_ids ORDER BY event_time DESC LIMIT $1 OFFSET $2",
       "name": "ListEvents",
       "cmd": ":many",
       "columns": [
@@ -69980,7 +70764,7 @@
           "table": {
             "catalog": "",
             "schema": "",
-            "name": "events"
+            "name": "events_with_org_ids"
           },
           "table_alias": "",
           "type": {
@@ -69991,32 +70775,6 @@
           "is_sqlc_slice": false,
           "embed_table": null,
           "original_name": "eid",
-          "unsigned": false,
-          "array_dims": 0
-        },
-        {
-          "name": "title",
-          "not_null": false,
-          "is_array": false,
-          "comment": "",
-          "length": -1,
-          "is_named_param": false,
-          "is_func_call": false,
-          "scope": "",
-          "table": {
-            "catalog": "",
-            "schema": "",
-            "name": "events"
-          },
-          "table_alias": "",
-          "type": {
-            "catalog": "",
-            "schema": "",
-            "name": "text"
-          },
-          "is_sqlc_slice": false,
-          "embed_table": null,
-          "original_name": "title",
           "unsigned": false,
           "array_dims": 0
         },
@@ -70032,7 +70790,7 @@
           "table": {
             "catalog": "",
             "schema": "",
-            "name": "events"
+            "name": "events_with_org_ids"
           },
           "table_alias": "",
           "type": {
@@ -70058,13 +70816,13 @@
           "table": {
             "catalog": "",
             "schema": "",
-            "name": "events"
+            "name": "events_with_org_ids"
           },
           "table_alias": "",
           "type": {
             "catalog": "",
-            "schema": "pg_catalog",
-            "name": "timestamp"
+            "schema": "",
+            "name": "pg_catalog.timestamp"
           },
           "is_sqlc_slice": false,
           "embed_table": null,
@@ -70084,7 +70842,7 @@
           "table": {
             "catalog": "",
             "schema": "",
-            "name": "events"
+            "name": "events_with_org_ids"
           },
           "table_alias": "",
           "type": {
@@ -70110,7 +70868,7 @@
           "table": {
             "catalog": "",
             "schema": "",
-            "name": "events"
+            "name": "events_with_org_ids"
           },
           "table_alias": "",
           "type": {
@@ -70136,7 +70894,7 @@
           "table": {
             "catalog": "",
             "schema": "",
-            "name": "events"
+            "name": "events_with_org_ids"
           },
           "table_alias": "",
           "type": {
@@ -70149,6 +70907,58 @@
           "original_name": "date_modified",
           "unsigned": false,
           "array_dims": 0
+        },
+        {
+          "name": "title",
+          "not_null": false,
+          "is_array": false,
+          "comment": "",
+          "length": -1,
+          "is_named_param": false,
+          "is_func_call": false,
+          "scope": "",
+          "table": {
+            "catalog": "",
+            "schema": "",
+            "name": "events_with_org_ids"
+          },
+          "table_alias": "",
+          "type": {
+            "catalog": "",
+            "schema": "",
+            "name": "text"
+          },
+          "is_sqlc_slice": false,
+          "embed_table": null,
+          "original_name": "title",
+          "unsigned": false,
+          "array_dims": 0
+        },
+        {
+          "name": "org_ids",
+          "not_null": true,
+          "is_array": true,
+          "comment": "",
+          "length": -1,
+          "is_named_param": false,
+          "is_func_call": false,
+          "scope": "",
+          "table": {
+            "catalog": "",
+            "schema": "",
+            "name": "events_with_org_ids"
+          },
+          "table_alias": "",
+          "type": {
+            "catalog": "",
+            "schema": "",
+            "name": "uuid"
+          },
+          "is_sqlc_slice": false,
+          "embed_table": null,
+          "original_name": "org_ids",
+          "unsigned": false,
+          "array_dims": 1
         }
       ],
       "params": [
@@ -70208,7 +71018,7 @@
       "insert_into_table": null
     },
     {
-      "text": "SELECT e.eid, e.title, e.location, e.event_time, e.description, e.date_created, e.date_modified\nFROM events e\nJOIN event_hosting eh ON e.eid = eh.eid\nWHERE eh.oid = $1\nORDER BY e.event_time DESC\nLIMIT $2 OFFSET $3",
+      "text": "SELECT e.eid, e.location, e.event_time, e.description, e.date_created, e.date_modified, e.title, e.org_ids\nFROM events_with_org_ids e\nJOIN event_hosting eh ON e.eid = eh.eid\nWHERE eh.oid = $1\nORDER BY e.event_time DESC\nLIMIT $2 OFFSET $3",
       "name": "ListEventsByOrg",
       "cmd": ":many",
       "columns": [
@@ -70224,7 +71034,7 @@
           "table": {
             "catalog": "",
             "schema": "",
-            "name": "events"
+            "name": "events_with_org_ids"
           },
           "table_alias": "",
           "type": {
@@ -70235,32 +71045,6 @@
           "is_sqlc_slice": false,
           "embed_table": null,
           "original_name": "eid",
-          "unsigned": false,
-          "array_dims": 0
-        },
-        {
-          "name": "title",
-          "not_null": false,
-          "is_array": false,
-          "comment": "",
-          "length": -1,
-          "is_named_param": false,
-          "is_func_call": false,
-          "scope": "",
-          "table": {
-            "catalog": "",
-            "schema": "",
-            "name": "events"
-          },
-          "table_alias": "",
-          "type": {
-            "catalog": "",
-            "schema": "",
-            "name": "text"
-          },
-          "is_sqlc_slice": false,
-          "embed_table": null,
-          "original_name": "title",
           "unsigned": false,
           "array_dims": 0
         },
@@ -70276,7 +71060,7 @@
           "table": {
             "catalog": "",
             "schema": "",
-            "name": "events"
+            "name": "events_with_org_ids"
           },
           "table_alias": "",
           "type": {
@@ -70302,13 +71086,13 @@
           "table": {
             "catalog": "",
             "schema": "",
-            "name": "events"
+            "name": "events_with_org_ids"
           },
           "table_alias": "",
           "type": {
             "catalog": "",
-            "schema": "pg_catalog",
-            "name": "timestamp"
+            "schema": "",
+            "name": "pg_catalog.timestamp"
           },
           "is_sqlc_slice": false,
           "embed_table": null,
@@ -70328,7 +71112,7 @@
           "table": {
             "catalog": "",
             "schema": "",
-            "name": "events"
+            "name": "events_with_org_ids"
           },
           "table_alias": "",
           "type": {
@@ -70354,7 +71138,7 @@
           "table": {
             "catalog": "",
             "schema": "",
-            "name": "events"
+            "name": "events_with_org_ids"
           },
           "table_alias": "",
           "type": {
@@ -70380,7 +71164,7 @@
           "table": {
             "catalog": "",
             "schema": "",
-            "name": "events"
+            "name": "events_with_org_ids"
           },
           "table_alias": "",
           "type": {
@@ -70393,6 +71177,58 @@
           "original_name": "date_modified",
           "unsigned": false,
           "array_dims": 0
+        },
+        {
+          "name": "title",
+          "not_null": false,
+          "is_array": false,
+          "comment": "",
+          "length": -1,
+          "is_named_param": false,
+          "is_func_call": false,
+          "scope": "",
+          "table": {
+            "catalog": "",
+            "schema": "",
+            "name": "events_with_org_ids"
+          },
+          "table_alias": "",
+          "type": {
+            "catalog": "",
+            "schema": "",
+            "name": "text"
+          },
+          "is_sqlc_slice": false,
+          "embed_table": null,
+          "original_name": "title",
+          "unsigned": false,
+          "array_dims": 0
+        },
+        {
+          "name": "org_ids",
+          "not_null": true,
+          "is_array": true,
+          "comment": "",
+          "length": -1,
+          "is_named_param": false,
+          "is_func_call": false,
+          "scope": "",
+          "table": {
+            "catalog": "",
+            "schema": "",
+            "name": "events_with_org_ids"
+          },
+          "table_alias": "",
+          "type": {
+            "catalog": "",
+            "schema": "",
+            "name": "uuid"
+          },
+          "is_sqlc_slice": false,
+          "embed_table": null,
+          "original_name": "org_ids",
+          "unsigned": false,
+          "array_dims": 1
         }
       ],
       "params": [
@@ -70481,7 +71317,7 @@
       "insert_into_table": null
     },
     {
-      "text": "INSERT INTO events (title, location, event_time, description)\nVALUES ($1, $2, $3, $4)\nRETURNING eid, title, location, event_time, description, date_created, date_modified",
+      "text": "WITH updated AS (\n    INSERT INTO events (title, location, event_time, description)\n    VALUES ($1, $2, $3, $4)\n    RETURNING eid, location, event_time, description, date_created, date_modified, title\n)\nSELECT v.eid, v.location, v.event_time, v.description, v.date_created, v.date_modified, v.title, v.org_ids FROM events_with_org_ids v\nWHERE v.eid = (SELECT eid FROM updated)",
       "name": "CreateEvent",
       "cmd": ":one",
       "columns": [
@@ -70497,7 +71333,7 @@
           "table": {
             "catalog": "",
             "schema": "",
-            "name": "events"
+            "name": "events_with_org_ids"
           },
           "table_alias": "",
           "type": {
@@ -70508,32 +71344,6 @@
           "is_sqlc_slice": false,
           "embed_table": null,
           "original_name": "eid",
-          "unsigned": false,
-          "array_dims": 0
-        },
-        {
-          "name": "title",
-          "not_null": false,
-          "is_array": false,
-          "comment": "",
-          "length": -1,
-          "is_named_param": false,
-          "is_func_call": false,
-          "scope": "",
-          "table": {
-            "catalog": "",
-            "schema": "",
-            "name": "events"
-          },
-          "table_alias": "",
-          "type": {
-            "catalog": "",
-            "schema": "",
-            "name": "text"
-          },
-          "is_sqlc_slice": false,
-          "embed_table": null,
-          "original_name": "title",
           "unsigned": false,
           "array_dims": 0
         },
@@ -70549,7 +71359,7 @@
           "table": {
             "catalog": "",
             "schema": "",
-            "name": "events"
+            "name": "events_with_org_ids"
           },
           "table_alias": "",
           "type": {
@@ -70575,13 +71385,13 @@
           "table": {
             "catalog": "",
             "schema": "",
-            "name": "events"
+            "name": "events_with_org_ids"
           },
           "table_alias": "",
           "type": {
             "catalog": "",
-            "schema": "pg_catalog",
-            "name": "timestamp"
+            "schema": "",
+            "name": "pg_catalog.timestamp"
           },
           "is_sqlc_slice": false,
           "embed_table": null,
@@ -70601,7 +71411,7 @@
           "table": {
             "catalog": "",
             "schema": "",
-            "name": "events"
+            "name": "events_with_org_ids"
           },
           "table_alias": "",
           "type": {
@@ -70627,7 +71437,7 @@
           "table": {
             "catalog": "",
             "schema": "",
-            "name": "events"
+            "name": "events_with_org_ids"
           },
           "table_alias": "",
           "type": {
@@ -70653,7 +71463,7 @@
           "table": {
             "catalog": "",
             "schema": "",
-            "name": "events"
+            "name": "events_with_org_ids"
           },
           "table_alias": "",
           "type": {
@@ -70666,6 +71476,58 @@
           "original_name": "date_modified",
           "unsigned": false,
           "array_dims": 0
+        },
+        {
+          "name": "title",
+          "not_null": false,
+          "is_array": false,
+          "comment": "",
+          "length": -1,
+          "is_named_param": false,
+          "is_func_call": false,
+          "scope": "",
+          "table": {
+            "catalog": "",
+            "schema": "",
+            "name": "events_with_org_ids"
+          },
+          "table_alias": "",
+          "type": {
+            "catalog": "",
+            "schema": "",
+            "name": "text"
+          },
+          "is_sqlc_slice": false,
+          "embed_table": null,
+          "original_name": "title",
+          "unsigned": false,
+          "array_dims": 0
+        },
+        {
+          "name": "org_ids",
+          "not_null": true,
+          "is_array": true,
+          "comment": "",
+          "length": -1,
+          "is_named_param": false,
+          "is_func_call": false,
+          "scope": "",
+          "table": {
+            "catalog": "",
+            "schema": "",
+            "name": "events_with_org_ids"
+          },
+          "table_alias": "",
+          "type": {
+            "catalog": "",
+            "schema": "",
+            "name": "uuid"
+          },
+          "is_sqlc_slice": false,
+          "embed_table": null,
+          "original_name": "org_ids",
+          "unsigned": false,
+          "array_dims": 1
         }
       ],
       "params": [
@@ -70788,14 +71650,10 @@
       ],
       "comments": [],
       "filename": "queries.sql",
-      "insert_into_table": {
-        "catalog": "",
-        "schema": "",
-        "name": "events"
-      }
+      "insert_into_table": null
     },
     {
-      "text": "UPDATE events\nSET title = COALESCE($2, title),\n    location = COALESCE($3, location),\n    event_time = COALESCE($4, event_time),\n    description = COALESCE($5, description)\nWHERE eid = $1\nRETURNING eid, title, location, event_time, description, date_created, date_modified",
+      "text": "WITH updated AS (\n    UPDATE events\n    SET title = COALESCE($2, title),\n        location = COALESCE($3, location),\n        event_time = COALESCE($4, event_time),\n        description = COALESCE($5, description)\n    WHERE eid = $1\n    RETURNING eid, location, event_time, description, date_created, date_modified, title\n)\nSELECT v.eid, v.location, v.event_time, v.description, v.date_created, v.date_modified, v.title, v.org_ids FROM events_with_org_ids v\nWHERE v.eid = $1",
       "name": "UpdateEvent",
       "cmd": ":one",
       "columns": [
@@ -70811,7 +71669,7 @@
           "table": {
             "catalog": "",
             "schema": "",
-            "name": "events"
+            "name": "events_with_org_ids"
           },
           "table_alias": "",
           "type": {
@@ -70822,32 +71680,6 @@
           "is_sqlc_slice": false,
           "embed_table": null,
           "original_name": "eid",
-          "unsigned": false,
-          "array_dims": 0
-        },
-        {
-          "name": "title",
-          "not_null": false,
-          "is_array": false,
-          "comment": "",
-          "length": -1,
-          "is_named_param": false,
-          "is_func_call": false,
-          "scope": "",
-          "table": {
-            "catalog": "",
-            "schema": "",
-            "name": "events"
-          },
-          "table_alias": "",
-          "type": {
-            "catalog": "",
-            "schema": "",
-            "name": "text"
-          },
-          "is_sqlc_slice": false,
-          "embed_table": null,
-          "original_name": "title",
           "unsigned": false,
           "array_dims": 0
         },
@@ -70863,7 +71695,7 @@
           "table": {
             "catalog": "",
             "schema": "",
-            "name": "events"
+            "name": "events_with_org_ids"
           },
           "table_alias": "",
           "type": {
@@ -70889,13 +71721,13 @@
           "table": {
             "catalog": "",
             "schema": "",
-            "name": "events"
+            "name": "events_with_org_ids"
           },
           "table_alias": "",
           "type": {
             "catalog": "",
-            "schema": "pg_catalog",
-            "name": "timestamp"
+            "schema": "",
+            "name": "pg_catalog.timestamp"
           },
           "is_sqlc_slice": false,
           "embed_table": null,
@@ -70915,7 +71747,7 @@
           "table": {
             "catalog": "",
             "schema": "",
-            "name": "events"
+            "name": "events_with_org_ids"
           },
           "table_alias": "",
           "type": {
@@ -70941,7 +71773,7 @@
           "table": {
             "catalog": "",
             "schema": "",
-            "name": "events"
+            "name": "events_with_org_ids"
           },
           "table_alias": "",
           "type": {
@@ -70967,7 +71799,7 @@
           "table": {
             "catalog": "",
             "schema": "",
-            "name": "events"
+            "name": "events_with_org_ids"
           },
           "table_alias": "",
           "type": {
@@ -70980,6 +71812,58 @@
           "original_name": "date_modified",
           "unsigned": false,
           "array_dims": 0
+        },
+        {
+          "name": "title",
+          "not_null": false,
+          "is_array": false,
+          "comment": "",
+          "length": -1,
+          "is_named_param": false,
+          "is_func_call": false,
+          "scope": "",
+          "table": {
+            "catalog": "",
+            "schema": "",
+            "name": "events_with_org_ids"
+          },
+          "table_alias": "",
+          "type": {
+            "catalog": "",
+            "schema": "",
+            "name": "text"
+          },
+          "is_sqlc_slice": false,
+          "embed_table": null,
+          "original_name": "title",
+          "unsigned": false,
+          "array_dims": 0
+        },
+        {
+          "name": "org_ids",
+          "not_null": true,
+          "is_array": true,
+          "comment": "",
+          "length": -1,
+          "is_named_param": false,
+          "is_func_call": false,
+          "scope": "",
+          "table": {
+            "catalog": "",
+            "schema": "",
+            "name": "events_with_org_ids"
+          },
+          "table_alias": "",
+          "type": {
+            "catalog": "",
+            "schema": "",
+            "name": "uuid"
+          },
+          "is_sqlc_slice": false,
+          "embed_table": null,
+          "original_name": "org_ids",
+          "unsigned": false,
+          "array_dims": 1
         }
       ],
       "params": [
@@ -70997,7 +71881,7 @@
             "table": {
               "catalog": "",
               "schema": "",
-              "name": "events"
+              "name": "events_with_org_ids"
             },
             "table_alias": "",
             "type": {
@@ -71026,7 +71910,7 @@
             "table": {
               "catalog": "",
               "schema": "public",
-              "name": "events"
+              "name": "events_with_org_ids"
             },
             "table_alias": "",
             "type": {
@@ -71055,7 +71939,7 @@
             "table": {
               "catalog": "",
               "schema": "public",
-              "name": "events"
+              "name": "events_with_org_ids"
             },
             "table_alias": "",
             "type": {
@@ -71084,7 +71968,7 @@
             "table": {
               "catalog": "",
               "schema": "public",
-              "name": "events"
+              "name": "events_with_org_ids"
             },
             "table_alias": "",
             "type": {
@@ -71113,7 +71997,7 @@
             "table": {
               "catalog": "",
               "schema": "public",
-              "name": "events"
+              "name": "events_with_org_ids"
             },
             "table_alias": "",
             "type": {
@@ -71889,7 +72773,7 @@
       "insert_into_table": null
     },
     {
-      "text": "SELECT e.eid, e.title, e.location, e.event_time, e.description, e.date_created, e.date_modified, er.is_attending, er.is_admin, er.date_registered\nFROM events e\nJOIN event_registrations er ON e.eid = er.eid\nWHERE er.uid = $1\nORDER BY e.event_time DESC",
+      "text": "SELECT e.eid, e.location, e.event_time, e.description, e.date_created, e.date_modified, e.title, e.org_ids, er.is_attending, er.is_admin, er.date_registered\nFROM events_with_org_ids e\nJOIN event_registrations er ON e.eid = er.eid\nWHERE er.uid = $1\nORDER BY e.event_time DESC",
       "name": "GetUserEvents",
       "cmd": ":many",
       "columns": [
@@ -71905,7 +72789,7 @@
           "table": {
             "catalog": "",
             "schema": "",
-            "name": "events"
+            "name": "events_with_org_ids"
           },
           "table_alias": "",
           "type": {
@@ -71916,32 +72800,6 @@
           "is_sqlc_slice": false,
           "embed_table": null,
           "original_name": "eid",
-          "unsigned": false,
-          "array_dims": 0
-        },
-        {
-          "name": "title",
-          "not_null": false,
-          "is_array": false,
-          "comment": "",
-          "length": -1,
-          "is_named_param": false,
-          "is_func_call": false,
-          "scope": "",
-          "table": {
-            "catalog": "",
-            "schema": "",
-            "name": "events"
-          },
-          "table_alias": "",
-          "type": {
-            "catalog": "",
-            "schema": "",
-            "name": "text"
-          },
-          "is_sqlc_slice": false,
-          "embed_table": null,
-          "original_name": "title",
           "unsigned": false,
           "array_dims": 0
         },
@@ -71957,7 +72815,7 @@
           "table": {
             "catalog": "",
             "schema": "",
-            "name": "events"
+            "name": "events_with_org_ids"
           },
           "table_alias": "",
           "type": {
@@ -71983,13 +72841,13 @@
           "table": {
             "catalog": "",
             "schema": "",
-            "name": "events"
+            "name": "events_with_org_ids"
           },
           "table_alias": "",
           "type": {
             "catalog": "",
-            "schema": "pg_catalog",
-            "name": "timestamp"
+            "schema": "",
+            "name": "pg_catalog.timestamp"
           },
           "is_sqlc_slice": false,
           "embed_table": null,
@@ -72009,7 +72867,7 @@
           "table": {
             "catalog": "",
             "schema": "",
-            "name": "events"
+            "name": "events_with_org_ids"
           },
           "table_alias": "",
           "type": {
@@ -72035,7 +72893,7 @@
           "table": {
             "catalog": "",
             "schema": "",
-            "name": "events"
+            "name": "events_with_org_ids"
           },
           "table_alias": "",
           "type": {
@@ -72061,7 +72919,7 @@
           "table": {
             "catalog": "",
             "schema": "",
-            "name": "events"
+            "name": "events_with_org_ids"
           },
           "table_alias": "",
           "type": {
@@ -72074,6 +72932,58 @@
           "original_name": "date_modified",
           "unsigned": false,
           "array_dims": 0
+        },
+        {
+          "name": "title",
+          "not_null": false,
+          "is_array": false,
+          "comment": "",
+          "length": -1,
+          "is_named_param": false,
+          "is_func_call": false,
+          "scope": "",
+          "table": {
+            "catalog": "",
+            "schema": "",
+            "name": "events_with_org_ids"
+          },
+          "table_alias": "",
+          "type": {
+            "catalog": "",
+            "schema": "",
+            "name": "text"
+          },
+          "is_sqlc_slice": false,
+          "embed_table": null,
+          "original_name": "title",
+          "unsigned": false,
+          "array_dims": 0
+        },
+        {
+          "name": "org_ids",
+          "not_null": true,
+          "is_array": true,
+          "comment": "",
+          "length": -1,
+          "is_named_param": false,
+          "is_func_call": false,
+          "scope": "",
+          "table": {
+            "catalog": "",
+            "schema": "",
+            "name": "events_with_org_ids"
+          },
+          "table_alias": "",
+          "type": {
+            "catalog": "",
+            "schema": "",
+            "name": "uuid"
+          },
+          "is_sqlc_slice": false,
+          "embed_table": null,
+          "original_name": "org_ids",
+          "unsigned": false,
+          "array_dims": 1
         },
         {
           "name": "is_attending",
