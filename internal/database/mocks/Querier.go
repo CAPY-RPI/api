@@ -83,22 +83,22 @@ func (_m *Querier) CreateBotToken(ctx context.Context, arg database.CreateBotTok
 }
 
 // CreateEvent provides a mock function with given fields: ctx, arg
-func (_m *Querier) CreateEvent(ctx context.Context, arg database.CreateEventParams) (database.EventsWithOrgID, error) {
+func (_m *Querier) CreateEvent(ctx context.Context, arg database.CreateEventParams) (database.Event, error) {
 	ret := _m.Called(ctx, arg)
 
 	if len(ret) == 0 {
 		panic("no return value specified for CreateEvent")
 	}
 
-	var r0 database.EventsWithOrgID
+	var r0 database.Event
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, database.CreateEventParams) (database.EventsWithOrgID, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, database.CreateEventParams) (database.Event, error)); ok {
 		return rf(ctx, arg)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, database.CreateEventParams) database.EventsWithOrgID); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, database.CreateEventParams) database.Event); ok {
 		r0 = rf(ctx, arg)
 	} else {
-		r0 = ret.Get(0).(database.EventsWithOrgID)
+		r0 = ret.Get(0).(database.Event)
 	}
 
 	if rf, ok := ret.Get(1).(func(context.Context, database.CreateEventParams) error); ok {
