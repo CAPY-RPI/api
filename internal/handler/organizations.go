@@ -22,7 +22,6 @@ import (
 // @Param        limit   query     int  false  "Limit (default 20, max 100)"
 // @Param        offset  query     int  false  "Offset (default 0)"
 // @Success      200     {array}   dto.OrganizationResponse
-// @Security     CookieAuth
 // @Router       /organizations [get]
 func (h *Handler) ListOrganizations(w http.ResponseWriter, r *http.Request) {
 	limit, offset := parsePagination(r)
