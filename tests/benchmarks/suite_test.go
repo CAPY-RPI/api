@@ -43,13 +43,12 @@ func TestMain(m *testing.M) {
 
 	_, filename, _, _ := runtime.Caller(0)
 	projectRoot := filepath.Join(filepath.Dir(filename), "../..")
-	schemaPath := filepath.Join(projectRoot, "schema.sql")
+	migrationsPath := filepath.Join(projectRoot, "migrations")
 
-	log.Printf("Using schema from: %s", schemaPath)
+	log.Printf("Using migrations from: %s", migrationsPath)
 
 	pgContainer, err := postgres.Run(ctx,
 		"postgres:16-alpine",
-		postgres.WithInitScripts(schemaPath),
 		postgres.WithDatabase("bench_db"),
 		postgres.WithUsername("bench"),
 		postgres.WithPassword("bench"),
@@ -80,6 +79,10 @@ func TestMain(m *testing.M) {
 	benchDB, err = database.NewPool(ctx, connStr)
 	if err != nil {
 		log.Fatalf("failed to connect to database: %v", err)
+	}
+
+	if err := database.RunMigrations(ctx, connStr, migrationsPath); err != nil {
+		log.Fatalf("failed to apply migrations: %v", err)
 	}
 
 	benchQueries = database.New(benchDB)
@@ -134,6 +137,14 @@ func setupTestData(ctx context.Context) {
 		log.Fatalf("failed to create organization: %v", err)
 	}
 	benchOrgID = org.Oid.String()
+
+	if err := benchQueries.AddOrgMember(ctx, database.AddOrgMemberParams{
+		Uid:     user.Uid,
+		Oid:     org.Oid,
+		IsAdmin: pgtype.Bool{Bool: true, Valid: true},
+	}); err != nil {
+		log.Fatalf("failed to add benchmark user as org admin: %v", err)
+	}
 
 	event, err := benchQueries.CreateEvent(ctx, database.CreateEventParams{
 		Location:    pgtype.Text{String: "Bench Event", Valid: true},
