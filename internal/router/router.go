@@ -22,31 +22,6 @@ func mountProtectedRoutes(r chi.Router, h *handler.Handler, jwtSecret string) {
 			r.Get("/{uid}/events", h.GetUserEvents)
 		})
 
-		r.Route("/organizations", func(r chi.Router) {
-			r.Get("/", h.ListOrganizations)
-			r.Post("/", h.CreateOrganization)
-			r.Get("/{oid}", h.GetOrganization)
-			r.Put("/{oid}", h.UpdateOrganization)
-			r.Delete("/{oid}", h.DeleteOrganization)
-			r.Get("/{oid}/members", h.ListOrgMembers)
-			r.Post("/{oid}/members", h.AddOrgMember)
-			r.Delete("/{oid}/members/{uid}", h.RemoveOrgMember)
-			r.Get("/{oid}/events", h.ListOrgEvents)
-			r.Get("/{oid}/links", h.ListOrgLinks)
-		})
-
-		r.Route("/events", func(r chi.Router) {
-			r.Get("/", h.ListEvents)
-			r.Post("/", h.CreateEvent)
-			r.Get("/org/{oid}", h.ListEventsByOrg)
-			r.Get("/{eid}", h.GetEvent)
-			r.Put("/{eid}", h.UpdateEvent)
-			r.Delete("/{eid}", h.DeleteEvent)
-			r.Get("/{eid}/registrations", h.ListEventRegistrations)
-			r.Post("/{eid}/register", h.RegisterForEvent)
-			r.Delete("/{eid}/register", h.UnregisterFromEvent)
-		})
-
 		// Links
 		r.Route("/links", func(r chi.Router) {
 			r.Post("/", h.CreateLink)
@@ -61,6 +36,25 @@ func mountProtectedRoutes(r chi.Router, h *handler.Handler, jwtSecret string) {
 			r.Delete("/{token_id}", h.RevokeBotToken)
 		})
 	})
+
+	r.With(middleware.Auth(jwtSecret)).Post("/organizations", h.CreateOrganization)
+	r.With(middleware.Auth(jwtSecret)).Get("/organizations/{oid}", h.GetOrganization)
+	r.With(middleware.Auth(jwtSecret)).Put("/organizations/{oid}", h.UpdateOrganization)
+	r.With(middleware.Auth(jwtSecret)).Delete("/organizations/{oid}", h.DeleteOrganization)
+	r.With(middleware.Auth(jwtSecret)).Get("/organizations/{oid}/members", h.ListOrgMembers)
+	r.With(middleware.Auth(jwtSecret)).Post("/organizations/{oid}/members", h.AddOrgMember)
+	r.With(middleware.Auth(jwtSecret)).Delete("/organizations/{oid}/members/{uid}", h.RemoveOrgMember)
+	r.With(middleware.Auth(jwtSecret)).Get("/organizations/{oid}/events", h.ListOrgEvents)
+	r.With(middleware.Auth(jwtSecret)).Get("/organizations/{oid}/links", h.ListOrgLinks)
+
+	r.With(middleware.Auth(jwtSecret)).Post("/events", h.CreateEvent)
+	r.With(middleware.Auth(jwtSecret)).Get("/events/org/{oid}", h.ListEventsByOrg)
+	r.With(middleware.Auth(jwtSecret)).Get("/events/{eid}", h.GetEvent)
+	r.With(middleware.Auth(jwtSecret)).Put("/events/{eid}", h.UpdateEvent)
+	r.With(middleware.Auth(jwtSecret)).Delete("/events/{eid}", h.DeleteEvent)
+	r.With(middleware.Auth(jwtSecret)).Get("/events/{eid}/registrations", h.ListEventRegistrations)
+	r.With(middleware.Auth(jwtSecret)).Post("/events/{eid}/register", h.RegisterForEvent)
+	r.With(middleware.Auth(jwtSecret)).Delete("/events/{eid}/register", h.UnregisterFromEvent)
 }
 
 // New creates a new chi router with all routes configured
@@ -74,6 +68,9 @@ func New(h *handler.Handler, queries database.Querier, jwtSecret string, allowed
 	r.Use(chimiddleware.Recoverer)
 	r.Use(chimiddleware.RequestID)
 	r.Use(middleware.CORS(allowedOrigins, h.Config.Env == "development"))
+
+	// Public link resolution alias.
+	r.Get("/r/{endpoint_url}", h.ResolveLink)
 
 	// API routes
 	r.Route("/api", func(r chi.Router) {
@@ -106,6 +103,10 @@ func New(h *handler.Handler, queries database.Querier, jwtSecret string, allowed
 					r.Post("/refresh", h.RefreshToken)
 				})
 			})
+
+			// Public read-only collection routes
+			r.Get("/organizations", h.ListOrganizations)
+			r.Get("/events", h.ListEvents)
 
 			mountProtectedRoutes(r, h, jwtSecret)
 
@@ -156,6 +157,8 @@ func New(h *handler.Handler, queries database.Querier, jwtSecret string, allowed
 	})
 
 	r.Route("/v1", func(r chi.Router) {
+		r.Get("/organizations", h.ListOrganizations)
+		r.Get("/events", h.ListEvents)
 		mountProtectedRoutes(r, h, jwtSecret)
 	})
 

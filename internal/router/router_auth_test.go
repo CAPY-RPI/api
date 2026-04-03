@@ -265,6 +265,34 @@ func TestBotTokenManagementUsesDatabaseRole(t *testing.T) {
 	assert.Equal(t, http.StatusOK, res.Code)
 }
 
+func TestPublicCollectionRoutesDoNotRequireAuth(t *testing.T) {
+	mockQueries := mocks.NewQuerier(t)
+	routerUnderTest := newTestRouter(mockQueries)
+
+	mockQueries.On("ListOrganizations", mock.Anything, mock.MatchedBy(func(arg database.ListOrganizationsParams) bool {
+		return arg.Limit == 20 && arg.Offset == 0
+	})).Return([]database.Organization{}, nil).Once()
+
+	mockQueries.On("ListEvents", mock.Anything, mock.MatchedBy(func(arg database.ListEventsParams) bool {
+		return arg.Limit == 20 && arg.Offset == 0
+	})).Return([]database.EventsWithOrgID{}, nil).Once()
+
+	orgReq := httptest.NewRequest(http.MethodGet, "/api/v1/organizations", nil)
+	orgRes := httptest.NewRecorder()
+	routerUnderTest.ServeHTTP(orgRes, orgReq)
+	assert.Equal(t, http.StatusOK, orgRes.Code)
+
+	eventReq := httptest.NewRequest(http.MethodGet, "/api/v1/events", nil)
+	eventRes := httptest.NewRecorder()
+	routerUnderTest.ServeHTTP(eventRes, eventReq)
+	assert.Equal(t, http.StatusOK, eventRes.Code)
+
+	protectedReq := httptest.NewRequest(http.MethodPost, "/api/v1/organizations", bytes.NewBufferString(`{"name":"Still Protected"}`))
+	protectedRes := httptest.NewRecorder()
+	routerUnderTest.ServeHTTP(protectedRes, protectedReq)
+	assert.Equal(t, http.StatusUnauthorized, protectedRes.Code)
+}
+
 func newTestRouter(queries database.Querier) http.Handler {
 	cfg := &config.Config{
 		Env: "test",

@@ -295,22 +295,22 @@ func (_m *Querier) GetBotTokenByID(ctx context.Context, tokenID uuid.UUID) (data
 }
 
 // GetEventByID provides a mock function with given fields: ctx, eid
-func (_m *Querier) GetEventByID(ctx context.Context, eid uuid.UUID) (database.Event, error) {
+func (_m *Querier) GetEventByID(ctx context.Context, eid uuid.UUID) (database.EventsWithOrgID, error) {
 	ret := _m.Called(ctx, eid)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetEventByID")
 	}
 
-	var r0 database.Event
+	var r0 database.EventsWithOrgID
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, uuid.UUID) (database.Event, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, uuid.UUID) (database.EventsWithOrgID, error)); ok {
 		return rf(ctx, eid)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, uuid.UUID) database.Event); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, uuid.UUID) database.EventsWithOrgID); ok {
 		r0 = rf(ctx, eid)
 	} else {
-		r0 = ret.Get(0).(database.Event)
+		r0 = ret.Get(0).(database.EventsWithOrgID)
 	}
 
 	if rf, ok := ret.Get(1).(func(context.Context, uuid.UUID) error); ok {
@@ -697,23 +697,23 @@ func (_m *Querier) ListBotTokens(ctx context.Context) ([]database.ListBotTokensR
 }
 
 // ListEvents provides a mock function with given fields: ctx, arg
-func (_m *Querier) ListEvents(ctx context.Context, arg database.ListEventsParams) ([]database.Event, error) {
+func (_m *Querier) ListEvents(ctx context.Context, arg database.ListEventsParams) ([]database.EventsWithOrgID, error) {
 	ret := _m.Called(ctx, arg)
 
 	if len(ret) == 0 {
 		panic("no return value specified for ListEvents")
 	}
 
-	var r0 []database.Event
+	var r0 []database.EventsWithOrgID
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, database.ListEventsParams) ([]database.Event, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, database.ListEventsParams) ([]database.EventsWithOrgID, error)); ok {
 		return rf(ctx, arg)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, database.ListEventsParams) []database.Event); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, database.ListEventsParams) []database.EventsWithOrgID); ok {
 		r0 = rf(ctx, arg)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]database.Event)
+			r0 = ret.Get(0).([]database.EventsWithOrgID)
 		}
 	}
 
@@ -727,23 +727,23 @@ func (_m *Querier) ListEvents(ctx context.Context, arg database.ListEventsParams
 }
 
 // ListEventsByOrg provides a mock function with given fields: ctx, arg
-func (_m *Querier) ListEventsByOrg(ctx context.Context, arg database.ListEventsByOrgParams) ([]database.Event, error) {
+func (_m *Querier) ListEventsByOrg(ctx context.Context, arg database.ListEventsByOrgParams) ([]database.EventsWithOrgID, error) {
 	ret := _m.Called(ctx, arg)
 
 	if len(ret) == 0 {
 		panic("no return value specified for ListEventsByOrg")
 	}
 
-	var r0 []database.Event
+	var r0 []database.EventsWithOrgID
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, database.ListEventsByOrgParams) ([]database.Event, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, database.ListEventsByOrgParams) ([]database.EventsWithOrgID, error)); ok {
 		return rf(ctx, arg)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, database.ListEventsByOrgParams) []database.Event); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, database.ListEventsByOrgParams) []database.EventsWithOrgID); ok {
 		r0 = rf(ctx, arg)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]database.Event)
+			r0 = ret.Get(0).([]database.EventsWithOrgID)
 		}
 	}
 
@@ -965,22 +965,22 @@ func (_m *Querier) UpdateBotTokenLastUsed(ctx context.Context, tokenID uuid.UUID
 }
 
 // UpdateEvent provides a mock function with given fields: ctx, arg
-func (_m *Querier) UpdateEvent(ctx context.Context, arg database.UpdateEventParams) (database.Event, error) {
+func (_m *Querier) UpdateEvent(ctx context.Context, arg database.UpdateEventParams) (database.EventsWithOrgID, error) {
 	ret := _m.Called(ctx, arg)
 
 	if len(ret) == 0 {
 		panic("no return value specified for UpdateEvent")
 	}
 
-	var r0 database.Event
+	var r0 database.EventsWithOrgID
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, database.UpdateEventParams) (database.Event, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, database.UpdateEventParams) (database.EventsWithOrgID, error)); ok {
 		return rf(ctx, arg)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, database.UpdateEventParams) database.Event); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, database.UpdateEventParams) database.EventsWithOrgID); ok {
 		r0 = rf(ctx, arg)
 	} else {
-		r0 = ret.Get(0).(database.Event)
+		r0 = ret.Get(0).(database.EventsWithOrgID)
 	}
 
 	if rf, ok := ret.Get(1).(func(context.Context, database.UpdateEventParams) error); ok {

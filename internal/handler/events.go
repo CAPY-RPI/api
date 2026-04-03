@@ -21,7 +21,6 @@ import (
 // @Param        limit   query     int  false  "Limit (default 20, max 100)"
 // @Param        offset  query     int  false  "Offset (default 0)"
 // @Success      200     {array}   dto.EventResponse
-// @Security     CookieAuth
 // @Router       /events [get]
 func (h *Handler) ListEvents(w http.ResponseWriter, r *http.Request) {
 	limit, offset := parsePagination(r)
@@ -91,7 +90,13 @@ func (h *Handler) CreateEvent(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	h.respondJSON(w, http.StatusCreated, toEventResponse(event))
+	createdEvent, err := h.queries.GetEventByID(r.Context(), event.Eid)
+	if err != nil {
+		h.handleDBError(w, err)
+		return
+	}
+
+	h.respondJSON(w, http.StatusCreated, toEventResponse(createdEvent))
 }
 
 // GetEvent gets an event by ID

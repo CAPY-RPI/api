@@ -87,13 +87,9 @@ ORDER BY e.event_time DESC
 LIMIT $2 OFFSET $3;
 
 -- name: CreateEvent :one
-WITH updated AS (
-    INSERT INTO events (title, location, event_time, description)
-    VALUES ($1, $2, $3, $4)
-    RETURNING *
-)
-SELECT v.* FROM events_with_org_ids v
-WHERE v.eid = (SELECT eid FROM updated);
+INSERT INTO events (title, location, event_time, description)
+VALUES ($1, $2, $3, $4)
+RETURNING *;
 
 -- name: UpdateEvent :one
 WITH updated AS (
@@ -105,8 +101,22 @@ WITH updated AS (
     WHERE eid = $1
     RETURNING *
 )
-SELECT v.* FROM events_with_org_ids v
-WHERE v.eid = $1;
+SELECT
+    u.eid,
+    u.location,
+    u.event_time,
+    u.description,
+    u.date_created,
+    u.date_modified,
+    u.title,
+    COALESCE(hosts.org_ids, ARRAY[]::uuid[]) AS org_ids
+FROM updated u
+LEFT JOIN (
+    SELECT eh.eid, ARRAY_AGG(eh.oid)::uuid[] AS org_ids
+    FROM event_hosting eh
+    WHERE eh.eid = $1
+    GROUP BY eh.eid
+) hosts ON hosts.eid = u.eid;
 
 -- name: DeleteEvent :exec
 DELETE FROM events WHERE eid = $1;

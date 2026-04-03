@@ -80,13 +80,9 @@ func (q *Queries) CreateBotToken(ctx context.Context, arg CreateBotTokenParams) 
 }
 
 const createEvent = `-- name: CreateEvent :one
-WITH updated AS (
-    INSERT INTO events (title, location, event_time, description)
-    VALUES ($1, $2, $3, $4)
-    RETURNING eid, location, event_time, description, date_created, date_modified, title
-)
-SELECT v.eid, v.location, v.event_time, v.description, v.date_created, v.date_modified, v.title, v.org_ids FROM events_with_org_ids v
-WHERE v.eid = (SELECT eid FROM updated)
+INSERT INTO events (title, location, event_time, description)
+VALUES ($1, $2, $3, $4)
+RETURNING eid, location, event_time, description, date_created, date_modified, title
 `
 
 type CreateEventParams struct {
@@ -96,14 +92,14 @@ type CreateEventParams struct {
 	Description pgtype.Text      `json:"description"`
 }
 
-func (q *Queries) CreateEvent(ctx context.Context, arg CreateEventParams) (EventsWithOrgID, error) {
+func (q *Queries) CreateEvent(ctx context.Context, arg CreateEventParams) (Event, error) {
 	row := q.db.QueryRow(ctx, createEvent,
 		arg.Title,
 		arg.Location,
 		arg.EventTime,
 		arg.Description,
 	)
-	var i EventsWithOrgID
+	var i Event
 	err := row.Scan(
 		&i.Eid,
 		&i.Location,
@@ -112,7 +108,6 @@ func (q *Queries) CreateEvent(ctx context.Context, arg CreateEventParams) (Event
 		&i.DateCreated,
 		&i.DateModified,
 		&i.Title,
-		&i.OrgIds,
 	)
 	return i, err
 }
@@ -973,8 +968,22 @@ WITH updated AS (
     WHERE eid = $1
     RETURNING eid, location, event_time, description, date_created, date_modified, title
 )
-SELECT v.eid, v.location, v.event_time, v.description, v.date_created, v.date_modified, v.title, v.org_ids FROM events_with_org_ids v
-WHERE v.eid = $1
+SELECT
+    u.eid,
+    u.location,
+    u.event_time,
+    u.description,
+    u.date_created,
+    u.date_modified,
+    u.title,
+    COALESCE(hosts.org_ids, ARRAY[]::uuid[]) AS org_ids
+FROM updated u
+LEFT JOIN (
+    SELECT eh.eid, ARRAY_AGG(eh.oid)::uuid[] AS org_ids
+    FROM event_hosting eh
+    WHERE eh.eid = $1
+    GROUP BY eh.eid
+) hosts ON hosts.eid = u.eid
 `
 
 type UpdateEventParams struct {

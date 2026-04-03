@@ -31,7 +31,7 @@ func BenchmarkHealthEndpoint(b *testing.B) {
 	b.ReportAllocs()
 
 	for i := 0; i < b.N; i++ {
-		resp, err := benchClient.Get(benchServer.URL + "/health")
+		resp, err := benchClient.Get(benchServer.URL + "/api/health")
 		if err != nil {
 			b.Fatalf("failed to make request: %v", err)
 		}
