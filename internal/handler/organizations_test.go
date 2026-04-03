@@ -16,6 +16,7 @@ import (
 	"github.com/capyrpi/api/internal/middleware"
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 )
@@ -156,4 +157,81 @@ func TestAddOrgMemberAllowsSelfJoin(t *testing.T) {
 	http.HandlerFunc(h.AddOrgMember).ServeHTTP(rr, req)
 
 	assert.Equal(t, http.StatusCreated, rr.Code)
+}
+
+func TestRemoveOrgMemberAuthorization(t *testing.T) {
+	oid := uuid.New()
+	selfUID := uuid.New()
+	otherUID := uuid.New()
+
+	tests := []struct {
+		name           string
+		authUID        uuid.UUID
+		targetUID      uuid.UUID
+		setupMock      func(*mocks.Querier)
+		expectedStatus int
+	}{
+		{
+			name:      "MemberCanRemoveSelf",
+			authUID:   selfUID,
+			targetUID: selfUID,
+			setupMock: func(m *mocks.Querier) {
+				m.On("RemoveOrgMember", mock.Anything, database.RemoveOrgMemberParams{
+					Uid: selfUID,
+					Oid: oid,
+				}).Return(nil)
+			},
+			expectedStatus: http.StatusNoContent,
+		},
+		{
+			name:      "AdminCanRemoveOtherMember",
+			authUID:   selfUID,
+			targetUID: otherUID,
+			setupMock: func(m *mocks.Querier) {
+				m.On("IsOrgAdmin", mock.Anything, database.IsOrgAdminParams{
+					Uid: selfUID,
+					Oid: oid,
+				}).Return(pgtype.Bool{Bool: true, Valid: true}, nil)
+				m.On("RemoveOrgMember", mock.Anything, database.RemoveOrgMemberParams{
+					Uid: otherUID,
+					Oid: oid,
+				}).Return(nil)
+			},
+			expectedStatus: http.StatusNoContent,
+		},
+		{
+			name:      "NonAdminCannotRemoveOtherMember",
+			authUID:   selfUID,
+			targetUID: otherUID,
+			setupMock: func(m *mocks.Querier) {
+				m.On("IsOrgAdmin", mock.Anything, database.IsOrgAdminParams{
+					Uid: selfUID,
+					Oid: oid,
+				}).Return(pgtype.Bool{Bool: false, Valid: true}, nil)
+			},
+			expectedStatus: http.StatusForbidden,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			mockQueries := mocks.NewQuerier(t)
+			tt.setupMock(mockQueries)
+
+			h := handler.New(mockQueries, &config.Config{})
+
+			req := httptest.NewRequest(http.MethodDelete, "/organizations/"+oid.String()+"/members/"+tt.targetUID.String(), nil)
+			req = req.WithContext(context.WithValue(context.Background(), middleware.UserClaimsKey, &middleware.UserClaims{UserID: tt.authUID.String()}))
+
+			rctx := chi.NewRouteContext()
+			rctx.URLParams.Add("oid", oid.String())
+			rctx.URLParams.Add("uid", tt.targetUID.String())
+			req = req.WithContext(context.WithValue(req.Context(), chi.RouteCtxKey, rctx))
+
+			rr := httptest.NewRecorder()
+			http.HandlerFunc(h.RemoveOrgMember).ServeHTTP(rr, req)
+
+			assert.Equal(t, tt.expectedStatus, rr.Code)
+		})
+	}
 }

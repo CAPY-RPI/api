@@ -315,15 +315,27 @@ func (h *Handler) RemoveOrgMember(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if _, ok := h.requireOrgAdmin(w, r, oid); !ok {
-		return
-	}
-
 	uidStr := chi.URLParam(r, "uid")
 	uid, err := uuid.Parse(uidStr)
 	if err != nil {
 		h.respondError(w, http.StatusBadRequest, "Invalid user ID")
 		return
+	}
+
+	switch middleware.GetAuthType(r.Context()) {
+	case "bot":
+		// Bots retain full access to remove members on behalf of users.
+	default:
+		authenticatedUID, _, ok := h.requireAuthenticatedUser(w, r)
+		if !ok {
+			return
+		}
+
+		if uid != authenticatedUID {
+			if _, ok := h.requireOrgAdmin(w, r, oid); !ok {
+				return
+			}
+		}
 	}
 
 	if err := h.queries.RemoveOrgMember(r.Context(), database.RemoveOrgMemberParams{
