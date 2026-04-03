@@ -69,6 +69,9 @@ func New(h *handler.Handler, queries database.Querier, jwtSecret string, allowed
 	r.Use(chimiddleware.RequestID)
 	r.Use(middleware.CORS(allowedOrigins, h.Config.Env == "development"))
 
+	// Public link resolution alias.
+	r.Get("/r/{endpoint_url}", h.ResolveLink)
+
 	// API routes
 	r.Route("/api", func(r chi.Router) {
 		// Health check (public)

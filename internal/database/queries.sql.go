@@ -968,8 +968,22 @@ WITH updated AS (
     WHERE eid = $1
     RETURNING eid, location, event_time, description, date_created, date_modified, title
 )
-SELECT v.eid, v.location, v.event_time, v.description, v.date_created, v.date_modified, v.title, v.org_ids FROM events_with_org_ids v
-WHERE v.eid = $1
+SELECT
+    u.eid,
+    u.location,
+    u.event_time,
+    u.description,
+    u.date_created,
+    u.date_modified,
+    u.title,
+    COALESCE(hosts.org_ids, ARRAY[]::uuid[]) AS org_ids
+FROM updated u
+LEFT JOIN (
+    SELECT eh.eid, ARRAY_AGG(eh.oid)::uuid[] AS org_ids
+    FROM event_hosting eh
+    WHERE eh.eid = $1
+    GROUP BY eh.eid
+) hosts ON hosts.eid = u.eid
 `
 
 type UpdateEventParams struct {

@@ -46,16 +46,15 @@ func SetupTestPostgres(t *testing.T) string {
 	return connStr
 }
 
-// SetupTestDB creates a fresh Postgres container, initializes schema.sql, and returns the connection pool.
+// SetupTestDB creates a fresh Postgres container, applies all migrations, and returns the connection pool.
 func SetupTestDB(t *testing.T) *pgxpool.Pool {
 	ctx := context.Background()
 	_, filename, _, _ := runtime.Caller(0)
 	projectRoot := filepath.Join(filepath.Dir(filename), "../..")
-	schemaPath := filepath.Join(projectRoot, "schema.sql")
+	migrationsPath := filepath.Join(projectRoot, "migrations")
 
 	pgContainer, err := postgres.Run(ctx,
 		"postgres:16-alpine",
-		postgres.WithInitScripts(schemaPath),
 		postgres.WithDatabase("test_db"),
 		postgres.WithUsername("test"),
 		postgres.WithPassword("test"),
@@ -77,6 +76,10 @@ func SetupTestDB(t *testing.T) *pgxpool.Pool {
 	connStr, err := pgContainer.ConnectionString(ctx, "sslmode=disable")
 	if err != nil {
 		t.Fatalf("failed to get connection string: %v", err)
+	}
+
+	if err := database.RunMigrations(ctx, connStr, migrationsPath); err != nil {
+		t.Fatalf("failed to apply migrations: %v", err)
 	}
 
 	pool, err := database.NewPool(ctx, connStr)
