@@ -87,13 +87,9 @@ ORDER BY e.event_time DESC
 LIMIT $2 OFFSET $3;
 
 -- name: CreateEvent :one
-WITH updated AS (
-    INSERT INTO events (title, location, event_time, description)
-    VALUES ($1, $2, $3, $4)
-    RETURNING *
-)
-SELECT v.* FROM events_with_org_ids v
-WHERE v.eid = (SELECT eid FROM updated);
+INSERT INTO events (title, location, event_time, description)
+VALUES ($1, $2, $3, $4)
+RETURNING *;
 
 -- name: UpdateEvent :one
 WITH updated AS (

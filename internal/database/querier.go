@@ -15,7 +15,7 @@ type Querier interface {
 	AddEventHost(ctx context.Context, arg AddEventHostParams) error
 	AddOrgMember(ctx context.Context, arg AddOrgMemberParams) error
 	CreateBotToken(ctx context.Context, arg CreateBotTokenParams) (BotToken, error)
-	CreateEvent(ctx context.Context, arg CreateEventParams) (EventsWithOrgID, error)
+	CreateEvent(ctx context.Context, arg CreateEventParams) (Event, error)
 	// Link Queries
 	CreateLink(ctx context.Context, arg CreateLinkParams) (Link, error)
 	CreateOrganization(ctx context.Context, name string) (Organization, error)

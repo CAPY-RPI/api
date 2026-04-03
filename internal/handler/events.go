@@ -90,7 +90,13 @@ func (h *Handler) CreateEvent(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	h.respondJSON(w, http.StatusCreated, toEventResponse(event))
+	createdEvent, err := h.queries.GetEventByID(r.Context(), event.Eid)
+	if err != nil {
+		h.handleDBError(w, err)
+		return
+	}
+
+	h.respondJSON(w, http.StatusCreated, toEventResponse(createdEvent))
 }
 
 // GetEvent gets an event by ID
