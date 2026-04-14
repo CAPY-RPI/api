@@ -78,7 +78,7 @@ func main() {
 
 	// Create queries and handler
 	queries := database.New(pool)
-	h := handler.New(queries, cfg)
+	h := handler.New(queries, cfg, pool)
 
 	// Setup router
 	r := router.New(h, queries, cfg.JWT.Secret, cfg.Server.AllowedOrigins)

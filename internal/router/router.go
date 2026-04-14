@@ -125,7 +125,7 @@ func New(h *handler.Handler, queries database.Querier, jwtSecret string, allowed
 
 					// Organizations (full access)
 					r.Get("/organizations", h.ListOrganizations)
-					r.Post("/organizations", h.CreateOrganization)
+					r.Post("/organizations", h.CreateBotOrganization)
 					r.Get("/organizations/{oid}", h.GetOrganization)
 					r.Put("/organizations/{oid}", h.UpdateOrganization)
 					r.Delete("/organizations/{oid}", h.DeleteOrganization)

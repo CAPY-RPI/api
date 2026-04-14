@@ -50,6 +50,16 @@ type UserResponse struct {
 type CreateOrganizationRequest struct {
 	Name       string     `json:"name" validate:"required,min=1,max=200"`
 	CreatorUID *uuid.UUID `json:"creator_uid,omitempty"` // Required for bot-created orgs
+	GuildID    *int64     `json:"guild_id,omitempty"`
+}
+
+type HumanCreateOrganizationRequest struct {
+	Name string `json:"name" validate:"required,min=1,max=200"`
+}
+
+type BotCreateOrganizationRequest struct {
+	Name    string `json:"name" validate:"required,min=1,max=200"`
+	GuildID int64  `json:"guild_id" validate:"required"`
 }
 
 type UpdateOrganizationRequest struct {

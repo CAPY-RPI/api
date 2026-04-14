@@ -157,6 +157,21 @@ func (q *Queries) CreateOrganization(ctx context.Context, name string) (Organiza
 	return i, err
 }
 
+const createOrgDiscord = `-- name: CreateOrgDiscord :exec
+INSERT INTO org_discords (oid, guild_id)
+VALUES ($1, $2)
+`
+
+type CreateOrgDiscordParams struct {
+	Oid     uuid.UUID `json:"oid"`
+	GuildID int64     `json:"guild_id"`
+}
+
+func (q *Queries) CreateOrgDiscord(ctx context.Context, arg CreateOrgDiscordParams) error {
+	_, err := q.db.Exec(ctx, createOrgDiscord, arg.Oid, arg.GuildID)
+	return err
+}
+
 const createUser = `-- name: CreateUser :one
 INSERT INTO users (first_name, last_name, personal_email, school_email, phone, grad_year, role)
 VALUES ($1, $2, $3, $4, $5, $6, $7)

@@ -38,6 +38,10 @@ INSERT INTO organizations (name)
 VALUES ($1)
 RETURNING *;
 
+-- name: CreateOrgDiscord :exec
+INSERT INTO org_discords (oid, guild_id)
+VALUES ($1, $2);
+
 -- name: UpdateOrganization :one
 UPDATE organizations
 SET name = COALESCE(sqlc.narg('name'), name)

@@ -166,6 +166,24 @@ func (_m *Querier) CreateOrganization(ctx context.Context, name string) (databas
 	return r0, r1
 }
 
+// CreateOrgDiscord provides a mock function with given fields: ctx, arg
+func (_m *Querier) CreateOrgDiscord(ctx context.Context, arg database.CreateOrgDiscordParams) error {
+	ret := _m.Called(ctx, arg)
+
+	if len(ret) == 0 {
+		panic("no return value specified for CreateOrgDiscord")
+	}
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(context.Context, database.CreateOrgDiscordParams) error); ok {
+		r0 = rf(ctx, arg)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
 // CreateUser provides a mock function with given fields: ctx, arg
 func (_m *Querier) CreateUser(ctx context.Context, arg database.CreateUserParams) (database.User, error) {
 	ret := _m.Called(ctx, arg)

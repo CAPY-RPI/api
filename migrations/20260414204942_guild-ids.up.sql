@@ -1,0 +1,4 @@
+CREATE TABLE IF NOT EXISTS org_discords (
+    oid UUID PRIMARY KEY REFERENCES organizations(oid) ON DELETE CASCADE,
+    guild_id BIGINT NOT NULL UNIQUE
+);

@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"context"
 	"encoding/json"
 	"log/slog"
 	"net/http"
@@ -13,18 +14,29 @@ import (
 	"github.com/jackc/pgx/v5/pgconn"
 )
 
+type txBeginner interface {
+	Begin(ctx context.Context) (pgx.Tx, error)
+}
+
 // Handler holds dependencies for HTTP handlers
 type Handler struct {
 	queries       database.Querier
+	txBeginner    txBeginner
 	Config        *config.Config
 	googleAuth    *oauth.GoogleProvider
 	microsoftAuth *oauth.MicrosoftProvider
 }
 
 // New creates a new Handler with the given dependencies
-func New(queries database.Querier, cfg *config.Config) *Handler {
+func New(queries database.Querier, cfg *config.Config, txDB ...txBeginner) *Handler {
+	var beginner txBeginner
+	if len(txDB) > 0 {
+		beginner = txDB[0]
+	}
+
 	return &Handler{
 		queries:       queries,
+		txBeginner:    beginner,
 		Config:        cfg,
 		googleAuth:    oauth.NewGoogleProvider(cfg.OAuth.Google.ClientID, cfg.OAuth.Google.ClientSecret, cfg.OAuth.Google.RedirectURL),
 		microsoftAuth: oauth.NewMicrosoftProvider(cfg.OAuth.Microsoft.ClientID, cfg.OAuth.Microsoft.ClientSecret, cfg.OAuth.Microsoft.RedirectURL, cfg.OAuth.Microsoft.TenantID),

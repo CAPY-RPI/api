@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"context"
 	"encoding/json"
 	"log/slog"
 	"net/http"
@@ -49,7 +50,7 @@ func (h *Handler) ListOrganizations(w http.ResponseWriter, r *http.Request) {
 // @Tags         organizations
 // @Accept       json
 // @Produce      json
-// @Param        body  body      dto.CreateOrganizationRequest  true  "Organization data"
+// @Param        body  body      dto.HumanCreateOrganizationRequest  true  "Organization data"
 // @Success      201   {object}  dto.OrganizationResponse
 // @Failure      400   {object}  ErrorResponse
 // @Security     CookieAuth
@@ -63,6 +64,22 @@ func (h *Handler) CreateOrganization(w http.ResponseWriter, r *http.Request) {
 
 	if req.Name == "" {
 		h.respondError(w, http.StatusBadRequest, "Name is required")
+		return
+	}
+
+	if middleware.GetAuthType(r.Context()) == "bot" {
+		if req.GuildID == nil {
+			h.respondError(w, http.StatusBadRequest, "Guild ID is required")
+			return
+		}
+
+		org, err := h.createBotOrganization(r.Context(), req.Name, *req.GuildID)
+		if err != nil {
+			h.handleDBError(w, err)
+			return
+		}
+
+		h.respondJSON(w, http.StatusCreated, toOrgResponse(org))
 		return
 	}
 
@@ -90,6 +107,68 @@ func (h *Handler) CreateOrganization(w http.ResponseWriter, r *http.Request) {
 	}
 
 	h.respondJSON(w, http.StatusCreated, toOrgResponse(org))
+}
+
+// CreateBotOrganization creates a new organization for a Discord guild.
+// @Summary      Create bot organization
+// @Description  Creates a new organization for the authenticated bot and links it to the provided Discord guild ID.
+// @Tags         organizations
+// @Accept       json
+// @Produce      json
+// @Param        body  body      dto.BotCreateOrganizationRequest  true  "Bot organization data"
+// @Success      201   {object}  dto.OrganizationResponse
+// @Failure      400   {object}  ErrorResponse
+// @Failure      409   {object}  ErrorResponse
+// @Security     BotToken
+// @Router       /bot/organizations [post]
+func (h *Handler) CreateBotOrganization(w http.ResponseWriter, r *http.Request) {
+	h.CreateOrganization(w, r)
+}
+
+func (h *Handler) createBotOrganization(ctx context.Context, name string, guildID int64) (database.Organization, error) {
+	if h.txBeginner == nil {
+		org, err := h.queries.CreateOrganization(ctx, name)
+		if err != nil {
+			return database.Organization{}, err
+		}
+
+		if err := h.queries.CreateOrgDiscord(ctx, database.CreateOrgDiscordParams{
+			Oid:     org.Oid,
+			GuildID: guildID,
+		}); err != nil {
+			return database.Organization{}, err
+		}
+
+		return org, nil
+	}
+
+	tx, err := h.txBeginner.Begin(ctx)
+	if err != nil {
+		return database.Organization{}, err
+	}
+	defer func() {
+		_ = tx.Rollback(ctx)
+	}()
+
+	q := database.New(tx)
+
+	org, err := q.CreateOrganization(ctx, name)
+	if err != nil {
+		return database.Organization{}, err
+	}
+
+	if err := q.CreateOrgDiscord(ctx, database.CreateOrgDiscordParams{
+		Oid:     org.Oid,
+		GuildID: guildID,
+	}); err != nil {
+		return database.Organization{}, err
+	}
+
+	if err := tx.Commit(ctx); err != nil {
+		return database.Organization{}, err
+	}
+
+	return org, nil
 }
 
 // GetOrganization gets an organization by ID

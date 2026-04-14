@@ -18,6 +18,7 @@ type Querier interface {
 	CreateEvent(ctx context.Context, arg CreateEventParams) (Event, error)
 	// Link Queries
 	CreateLink(ctx context.Context, arg CreateLinkParams) (Link, error)
+	CreateOrgDiscord(ctx context.Context, arg CreateOrgDiscordParams) error
 	CreateOrganization(ctx context.Context, name string) (Organization, error)
 	CreateUser(ctx context.Context, arg CreateUserParams) (User, error)
 	DeleteEvent(ctx context.Context, eid uuid.UUID) error

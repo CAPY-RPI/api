@@ -30,11 +30,34 @@ definitions:
       creator_uid:
         description: Required for bot-created orgs
         type: string
+      guild_id:
+        type: integer
       name:
         maxLength: 200
         minLength: 1
         type: string
     required:
+    - name
+    type: object
+  dto.HumanCreateOrganizationRequest:
+    properties:
+      name:
+        maxLength: 200
+        minLength: 1
+        type: string
+    required:
+    - name
+    type: object
+  dto.BotCreateOrganizationRequest:
+    properties:
+      guild_id:
+        type: integer
+      name:
+        maxLength: 200
+        minLength: 1
+        type: string
+    required:
+    - guild_id
     - name
     type: object
   dto.EventRegistrationResponse:
@@ -397,6 +420,38 @@ paths:
       summary: Get bot info
       tags:
       - bot
+  /bot/organizations:
+    post:
+      consumes:
+      - application/json
+      description: Creates a new organization for the authenticated bot and links it to the provided Discord guild ID.
+      parameters:
+      - description: Bot organization data
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/dto.BotCreateOrganizationRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/dto.OrganizationResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "409":
+          description: Conflict
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+      security:
+      - BotToken: []
+      summary: Create bot organization
+      tags:
+      - organizations
   /bot/tokens:
     get:
       consumes:
@@ -814,7 +869,7 @@ paths:
         name: body
         required: true
         schema:
-          $ref: '#/definitions/dto.CreateOrganizationRequest'
+          $ref: '#/definitions/dto.HumanCreateOrganizationRequest'
       produces:
       - application/json
       responses:

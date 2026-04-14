@@ -66,6 +66,11 @@ CREATE TABLE IF NOT EXISTS event_registrations (
     PRIMARY KEY (uid, eid)
 );
 
+CREATE TABLE IF NOT EXISTS org_discords (
+    oid UUID PRIMARY KEY REFERENCES organizations(oid) ON DELETE CASCADE,
+    guild_id BIGINT NOT NULL UNIQUE
+);
+
 -- 3. Bot Tokens (global access for M2M authentication)
 CREATE TABLE IF NOT EXISTS bot_tokens (
     token_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),

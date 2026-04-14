@@ -245,6 +245,57 @@ const docTemplate = `{
                 }
             }
         },
+        "/bot/organizations": {
+            "post": {
+                "security": [
+                    {
+                        "BotToken": []
+                    }
+                ],
+                "description": "Creates a new organization for the authenticated bot and links it to the provided Discord guild ID.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "organizations"
+                ],
+                "summary": "Create bot organization",
+                "parameters": [
+                    {
+                        "description": "Bot organization data",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/dto.BotCreateOrganizationRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/dto.OrganizationResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErrorResponse"
+                        }
+                    },
+                    "409": {
+                        "description": "Conflict",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/bot/tokens": {
             "get": {
                 "security": [
@@ -909,7 +960,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/dto.CreateOrganizationRequest"
+                            "$ref": "#/definitions/dto.HumanCreateOrganizationRequest"
                         }
                     }
                 ],
@@ -1581,6 +1632,23 @@ const docTemplate = `{
                 }
             }
         },
+        "dto.BotCreateOrganizationRequest": {
+            "type": "object",
+            "required": [
+                "guild_id",
+                "name"
+            ],
+            "properties": {
+                "guild_id": {
+                    "type": "integer"
+                },
+                "name": {
+                    "type": "string",
+                    "maxLength": 200,
+                    "minLength": 1
+                }
+            }
+        },
         "dto.CreateOrganizationRequest": {
             "type": "object",
             "required": [
@@ -1591,6 +1659,22 @@ const docTemplate = `{
                     "description": "Required for bot-created orgs",
                     "type": "string"
                 },
+                "guild_id": {
+                    "type": "integer"
+                },
+                "name": {
+                    "type": "string",
+                    "maxLength": 200,
+                    "minLength": 1
+                }
+            }
+        },
+        "dto.HumanCreateOrganizationRequest": {
+            "type": "object",
+            "required": [
+                "name"
+            ],
+            "properties": {
                 "name": {
                     "type": "string",
                     "maxLength": 200,
