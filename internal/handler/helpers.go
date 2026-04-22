@@ -28,6 +28,10 @@ func parsePagination(r *http.Request) (limit, offset int) {
 	return limit, offset
 }
 
+func parseInt64PathParam(value string) (int64, error) {
+	return strconv.ParseInt(value, 10, 64)
+}
+
 // ============================================================================
 // Database -> DTO Converters
 // ============================================================================
@@ -44,6 +48,14 @@ func fromPgInt4(i pgtype.Int4) *int {
 		return nil
 	}
 	v := int(i.Int32)
+	return &v
+}
+
+func fromPgInt8(i pgtype.Int8) *int64 {
+	if !i.Valid {
+		return nil
+	}
+	v := i.Int64
 	return &v
 }
 

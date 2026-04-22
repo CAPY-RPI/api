@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
+	"time"
 
 	"github.com/capyrpi/api/internal/config"
 	"github.com/capyrpi/api/internal/database"
@@ -189,9 +190,9 @@ func TestListOrganizations(t *testing.T) {
 			setupMock: func(m *mocks.Querier) {
 				m.On("ListOrganizations", mock.Anything, mock.MatchedBy(func(arg database.ListOrganizationsParams) bool {
 					return arg.Limit == 20 && arg.Offset == 0
-				})).Return([]database.Organization{
+				})).Return([]database.ListOrganizationsRow{
 					{Name: "Org 1"},
-					{Name: "Org 2"},
+					{Name: "Org 2", GuildID: pgtype.Int8{Int64: 123456789, Valid: true}},
 				}, nil)
 			},
 			expectedStatus: http.StatusOK,
@@ -211,6 +212,85 @@ func TestListOrganizations(t *testing.T) {
 			http.HandlerFunc(h.ListOrganizations).ServeHTTP(rr, req)
 
 			assert.Equal(t, tt.expectedStatus, rr.Code)
+
+			if tt.expectedStatus == http.StatusOK {
+				var resp []dto.OrganizationResponse
+				err := json.NewDecoder(rr.Body).Decode(&resp)
+				assert.NoError(t, err)
+				assert.Len(t, resp, 2)
+				assert.Nil(t, resp[0].GuildID)
+				if assert.NotNil(t, resp[1].GuildID) {
+					assert.Equal(t, int64(123456789), *resp[1].GuildID)
+				}
+			}
+		})
+	}
+}
+
+func TestGetOrganizationByGuildID(t *testing.T) {
+	oid := uuid.New()
+	now := pgtype.Date{Time: time.Now(), Valid: true}
+
+	tests := []struct {
+		name           string
+		guildIDParam   string
+		setupMock      func(*mocks.Querier)
+		expectedStatus int
+	}{
+		{
+			name:         "Success",
+			guildIDParam: "123456789",
+			setupMock: func(m *mocks.Querier) {
+				m.On("GetOrganizationByGuildID", mock.Anything, int64(123456789)).Return(database.GetOrganizationByGuildIDRow{
+					Oid:          oid,
+					Name:         "Bot Org",
+					GuildID:      123456789,
+					DateCreated:  now,
+					DateModified: now,
+				}, nil)
+			},
+			expectedStatus: http.StatusOK,
+		},
+		{
+			name:         "InvalidGuildID",
+			guildIDParam: "not-a-number",
+			setupMock:    func(m *mocks.Querier) {},
+			expectedStatus: http.StatusBadRequest,
+		},
+		{
+			name:         "NotFound",
+			guildIDParam: "987654321",
+			setupMock: func(m *mocks.Querier) {
+				m.On("GetOrganizationByGuildID", mock.Anything, int64(987654321)).Return(database.GetOrganizationByGuildIDRow{}, pgx.ErrNoRows)
+			},
+			expectedStatus: http.StatusNotFound,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			mockQueries := mocks.NewQuerier(t)
+			tt.setupMock(mockQueries)
+
+			h := handler.New(mockQueries, &config.Config{})
+
+			req := httptest.NewRequest(http.MethodGet, "/bot/organizations/guilds/"+tt.guildIDParam, nil)
+			rctx := chi.NewRouteContext()
+			rctx.URLParams.Add("guild_id", tt.guildIDParam)
+			req = req.WithContext(context.WithValue(req.Context(), chi.RouteCtxKey, rctx))
+
+			rr := httptest.NewRecorder()
+			http.HandlerFunc(h.GetOrganizationByGuildID).ServeHTTP(rr, req)
+
+			assert.Equal(t, tt.expectedStatus, rr.Code)
+
+			if tt.expectedStatus == http.StatusOK {
+				var resp dto.BotOrganizationResponse
+				err := json.NewDecoder(rr.Body).Decode(&resp)
+				assert.NoError(t, err)
+				assert.Equal(t, oid, resp.OID)
+				assert.Equal(t, int64(123456789), resp.GuildID)
+			}
 		})
 	}
 }

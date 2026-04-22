@@ -296,6 +296,56 @@ const docTemplate = `{
                 }
             }
         },
+        "/bot/organizations/guilds/{guild_id}": {
+            "get": {
+                "security": [
+                    {
+                        "BotToken": []
+                    }
+                ],
+                "description": "Returns organization details for the provided Discord guild ID.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "organizations"
+                ],
+                "summary": "Get organization by guild ID",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "format": "int64",
+                        "description": "Discord guild ID",
+                        "name": "guild_id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/dto.BotOrganizationResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/bot/tokens": {
             "get": {
                 "security": [
@@ -430,11 +480,6 @@ const docTemplate = `{
         },
         "/events": {
             "get": {
-                "security": [
-                    {
-                        "CookieAuth": []
-                    }
-                ],
                 "description": "Returns a paginated list of all public events",
                 "consumes": [
                     "application/json"
@@ -892,13 +937,198 @@ const docTemplate = `{
                 }
             }
         },
-        "/organizations": {
+        "/links": {
+            "post": {
+                "security": [
+                    {
+                        "CookieAuth": []
+                    }
+                ],
+                "description": "Creates a new dynamic link for an organization. Requires org_admin role.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "links"
+                ],
+                "summary": "Create link",
+                "parameters": [
+                    {
+                        "description": "Link data",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/dto.CreateLinkRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/dto.LinkResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/links/{lid}": {
+            "put": {
+                "security": [
+                    {
+                        "CookieAuth": []
+                    }
+                ],
+                "description": "Updates a dynamic link's destination or endpoint URL. Requires org_admin role.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "links"
+                ],
+                "summary": "Update link",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Link UUID",
+                        "name": "lid",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Update data",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/dto.UpdateLinkRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/dto.LinkResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/links/{lid}/qrcode": {
+            "get": {
+                "description": "Generates and returns a QR code image for the link's destination URL",
+                "produces": [
+                    "image/png"
+                ],
+                "tags": [
+                    "links"
+                ],
+                "summary": "Get QR code",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Link UUID",
+                        "name": "lid",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "file"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/links/{lid}/visits": {
             "get": {
                 "security": [
                     {
                         "CookieAuth": []
                     }
                 ],
+                "description": "Returns the total number of visits logged for a link",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "links"
+                ],
+                "summary": "Get visit count",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Link UUID",
+                        "name": "lid",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/dto.VisitCountResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/organizations": {
+            "get": {
                 "description": "Returns a paginated list of all organizations",
                 "consumes": [
                     "application/json"
@@ -1187,6 +1417,52 @@ const docTemplate = `{
                 }
             }
         },
+        "/organizations/{oid}/links": {
+            "get": {
+                "security": [
+                    {
+                        "CookieAuth": []
+                    }
+                ],
+                "description": "Returns all dynamic links owned by an organization",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "links"
+                ],
+                "summary": "List org links",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Organization UUID",
+                        "name": "oid",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/dto.LinkResponse"
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/organizations/{oid}/members": {
             "get": {
                 "security": [
@@ -1341,6 +1617,35 @@ const docTemplate = `{
                         "schema": {
                             "$ref": "#/definitions/handler.ErrorResponse"
                         }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/r/{endpoint_url}": {
+            "get": {
+                "description": "Redirects to the destination URL and logs a visit",
+                "tags": [
+                    "links"
+                ],
+                "summary": "Resolve link",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Dynamic link endpoint URL",
+                        "name": "endpoint_url",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "302": {
+                        "description": "Found"
                     },
                     "404": {
                         "description": "Not Found",
@@ -1608,6 +1913,43 @@ const docTemplate = `{
                 }
             }
         },
+        "dto.BotCreateOrganizationRequest": {
+            "type": "object",
+            "required": [
+                "guild_id",
+                "name"
+            ],
+            "properties": {
+                "guild_id": {
+                    "type": "integer"
+                },
+                "name": {
+                    "type": "string",
+                    "maxLength": 200,
+                    "minLength": 1
+                }
+            }
+        },
+        "dto.BotOrganizationResponse": {
+            "type": "object",
+            "properties": {
+                "date_created": {
+                    "type": "string"
+                },
+                "date_modified": {
+                    "type": "string"
+                },
+                "guild_id": {
+                    "type": "integer"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "oid": {
+                    "type": "string"
+                }
+            }
+        },
         "dto.CreateEventRequest": {
             "type": "object",
             "required": [
@@ -1632,53 +1974,22 @@ const docTemplate = `{
                 }
             }
         },
-        "dto.BotCreateOrganizationRequest": {
+        "dto.CreateLinkRequest": {
             "type": "object",
             "required": [
-                "guild_id",
-                "name"
+                "dest_url",
+                "endpoint_url",
+                "org_id"
             ],
             "properties": {
-                "guild_id": {
-                    "type": "integer"
-                },
-                "name": {
-                    "type": "string",
-                    "maxLength": 200,
-                    "minLength": 1
-                }
-            }
-        },
-        "dto.CreateOrganizationRequest": {
-            "type": "object",
-            "required": [
-                "name"
-            ],
-            "properties": {
-                "creator_uid": {
-                    "description": "Required for bot-created orgs",
+                "dest_url": {
                     "type": "string"
                 },
-                "guild_id": {
-                    "type": "integer"
+                "endpoint_url": {
+                    "type": "string"
                 },
-                "name": {
-                    "type": "string",
-                    "maxLength": 200,
-                    "minLength": 1
-                }
-            }
-        },
-        "dto.HumanCreateOrganizationRequest": {
-            "type": "object",
-            "required": [
-                "name"
-            ],
-            "properties": {
-                "name": {
-                    "type": "string",
-                    "maxLength": 200,
-                    "minLength": 1
+                "org_id": {
+                    "type": "string"
                 }
             }
         },
@@ -1726,7 +2037,46 @@ const docTemplate = `{
                 "location": {
                     "type": "string"
                 },
+                "oids": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
                 "title": {
+                    "type": "string"
+                }
+            }
+        },
+        "dto.HumanCreateOrganizationRequest": {
+            "type": "object",
+            "required": [
+                "name"
+            ],
+            "properties": {
+                "name": {
+                    "type": "string",
+                    "maxLength": 200,
+                    "minLength": 1
+                }
+            }
+        },
+        "dto.LinkResponse": {
+            "type": "object",
+            "properties": {
+                "created_at": {
+                    "type": "string"
+                },
+                "dest_url": {
+                    "type": "string"
+                },
+                "endpoint_url": {
+                    "type": "string"
+                },
+                "lid": {
+                    "type": "string"
+                },
+                "org_id": {
                     "type": "string"
                 }
             }
@@ -1766,6 +2116,9 @@ const docTemplate = `{
                 "date_modified": {
                     "type": "string"
                 },
+                "guild_id": {
+                    "type": "integer"
+                },
                 "name": {
                     "type": "string"
                 },
@@ -1799,6 +2152,17 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "title": {
+                    "type": "string"
+                }
+            }
+        },
+        "dto.UpdateLinkRequest": {
+            "type": "object",
+            "properties": {
+                "dest_url": {
+                    "type": "string"
+                },
+                "endpoint_url": {
                     "type": "string"
                 }
             }
@@ -1883,6 +2247,17 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "uid": {
+                    "type": "string"
+                }
+            }
+        },
+        "dto.VisitCountResponse": {
+            "type": "object",
+            "properties": {
+                "count": {
+                    "type": "integer"
+                },
+                "lid": {
                     "type": "string"
                 }
             }

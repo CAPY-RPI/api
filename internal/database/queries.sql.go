@@ -139,6 +139,21 @@ func (q *Queries) CreateLink(ctx context.Context, arg CreateLinkParams) (Link, e
 	return i, err
 }
 
+const createOrgDiscord = `-- name: CreateOrgDiscord :exec
+INSERT INTO org_discords (oid, guild_id)
+VALUES ($1, $2)
+`
+
+type CreateOrgDiscordParams struct {
+	Oid     uuid.UUID `json:"oid"`
+	GuildID int64     `json:"guild_id"`
+}
+
+func (q *Queries) CreateOrgDiscord(ctx context.Context, arg CreateOrgDiscordParams) error {
+	_, err := q.db.Exec(ctx, createOrgDiscord, arg.Oid, arg.GuildID)
+	return err
+}
+
 const createOrganization = `-- name: CreateOrganization :one
 INSERT INTO organizations (name)
 VALUES ($1)
@@ -155,21 +170,6 @@ func (q *Queries) CreateOrganization(ctx context.Context, name string) (Organiza
 		&i.DateModified,
 	)
 	return i, err
-}
-
-const createOrgDiscord = `-- name: CreateOrgDiscord :exec
-INSERT INTO org_discords (oid, guild_id)
-VALUES ($1, $2)
-`
-
-type CreateOrgDiscordParams struct {
-	Oid     uuid.UUID `json:"oid"`
-	GuildID int64     `json:"guild_id"`
-}
-
-func (q *Queries) CreateOrgDiscord(ctx context.Context, arg CreateOrgDiscordParams) error {
-	_, err := q.db.Exec(ctx, createOrgDiscord, arg.Oid, arg.GuildID)
-	return err
 }
 
 const createUser = `-- name: CreateUser :one
@@ -440,6 +440,39 @@ func (q *Queries) GetOrgMembers(ctx context.Context, oid uuid.UUID) ([]GetOrgMem
 		return nil, err
 	}
 	return items, nil
+}
+
+const getOrganizationByGuildID = `-- name: GetOrganizationByGuildID :one
+SELECT
+    o.oid,
+    o.name,
+    o.date_created,
+    o.date_modified,
+    od.guild_id
+FROM organizations o
+JOIN org_discords od ON od.oid = o.oid
+WHERE od.guild_id = $1
+`
+
+type GetOrganizationByGuildIDRow struct {
+	Oid          uuid.UUID   `json:"oid"`
+	Name         string      `json:"name"`
+	DateCreated  pgtype.Date `json:"date_created"`
+	DateModified pgtype.Date `json:"date_modified"`
+	GuildID      int64       `json:"guild_id"`
+}
+
+func (q *Queries) GetOrganizationByGuildID(ctx context.Context, guildID int64) (GetOrganizationByGuildIDRow, error) {
+	row := q.db.QueryRow(ctx, getOrganizationByGuildID, guildID)
+	var i GetOrganizationByGuildIDRow
+	err := row.Scan(
+		&i.Oid,
+		&i.Name,
+		&i.DateCreated,
+		&i.DateModified,
+		&i.GuildID,
+	)
+	return i, err
 }
 
 const getOrganizationByID = `-- name: GetOrganizationByID :one
@@ -814,7 +847,16 @@ func (q *Queries) ListLinksByOrg(ctx context.Context, oid uuid.UUID) ([]Link, er
 }
 
 const listOrganizations = `-- name: ListOrganizations :many
-SELECT oid, name, date_created, date_modified FROM organizations ORDER BY name LIMIT $1 OFFSET $2
+SELECT
+    o.oid,
+    o.name,
+    o.date_created,
+    o.date_modified,
+    od.guild_id
+FROM organizations o
+LEFT JOIN org_discords od ON od.oid = o.oid
+ORDER BY o.name
+LIMIT $1 OFFSET $2
 `
 
 type ListOrganizationsParams struct {
@@ -822,20 +864,29 @@ type ListOrganizationsParams struct {
 	Offset int32 `json:"offset"`
 }
 
-func (q *Queries) ListOrganizations(ctx context.Context, arg ListOrganizationsParams) ([]Organization, error) {
+type ListOrganizationsRow struct {
+	Oid          uuid.UUID   `json:"oid"`
+	Name         string      `json:"name"`
+	DateCreated  pgtype.Date `json:"date_created"`
+	DateModified pgtype.Date `json:"date_modified"`
+	GuildID      pgtype.Int8 `json:"guild_id"`
+}
+
+func (q *Queries) ListOrganizations(ctx context.Context, arg ListOrganizationsParams) ([]ListOrganizationsRow, error) {
 	rows, err := q.db.Query(ctx, listOrganizations, arg.Limit, arg.Offset)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	items := []Organization{}
+	items := []ListOrganizationsRow{}
 	for rows.Next() {
-		var i Organization
+		var i ListOrganizationsRow
 		if err := rows.Scan(
 			&i.Oid,
 			&i.Name,
 			&i.DateCreated,
 			&i.DateModified,
+			&i.GuildID,
 		); err != nil {
 			return nil, err
 		}
@@ -976,12 +1027,11 @@ func (q *Queries) UpdateBotTokenLastUsed(ctx context.Context, tokenID uuid.UUID)
 const updateEvent = `-- name: UpdateEvent :one
 WITH updated AS (
     UPDATE events
-    SET title = COALESCE($2, title),
-        location = COALESCE($3, location),
-        event_time = COALESCE($4, event_time),
-        description = COALESCE($5, description)
-    WHERE eid = $1
-    RETURNING eid, location, event_time, description, date_created, date_modified, title
+    SET location = $2,
+        event_time = $3,
+        description = $4
+    WHERE events.eid = $1
+    RETURNING events.eid, events.location, events.event_time, events.description, events.date_created, events.date_modified, events.title
 )
 SELECT
     u.eid,
@@ -1003,21 +1053,30 @@ LEFT JOIN (
 
 type UpdateEventParams struct {
 	Eid         uuid.UUID        `json:"eid"`
-	Title       pgtype.Text      `json:"title"`
 	Location    pgtype.Text      `json:"location"`
 	EventTime   pgtype.Timestamp `json:"event_time"`
 	Description pgtype.Text      `json:"description"`
 }
 
-func (q *Queries) UpdateEvent(ctx context.Context, arg UpdateEventParams) (EventsWithOrgID, error) {
+type UpdateEventRow struct {
+	Eid          uuid.UUID        `json:"eid"`
+	Location     pgtype.Text      `json:"location"`
+	EventTime    pgtype.Timestamp `json:"event_time"`
+	Description  pgtype.Text      `json:"description"`
+	DateCreated  pgtype.Date      `json:"date_created"`
+	DateModified pgtype.Date      `json:"date_modified"`
+	Title        pgtype.Text      `json:"title"`
+	OrgIds       []uuid.UUID      `json:"org_ids"`
+}
+
+func (q *Queries) UpdateEvent(ctx context.Context, arg UpdateEventParams) (UpdateEventRow, error) {
 	row := q.db.QueryRow(ctx, updateEvent,
 		arg.Eid,
-		arg.Title,
 		arg.Location,
 		arg.EventTime,
 		arg.Description,
 	)
-	var i EventsWithOrgID
+	var i UpdateEventRow
 	err := row.Scan(
 		&i.Eid,
 		&i.Location,

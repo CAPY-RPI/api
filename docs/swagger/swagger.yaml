@@ -9,6 +9,31 @@ definitions:
     required:
     - uid
     type: object
+  dto.BotCreateOrganizationRequest:
+    properties:
+      guild_id:
+        type: integer
+      name:
+        maxLength: 200
+        minLength: 1
+        type: string
+    required:
+    - guild_id
+    - name
+    type: object
+  dto.BotOrganizationResponse:
+    properties:
+      date_created:
+        type: string
+      date_modified:
+        type: string
+      guild_id:
+        type: integer
+      name:
+        type: string
+      oid:
+        type: string
+    type: object
   dto.CreateEventRequest:
     properties:
       description:
@@ -25,40 +50,18 @@ definitions:
     required:
     - org_id
     type: object
-  dto.CreateOrganizationRequest:
+  dto.CreateLinkRequest:
     properties:
-      creator_uid:
-        description: Required for bot-created orgs
+      dest_url:
         type: string
-      guild_id:
-        type: integer
-      name:
-        maxLength: 200
-        minLength: 1
+      endpoint_url:
+        type: string
+      org_id:
         type: string
     required:
-    - name
-    type: object
-  dto.HumanCreateOrganizationRequest:
-    properties:
-      name:
-        maxLength: 200
-        minLength: 1
-        type: string
-    required:
-    - name
-    type: object
-  dto.BotCreateOrganizationRequest:
-    properties:
-      guild_id:
-        type: integer
-      name:
-        maxLength: 200
-        minLength: 1
-        type: string
-    required:
-    - guild_id
-    - name
+    - dest_url
+    - endpoint_url
+    - org_id
     type: object
   dto.EventRegistrationResponse:
     properties:
@@ -89,7 +92,33 @@ definitions:
         type: string
       location:
         type: string
+      oids:
+        items:
+          type: string
+        type: array
       title:
+        type: string
+    type: object
+  dto.HumanCreateOrganizationRequest:
+    properties:
+      name:
+        maxLength: 200
+        minLength: 1
+        type: string
+    required:
+    - name
+    type: object
+  dto.LinkResponse:
+    properties:
+      created_at:
+        type: string
+      dest_url:
+        type: string
+      endpoint_url:
+        type: string
+      lid:
+        type: string
+      org_id:
         type: string
     type: object
   dto.OrgMemberResponse:
@@ -115,6 +144,8 @@ definitions:
         type: string
       date_modified:
         type: string
+      guild_id:
+        type: integer
       name:
         type: string
       oid:
@@ -137,6 +168,13 @@ definitions:
       location:
         type: string
       title:
+        type: string
+    type: object
+  dto.UpdateLinkRequest:
+    properties:
+      dest_url:
+        type: string
+      endpoint_url:
         type: string
     type: object
   dto.UpdateOrganizationRequest:
@@ -196,6 +234,13 @@ definitions:
       school_email:
         type: string
       uid:
+        type: string
+    type: object
+  dto.VisitCountResponse:
+    properties:
+      count:
+        type: integer
+      lid:
         type: string
     type: object
   handler.AuthResponse:
@@ -424,7 +469,8 @@ paths:
     post:
       consumes:
       - application/json
-      description: Creates a new organization for the authenticated bot and links it to the provided Discord guild ID.
+      description: Creates a new organization for the authenticated bot and links
+        it to the provided Discord guild ID.
       parameters:
       - description: Bot organization data
         in: body
@@ -450,6 +496,38 @@ paths:
       security:
       - BotToken: []
       summary: Create bot organization
+      tags:
+      - organizations
+  /bot/organizations/guilds/{guild_id}:
+    get:
+      consumes:
+      - application/json
+      description: Returns organization details for the provided Discord guild ID.
+      parameters:
+      - description: Discord guild ID
+        format: int64
+        in: path
+        name: guild_id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.BotOrganizationResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+      security:
+      - BotToken: []
+      summary: Get organization by guild ID
       tags:
       - organizations
   /bot/tokens:
@@ -559,8 +637,6 @@ paths:
             items:
               $ref: '#/definitions/dto.EventResponse'
             type: array
-      security:
-      - CookieAuth: []
       summary: List events
       tags:
       - events
@@ -831,6 +907,130 @@ paths:
       summary: List events by organization
       tags:
       - events
+  /links:
+    post:
+      consumes:
+      - application/json
+      description: Creates a new dynamic link for an organization. Requires org_admin
+        role.
+      parameters:
+      - description: Link data
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/dto.CreateLinkRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/dto.LinkResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+      security:
+      - CookieAuth: []
+      summary: Create link
+      tags:
+      - links
+  /links/{lid}:
+    put:
+      consumes:
+      - application/json
+      description: Updates a dynamic link's destination or endpoint URL. Requires
+        org_admin role.
+      parameters:
+      - description: Link UUID
+        in: path
+        name: lid
+        required: true
+        type: string
+      - description: Update data
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/dto.UpdateLinkRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.LinkResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+      security:
+      - CookieAuth: []
+      summary: Update link
+      tags:
+      - links
+  /links/{lid}/qrcode:
+    get:
+      description: Generates and returns a QR code image for the link's destination
+        URL
+      parameters:
+      - description: Link UUID
+        in: path
+        name: lid
+        required: true
+        type: string
+      produces:
+      - image/png
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: file
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+      summary: Get QR code
+      tags:
+      - links
+  /links/{lid}/visits:
+    get:
+      description: Returns the total number of visits logged for a link
+      parameters:
+      - description: Link UUID
+        in: path
+        name: lid
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.VisitCountResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+      security:
+      - CookieAuth: []
+      summary: Get visit count
+      tags:
+      - links
   /organizations:
     get:
       consumes:
@@ -854,8 +1054,6 @@ paths:
             items:
               $ref: '#/definitions/dto.OrganizationResponse'
             type: array
-      security:
-      - CookieAuth: []
       summary: List organizations
       tags:
       - organizations
@@ -1018,6 +1216,35 @@ paths:
       summary: List organization events
       tags:
       - organizations
+  /organizations/{oid}/links:
+    get:
+      consumes:
+      - application/json
+      description: Returns all dynamic links owned by an organization
+      parameters:
+      - description: Organization UUID
+        in: path
+        name: oid
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/dto.LinkResponse'
+            type: array
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+      security:
+      - CookieAuth: []
+      summary: List org links
+      tags:
+      - links
   /organizations/{oid}/members:
     get:
       consumes:
@@ -1123,6 +1350,25 @@ paths:
       summary: Remove organization member
       tags:
       - organizations
+  /r/{endpoint_url}:
+    get:
+      description: Redirects to the destination URL and logs a visit
+      parameters:
+      - description: Dynamic link endpoint URL
+        in: path
+        name: endpoint_url
+        required: true
+        type: string
+      responses:
+        "302":
+          description: Found
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+      summary: Resolve link
+      tags:
+      - links
   /users/{uid}:
     delete:
       consumes:

@@ -159,19 +159,39 @@ func (h *Handler) UpdateEvent(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	currentEvent, err := h.queries.GetEventByID(r.Context(), eid)
+	if err != nil {
+		h.handleDBError(w, err)
+		return
+	}
+
+	location := currentEvent.Location
+	if req.Location != nil {
+		location = toPgText(req.Location)
+	}
+
+	eventTime := currentEvent.EventTime
+	if req.EventTime != nil {
+		eventTime = toPgTimestamp(req.EventTime)
+	}
+
+	description := currentEvent.Description
+	if req.Description != nil {
+		description = toPgText(req.Description)
+	}
+
 	event, err := h.queries.UpdateEvent(r.Context(), database.UpdateEventParams{
 		Eid:         eid,
-		Title:       toPgText(req.Title),
-		Location:    toPgText(req.Location),
-		EventTime:   toPgTimestamp(req.EventTime),
-		Description: toPgText(req.Description),
+		Location:    location,
+		EventTime:   eventTime,
+		Description: description,
 	})
 	if err != nil {
 		h.handleDBError(w, err)
 		return
 	}
 
-	h.respondJSON(w, http.StatusOK, toEventResponse(event))
+	h.respondJSON(w, http.StatusOK, toUpdatedEventResponse(event))
 }
 
 // DeleteEvent deletes an event
@@ -423,7 +443,19 @@ func (h *Handler) ListEventsByOrg(w http.ResponseWriter, r *http.Request) {
 
 // Helper functions
 func toEventResponse(event database.EventsWithOrgID) dto.EventResponse {
+	return dto.EventResponse{
+		EID:           event.Eid,
+		Organizations: event.OrgIds,
+		Title:         fromPgText(event.Title),
+		Location:      fromPgText(event.Location),
+		EventTime:     fromPgTimestamp(event.EventTime),
+		Description:   fromPgText(event.Description),
+		DateCreated:   fromPgDate(event.DateCreated),
+		DateModified:  fromPgDate(event.DateModified),
+	}
+}
 
+func toUpdatedEventResponse(event database.UpdateEventRow) dto.EventResponse {
 	return dto.EventResponse{
 		EID:           event.Eid,
 		Organizations: event.OrgIds,

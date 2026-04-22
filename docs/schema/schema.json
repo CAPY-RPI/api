@@ -2173,6 +2173,68 @@
               }
             ],
             "comment": ""
+          },
+          {
+            "rel": {
+              "catalog": "",
+              "schema": "",
+              "name": "org_discords"
+            },
+            "columns": [
+              {
+                "name": "oid",
+                "not_null": true,
+                "is_array": false,
+                "comment": "",
+                "length": -1,
+                "is_named_param": false,
+                "is_func_call": false,
+                "scope": "",
+                "table": {
+                  "catalog": "",
+                  "schema": "",
+                  "name": "org_discords"
+                },
+                "table_alias": "",
+                "type": {
+                  "catalog": "",
+                  "schema": "",
+                  "name": "uuid"
+                },
+                "is_sqlc_slice": false,
+                "embed_table": null,
+                "original_name": "",
+                "unsigned": false,
+                "array_dims": 0
+              },
+              {
+                "name": "guild_id",
+                "not_null": true,
+                "is_array": false,
+                "comment": "",
+                "length": -1,
+                "is_named_param": false,
+                "is_func_call": false,
+                "scope": "",
+                "table": {
+                  "catalog": "",
+                  "schema": "",
+                  "name": "org_discords"
+                },
+                "table_alias": "",
+                "type": {
+                  "catalog": "",
+                  "schema": "pg_catalog",
+                  "name": "int8"
+                },
+                "is_sqlc_slice": false,
+                "embed_table": null,
+                "original_name": "",
+                "unsigned": false,
+                "array_dims": 0
+              }
+            ],
+            "comment": ""
           }
         ],
         "enums": [
@@ -69127,7 +69189,178 @@
       "insert_into_table": null
     },
     {
-      "text": "SELECT oid, name, date_created, date_modified FROM organizations ORDER BY name LIMIT $1 OFFSET $2",
+      "text": "SELECT\n    o.oid,\n    o.name,\n    o.date_created,\n    o.date_modified,\n    od.guild_id\nFROM organizations o\nJOIN org_discords od ON od.oid = o.oid\nWHERE od.guild_id = $1",
+      "name": "GetOrganizationByGuildID",
+      "cmd": ":one",
+      "columns": [
+        {
+          "name": "oid",
+          "not_null": true,
+          "is_array": false,
+          "comment": "",
+          "length": -1,
+          "is_named_param": false,
+          "is_func_call": false,
+          "scope": "",
+          "table": {
+            "catalog": "",
+            "schema": "",
+            "name": "organizations"
+          },
+          "table_alias": "",
+          "type": {
+            "catalog": "",
+            "schema": "",
+            "name": "uuid"
+          },
+          "is_sqlc_slice": false,
+          "embed_table": null,
+          "original_name": "oid",
+          "unsigned": false,
+          "array_dims": 0
+        },
+        {
+          "name": "name",
+          "not_null": true,
+          "is_array": false,
+          "comment": "",
+          "length": -1,
+          "is_named_param": false,
+          "is_func_call": false,
+          "scope": "",
+          "table": {
+            "catalog": "",
+            "schema": "",
+            "name": "organizations"
+          },
+          "table_alias": "",
+          "type": {
+            "catalog": "",
+            "schema": "",
+            "name": "text"
+          },
+          "is_sqlc_slice": false,
+          "embed_table": null,
+          "original_name": "name",
+          "unsigned": false,
+          "array_dims": 0
+        },
+        {
+          "name": "date_created",
+          "not_null": false,
+          "is_array": false,
+          "comment": "",
+          "length": -1,
+          "is_named_param": false,
+          "is_func_call": false,
+          "scope": "",
+          "table": {
+            "catalog": "",
+            "schema": "",
+            "name": "organizations"
+          },
+          "table_alias": "",
+          "type": {
+            "catalog": "",
+            "schema": "",
+            "name": "date"
+          },
+          "is_sqlc_slice": false,
+          "embed_table": null,
+          "original_name": "date_created",
+          "unsigned": false,
+          "array_dims": 0
+        },
+        {
+          "name": "date_modified",
+          "not_null": false,
+          "is_array": false,
+          "comment": "",
+          "length": -1,
+          "is_named_param": false,
+          "is_func_call": false,
+          "scope": "",
+          "table": {
+            "catalog": "",
+            "schema": "",
+            "name": "organizations"
+          },
+          "table_alias": "",
+          "type": {
+            "catalog": "",
+            "schema": "",
+            "name": "date"
+          },
+          "is_sqlc_slice": false,
+          "embed_table": null,
+          "original_name": "date_modified",
+          "unsigned": false,
+          "array_dims": 0
+        },
+        {
+          "name": "guild_id",
+          "not_null": true,
+          "is_array": false,
+          "comment": "",
+          "length": -1,
+          "is_named_param": false,
+          "is_func_call": false,
+          "scope": "",
+          "table": {
+            "catalog": "",
+            "schema": "",
+            "name": "org_discords"
+          },
+          "table_alias": "",
+          "type": {
+            "catalog": "",
+            "schema": "pg_catalog",
+            "name": "int8"
+          },
+          "is_sqlc_slice": false,
+          "embed_table": null,
+          "original_name": "guild_id",
+          "unsigned": false,
+          "array_dims": 0
+        }
+      ],
+      "params": [
+        {
+          "number": 1,
+          "column": {
+            "name": "guild_id",
+            "not_null": true,
+            "is_array": false,
+            "comment": "",
+            "length": -1,
+            "is_named_param": false,
+            "is_func_call": false,
+            "scope": "",
+            "table": {
+              "catalog": "",
+              "schema": "",
+              "name": "org_discords"
+            },
+            "table_alias": "",
+            "type": {
+              "catalog": "",
+              "schema": "",
+              "name": "pg_catalog.int8"
+            },
+            "is_sqlc_slice": false,
+            "embed_table": null,
+            "original_name": "guild_id",
+            "unsigned": false,
+            "array_dims": 0
+          }
+        }
+      ],
+      "comments": [],
+      "filename": "queries.sql",
+      "insert_into_table": null
+    },
+    {
+      "text": "SELECT\n    o.oid,\n    o.name,\n    o.date_created,\n    o.date_modified,\n    od.guild_id\nFROM organizations o\nLEFT JOIN org_discords od ON od.oid = o.oid\nORDER BY o.name\nLIMIT $1 OFFSET $2",
       "name": "ListOrganizations",
       "cmd": ":many",
       "columns": [
@@ -69232,6 +69465,32 @@
           "is_sqlc_slice": false,
           "embed_table": null,
           "original_name": "date_modified",
+          "unsigned": false,
+          "array_dims": 0
+        },
+        {
+          "name": "guild_id",
+          "not_null": false,
+          "is_array": false,
+          "comment": "",
+          "length": -1,
+          "is_named_param": false,
+          "is_func_call": false,
+          "scope": "",
+          "table": {
+            "catalog": "",
+            "schema": "",
+            "name": "org_discords"
+          },
+          "table_alias": "",
+          "type": {
+            "catalog": "",
+            "schema": "pg_catalog",
+            "name": "int8"
+          },
+          "is_sqlc_slice": false,
+          "embed_table": null,
+          "original_name": "guild_id",
           "unsigned": false,
           "array_dims": 0
         }
@@ -69439,6 +69698,79 @@
         "catalog": "",
         "schema": "",
         "name": "organizations"
+      }
+    },
+    {
+      "text": "INSERT INTO org_discords (oid, guild_id)\nVALUES ($1, $2)",
+      "name": "CreateOrgDiscord",
+      "cmd": ":exec",
+      "columns": [],
+      "params": [
+        {
+          "number": 1,
+          "column": {
+            "name": "oid",
+            "not_null": true,
+            "is_array": false,
+            "comment": "",
+            "length": -1,
+            "is_named_param": false,
+            "is_func_call": false,
+            "scope": "",
+            "table": {
+              "catalog": "",
+              "schema": "public",
+              "name": "org_discords"
+            },
+            "table_alias": "",
+            "type": {
+              "catalog": "",
+              "schema": "",
+              "name": "uuid"
+            },
+            "is_sqlc_slice": false,
+            "embed_table": null,
+            "original_name": "oid",
+            "unsigned": false,
+            "array_dims": 0
+          }
+        },
+        {
+          "number": 2,
+          "column": {
+            "name": "guild_id",
+            "not_null": true,
+            "is_array": false,
+            "comment": "",
+            "length": -1,
+            "is_named_param": false,
+            "is_func_call": false,
+            "scope": "",
+            "table": {
+              "catalog": "",
+              "schema": "public",
+              "name": "org_discords"
+            },
+            "table_alias": "",
+            "type": {
+              "catalog": "",
+              "schema": "",
+              "name": "pg_catalog.int8"
+            },
+            "is_sqlc_slice": false,
+            "embed_table": null,
+            "original_name": "guild_id",
+            "unsigned": false,
+            "array_dims": 0
+          }
+        }
+      ],
+      "comments": [],
+      "filename": "queries.sql",
+      "insert_into_table": {
+        "catalog": "",
+        "schema": "",
+        "name": "org_discords"
       }
     },
     {
@@ -71317,7 +71649,7 @@
       "insert_into_table": null
     },
     {
-      "text": "WITH updated AS (\n    INSERT INTO events (title, location, event_time, description)\n    VALUES ($1, $2, $3, $4)\n    RETURNING eid, location, event_time, description, date_created, date_modified, title\n)\nSELECT v.eid, v.location, v.event_time, v.description, v.date_created, v.date_modified, v.title, v.org_ids FROM events_with_org_ids v\nWHERE v.eid = (SELECT eid FROM updated)",
+      "text": "INSERT INTO events (title, location, event_time, description)\nVALUES ($1, $2, $3, $4)\nRETURNING eid, location, event_time, description, date_created, date_modified, title",
       "name": "CreateEvent",
       "cmd": ":one",
       "columns": [
@@ -71333,7 +71665,7 @@
           "table": {
             "catalog": "",
             "schema": "",
-            "name": "events_with_org_ids"
+            "name": "events"
           },
           "table_alias": "",
           "type": {
@@ -71359,7 +71691,7 @@
           "table": {
             "catalog": "",
             "schema": "",
-            "name": "events_with_org_ids"
+            "name": "events"
           },
           "table_alias": "",
           "type": {
@@ -71385,13 +71717,13 @@
           "table": {
             "catalog": "",
             "schema": "",
-            "name": "events_with_org_ids"
+            "name": "events"
           },
           "table_alias": "",
           "type": {
             "catalog": "",
-            "schema": "",
-            "name": "pg_catalog.timestamp"
+            "schema": "pg_catalog",
+            "name": "timestamp"
           },
           "is_sqlc_slice": false,
           "embed_table": null,
@@ -71411,7 +71743,7 @@
           "table": {
             "catalog": "",
             "schema": "",
-            "name": "events_with_org_ids"
+            "name": "events"
           },
           "table_alias": "",
           "type": {
@@ -71437,7 +71769,7 @@
           "table": {
             "catalog": "",
             "schema": "",
-            "name": "events_with_org_ids"
+            "name": "events"
           },
           "table_alias": "",
           "type": {
@@ -71463,7 +71795,7 @@
           "table": {
             "catalog": "",
             "schema": "",
-            "name": "events_with_org_ids"
+            "name": "events"
           },
           "table_alias": "",
           "type": {
@@ -71489,7 +71821,7 @@
           "table": {
             "catalog": "",
             "schema": "",
-            "name": "events_with_org_ids"
+            "name": "events"
           },
           "table_alias": "",
           "type": {
@@ -71502,32 +71834,6 @@
           "original_name": "title",
           "unsigned": false,
           "array_dims": 0
-        },
-        {
-          "name": "org_ids",
-          "not_null": true,
-          "is_array": true,
-          "comment": "",
-          "length": -1,
-          "is_named_param": false,
-          "is_func_call": false,
-          "scope": "",
-          "table": {
-            "catalog": "",
-            "schema": "",
-            "name": "events_with_org_ids"
-          },
-          "table_alias": "",
-          "type": {
-            "catalog": "",
-            "schema": "",
-            "name": "uuid"
-          },
-          "is_sqlc_slice": false,
-          "embed_table": null,
-          "original_name": "org_ids",
-          "unsigned": false,
-          "array_dims": 1
         }
       ],
       "params": [
@@ -71650,10 +71956,14 @@
       ],
       "comments": [],
       "filename": "queries.sql",
-      "insert_into_table": null
+      "insert_into_table": {
+        "catalog": "",
+        "schema": "",
+        "name": "events"
+      }
     },
     {
-      "text": "WITH updated AS (\n    UPDATE events\n    SET title = COALESCE($2, title),\n        location = COALESCE($3, location),\n        event_time = COALESCE($4, event_time),\n        description = COALESCE($5, description)\n    WHERE eid = $1\n    RETURNING eid, location, event_time, description, date_created, date_modified, title\n)\nSELECT v.eid, v.location, v.event_time, v.description, v.date_created, v.date_modified, v.title, v.org_ids FROM events_with_org_ids v\nWHERE v.eid = $1",
+      "text": "WITH updated AS (\n    UPDATE events\n    SET location = $2,\n        event_time = $3,\n        description = $4\n    WHERE events.eid = $1\n    RETURNING events.eid, events.location, events.event_time, events.description, events.date_created, events.date_modified, events.title\n)\nSELECT\n    u.eid,\n    u.location,\n    u.event_time,\n    u.description,\n    u.date_created,\n    u.date_modified,\n    u.title,\n    COALESCE(hosts.org_ids, ARRAY[]::uuid[]) AS org_ids\nFROM updated u\nLEFT JOIN (\n    SELECT eh.eid, ARRAY_AGG(eh.oid)::uuid[] AS org_ids\n    FROM event_hosting eh\n    WHERE eh.eid = $1\n    GROUP BY eh.eid\n) hosts ON hosts.eid = u.eid",
       "name": "UpdateEvent",
       "cmd": ":one",
       "columns": [
@@ -71669,7 +71979,7 @@
           "table": {
             "catalog": "",
             "schema": "",
-            "name": "events_with_org_ids"
+            "name": "updated"
           },
           "table_alias": "",
           "type": {
@@ -71695,7 +72005,7 @@
           "table": {
             "catalog": "",
             "schema": "",
-            "name": "events_with_org_ids"
+            "name": "updated"
           },
           "table_alias": "",
           "type": {
@@ -71721,13 +72031,13 @@
           "table": {
             "catalog": "",
             "schema": "",
-            "name": "events_with_org_ids"
+            "name": "updated"
           },
           "table_alias": "",
           "type": {
             "catalog": "",
-            "schema": "",
-            "name": "pg_catalog.timestamp"
+            "schema": "pg_catalog",
+            "name": "timestamp"
           },
           "is_sqlc_slice": false,
           "embed_table": null,
@@ -71747,7 +72057,7 @@
           "table": {
             "catalog": "",
             "schema": "",
-            "name": "events_with_org_ids"
+            "name": "updated"
           },
           "table_alias": "",
           "type": {
@@ -71773,7 +72083,7 @@
           "table": {
             "catalog": "",
             "schema": "",
-            "name": "events_with_org_ids"
+            "name": "updated"
           },
           "table_alias": "",
           "type": {
@@ -71799,7 +72109,7 @@
           "table": {
             "catalog": "",
             "schema": "",
-            "name": "events_with_org_ids"
+            "name": "updated"
           },
           "table_alias": "",
           "type": {
@@ -71825,7 +72135,7 @@
           "table": {
             "catalog": "",
             "schema": "",
-            "name": "events_with_org_ids"
+            "name": "updated"
           },
           "table_alias": "",
           "type": {
@@ -71848,11 +72158,7 @@
           "is_named_param": false,
           "is_func_call": false,
           "scope": "",
-          "table": {
-            "catalog": "",
-            "schema": "",
-            "name": "events_with_org_ids"
-          },
+          "table": null,
           "table_alias": "",
           "type": {
             "catalog": "",
@@ -71881,7 +72187,7 @@
             "table": {
               "catalog": "",
               "schema": "",
-              "name": "events_with_org_ids"
+              "name": "event_hosting"
             },
             "table_alias": "",
             "type": {
@@ -71899,35 +72205,6 @@
         {
           "number": 2,
           "column": {
-            "name": "title",
-            "not_null": false,
-            "is_array": false,
-            "comment": "",
-            "length": -1,
-            "is_named_param": true,
-            "is_func_call": false,
-            "scope": "",
-            "table": {
-              "catalog": "",
-              "schema": "public",
-              "name": "events_with_org_ids"
-            },
-            "table_alias": "",
-            "type": {
-              "catalog": "",
-              "schema": "",
-              "name": "text"
-            },
-            "is_sqlc_slice": false,
-            "embed_table": null,
-            "original_name": "title",
-            "unsigned": false,
-            "array_dims": 0
-          }
-        },
-        {
-          "number": 3,
-          "column": {
             "name": "location",
             "not_null": false,
             "is_array": false,
@@ -71939,7 +72216,7 @@
             "table": {
               "catalog": "",
               "schema": "public",
-              "name": "events_with_org_ids"
+              "name": "events"
             },
             "table_alias": "",
             "type": {
@@ -71955,7 +72232,7 @@
           }
         },
         {
-          "number": 4,
+          "number": 3,
           "column": {
             "name": "event_time",
             "not_null": false,
@@ -71968,7 +72245,7 @@
             "table": {
               "catalog": "",
               "schema": "public",
-              "name": "events_with_org_ids"
+              "name": "events"
             },
             "table_alias": "",
             "type": {
@@ -71984,7 +72261,7 @@
           }
         },
         {
-          "number": 5,
+          "number": 4,
           "column": {
             "name": "description",
             "not_null": false,
@@ -71997,7 +72274,7 @@
             "table": {
               "catalog": "",
               "schema": "public",
-              "name": "events_with_org_ids"
+              "name": "events"
             },
             "table_alias": "",
             "type": {

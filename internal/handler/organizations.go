@@ -38,7 +38,7 @@ func (h *Handler) ListOrganizations(w http.ResponseWriter, r *http.Request) {
 
 	response := make([]dto.OrganizationResponse, len(orgs))
 	for i, org := range orgs {
-		response[i] = toOrgResponse(org)
+		response[i] = toListOrgResponse(org)
 	}
 
 	h.respondJSON(w, http.StatusOK, response)
@@ -197,6 +197,34 @@ func (h *Handler) GetOrganization(w http.ResponseWriter, r *http.Request) {
 	}
 
 	h.respondJSON(w, http.StatusOK, toOrgResponse(org))
+}
+
+// GetOrganizationByGuildID gets a bot-managed organization by Discord guild ID.
+// @Summary      Get organization by guild ID
+// @Description  Returns organization details for the provided Discord guild ID.
+// @Tags         organizations
+// @Accept       json
+// @Produce      json
+// @Param        guild_id  path      int64  true  "Discord guild ID"
+// @Success      200       {object}  dto.BotOrganizationResponse
+// @Failure      400       {object}  ErrorResponse
+// @Failure      404       {object}  ErrorResponse
+// @Security     BotToken
+// @Router       /bot/organizations/guilds/{guild_id} [get]
+func (h *Handler) GetOrganizationByGuildID(w http.ResponseWriter, r *http.Request) {
+	guildID, err := parseInt64PathParam(chi.URLParam(r, "guild_id"))
+	if err != nil {
+		h.respondError(w, http.StatusBadRequest, "Invalid guild ID")
+		return
+	}
+
+	org, err := h.queries.GetOrganizationByGuildID(r.Context(), guildID)
+	if err != nil {
+		h.handleDBError(w, err)
+		return
+	}
+
+	h.respondJSON(w, http.StatusOK, toBotOrgResponse(org))
 }
 
 // UpdateOrganization updates an organization
@@ -474,6 +502,26 @@ func toOrgResponse(org database.Organization) dto.OrganizationResponse {
 	return dto.OrganizationResponse{
 		OID:          org.Oid,
 		Name:         org.Name,
+		DateCreated:  fromPgDate(org.DateCreated),
+		DateModified: fromPgDate(org.DateModified),
+	}
+}
+
+func toListOrgResponse(org database.ListOrganizationsRow) dto.OrganizationResponse {
+	return dto.OrganizationResponse{
+		OID:          org.Oid,
+		Name:         org.Name,
+		GuildID:      fromPgInt8(org.GuildID),
+		DateCreated:  fromPgDate(org.DateCreated),
+		DateModified: fromPgDate(org.DateModified),
+	}
+}
+
+func toBotOrgResponse(org database.GetOrganizationByGuildIDRow) dto.BotOrganizationResponse {
+	return dto.BotOrganizationResponse{
+		OID:          org.Oid,
+		Name:         org.Name,
+		GuildID:      org.GuildID,
 		DateCreated:  fromPgDate(org.DateCreated),
 		DateModified: fromPgDate(org.DateModified),
 	}

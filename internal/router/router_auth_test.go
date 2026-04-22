@@ -271,7 +271,7 @@ func TestPublicCollectionRoutesDoNotRequireAuth(t *testing.T) {
 
 	mockQueries.On("ListOrganizations", mock.Anything, mock.MatchedBy(func(arg database.ListOrganizationsParams) bool {
 		return arg.Limit == 20 && arg.Offset == 0
-	})).Return([]database.Organization{}, nil).Once()
+	})).Return([]database.ListOrganizationsRow{}, nil).Once()
 
 	mockQueries.On("ListEvents", mock.Anything, mock.MatchedBy(func(arg database.ListEventsParams) bool {
 		return arg.Limit == 20 && arg.Offset == 0
@@ -291,6 +291,17 @@ func TestPublicCollectionRoutesDoNotRequireAuth(t *testing.T) {
 	protectedRes := httptest.NewRecorder()
 	routerUnderTest.ServeHTTP(protectedRes, protectedReq)
 	assert.Equal(t, http.StatusUnauthorized, protectedRes.Code)
+}
+
+func TestBotGuildLookupRequiresBotAuth(t *testing.T) {
+	mockQueries := mocks.NewQuerier(t)
+	routerUnderTest := newTestRouter(mockQueries)
+
+	req := httptest.NewRequest(http.MethodGet, "/api/v1/bot/organizations/guilds/123456789", nil)
+	res := httptest.NewRecorder()
+	routerUnderTest.ServeHTTP(res, req)
+
+	assert.Equal(t, http.StatusUnauthorized, res.Code)
 }
 
 func newTestRouter(queries database.Querier) http.Handler {

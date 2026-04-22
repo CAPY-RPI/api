@@ -117,6 +117,11 @@ type LinkVisit struct {
 	CreatedAt pgtype.Timestamp `json:"created_at"`
 }
 
+type OrgDiscord struct {
+	Oid     uuid.UUID `json:"oid"`
+	GuildID int64     `json:"guild_id"`
+}
+
 type OrgMember struct {
 	Uid        uuid.UUID   `json:"uid"`
 	Oid        uuid.UUID   `json:"oid"`

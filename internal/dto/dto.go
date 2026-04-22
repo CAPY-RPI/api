@@ -69,6 +69,15 @@ type UpdateOrganizationRequest struct {
 type OrganizationResponse struct {
 	OID          uuid.UUID  `json:"oid"`
 	Name         string     `json:"name"`
+	GuildID      *int64     `json:"guild_id,omitempty"`
+	DateCreated  *time.Time `json:"date_created,omitempty"`
+	DateModified *time.Time `json:"date_modified,omitempty"`
+}
+
+type BotOrganizationResponse struct {
+	OID          uuid.UUID  `json:"oid"`
+	Name         string     `json:"name"`
+	GuildID      int64      `json:"guild_id"`
 	DateCreated  *time.Time `json:"date_created,omitempty"`
 	DateModified *time.Time `json:"date_modified,omitempty"`
 }

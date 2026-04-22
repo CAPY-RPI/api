@@ -484,6 +484,34 @@ func (_m *Querier) GetOrganizationByID(ctx context.Context, oid uuid.UUID) (data
 	return r0, r1
 }
 
+// GetOrganizationByGuildID provides a mock function with given fields: ctx, guildID
+func (_m *Querier) GetOrganizationByGuildID(ctx context.Context, guildID int64) (database.GetOrganizationByGuildIDRow, error) {
+	ret := _m.Called(ctx, guildID)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetOrganizationByGuildID")
+	}
+
+	var r0 database.GetOrganizationByGuildIDRow
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, int64) (database.GetOrganizationByGuildIDRow, error)); ok {
+		return rf(ctx, guildID)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, int64) database.GetOrganizationByGuildIDRow); ok {
+		r0 = rf(ctx, guildID)
+	} else {
+		r0 = ret.Get(0).(database.GetOrganizationByGuildIDRow)
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, int64) error); ok {
+		r1 = rf(ctx, guildID)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // GetTotalVisits provides a mock function with given fields: ctx, lid
 func (_m *Querier) GetTotalVisits(ctx context.Context, lid uuid.UUID) (int64, error) {
 	ret := _m.Called(ctx, lid)
@@ -805,23 +833,23 @@ func (_m *Querier) ListLinksByOrg(ctx context.Context, oid uuid.UUID) ([]databas
 }
 
 // ListOrganizations provides a mock function with given fields: ctx, arg
-func (_m *Querier) ListOrganizations(ctx context.Context, arg database.ListOrganizationsParams) ([]database.Organization, error) {
+func (_m *Querier) ListOrganizations(ctx context.Context, arg database.ListOrganizationsParams) ([]database.ListOrganizationsRow, error) {
 	ret := _m.Called(ctx, arg)
 
 	if len(ret) == 0 {
 		panic("no return value specified for ListOrganizations")
 	}
 
-	var r0 []database.Organization
+	var r0 []database.ListOrganizationsRow
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, database.ListOrganizationsParams) ([]database.Organization, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, database.ListOrganizationsParams) ([]database.ListOrganizationsRow, error)); ok {
 		return rf(ctx, arg)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, database.ListOrganizationsParams) []database.Organization); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, database.ListOrganizationsParams) []database.ListOrganizationsRow); ok {
 		r0 = rf(ctx, arg)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]database.Organization)
+			r0 = ret.Get(0).([]database.ListOrganizationsRow)
 		}
 	}
 
@@ -983,22 +1011,22 @@ func (_m *Querier) UpdateBotTokenLastUsed(ctx context.Context, tokenID uuid.UUID
 }
 
 // UpdateEvent provides a mock function with given fields: ctx, arg
-func (_m *Querier) UpdateEvent(ctx context.Context, arg database.UpdateEventParams) (database.EventsWithOrgID, error) {
+func (_m *Querier) UpdateEvent(ctx context.Context, arg database.UpdateEventParams) (database.UpdateEventRow, error) {
 	ret := _m.Called(ctx, arg)
 
 	if len(ret) == 0 {
 		panic("no return value specified for UpdateEvent")
 	}
 
-	var r0 database.EventsWithOrgID
+	var r0 database.UpdateEventRow
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, database.UpdateEventParams) (database.EventsWithOrgID, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, database.UpdateEventParams) (database.UpdateEventRow, error)); ok {
 		return rf(ctx, arg)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, database.UpdateEventParams) database.EventsWithOrgID); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, database.UpdateEventParams) database.UpdateEventRow); ok {
 		r0 = rf(ctx, arg)
 	} else {
-		r0 = ret.Get(0).(database.EventsWithOrgID)
+		r0 = ret.Get(0).(database.UpdateEventRow)
 	}
 
 	if rf, ok := ret.Get(1).(func(context.Context, database.UpdateEventParams) error); ok {

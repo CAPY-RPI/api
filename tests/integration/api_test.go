@@ -738,7 +738,7 @@ func TestBotRoutes(t *testing.T) {
 	require.NoError(t, json.NewDecoder(meResp.Body).Decode(&botMe))
 	assert.Equal(t, "bot", botMe.AuthType)
 
-	orgCreateReq, _ := http.NewRequest(http.MethodPost, server.URL+"/api/v1/bot/organizations", bytes.NewBufferString(`{"name":"Bot Org"}`))
+	orgCreateReq, _ := http.NewRequest(http.MethodPost, server.URL+"/api/v1/bot/organizations", bytes.NewBufferString(`{"name":"Bot Org","guild_id":123456789}`))
 	orgCreateReq.Header.Set("Content-Type", "application/json")
 	orgCreateReq.Header.Set("X-Bot-Token", botToken)
 	orgCreateResp, err := client.Do(orgCreateReq)
@@ -750,6 +750,18 @@ func TestBotRoutes(t *testing.T) {
 	require.NoError(t, json.NewDecoder(orgCreateResp.Body).Decode(&createdOrg))
 	assert.Equal(t, "Bot Org", createdOrg.Name)
 
+	orgGuildReq, _ := http.NewRequest(http.MethodGet, server.URL+"/api/v1/bot/organizations/guilds/123456789", nil)
+	orgGuildReq.Header.Set("X-Bot-Token", botToken)
+	orgGuildResp, err := client.Do(orgGuildReq)
+	require.NoError(t, err)
+	defer orgGuildResp.Body.Close()
+	require.Equal(t, http.StatusOK, orgGuildResp.StatusCode)
+
+	var guildOrg dto.BotOrganizationResponse
+	require.NoError(t, json.NewDecoder(orgGuildResp.Body).Decode(&guildOrg))
+	assert.Equal(t, createdOrg.OID, guildOrg.OID)
+	assert.Equal(t, int64(123456789), guildOrg.GuildID)
+
 	orgListReq, _ := http.NewRequest(http.MethodGet, server.URL+"/api/v1/bot/organizations", nil)
 	orgListReq.Header.Set("X-Bot-Token", botToken)
 	orgListResp, err := client.Do(orgListReq)
@@ -760,6 +772,16 @@ func TestBotRoutes(t *testing.T) {
 	var orgs []dto.OrganizationResponse
 	require.NoError(t, json.NewDecoder(orgListResp.Body).Decode(&orgs))
 	require.NotEmpty(t, orgs)
+	foundBotOrg := false
+	for _, org := range orgs {
+		if org.OID == createdOrg.OID {
+			foundBotOrg = true
+			if assert.NotNil(t, org.GuildID) {
+				assert.Equal(t, int64(123456789), *org.GuildID)
+			}
+		}
+	}
+	assert.True(t, foundBotOrg)
 
 	orgGetReq, _ := http.NewRequest(http.MethodGet, fmt.Sprintf("%s/api/v1/bot/organizations/%s", server.URL, createdOrg.OID), nil)
 	orgGetReq.Header.Set("X-Bot-Token", botToken)
@@ -771,6 +793,13 @@ func TestBotRoutes(t *testing.T) {
 	var fetchedOrg dto.OrganizationResponse
 	require.NoError(t, json.NewDecoder(orgGetResp.Body).Decode(&fetchedOrg))
 	assert.Equal(t, createdOrg.OID, fetchedOrg.OID)
+
+	missingGuildReq, _ := http.NewRequest(http.MethodGet, server.URL+"/api/v1/bot/organizations/guilds/999999999", nil)
+	missingGuildReq.Header.Set("X-Bot-Token", botToken)
+	missingGuildResp, err := client.Do(missingGuildReq)
+	require.NoError(t, err)
+	defer missingGuildResp.Body.Close()
+	require.Equal(t, http.StatusNotFound, missingGuildResp.StatusCode)
 
 	orgUpdateReq, _ := http.NewRequest(http.MethodPut, fmt.Sprintf("%s/api/v1/bot/organizations/%s", server.URL, createdOrg.OID), bytes.NewBufferString(`{"name":"Bot Org Updated"}`))
 	orgUpdateReq.Header.Set("Content-Type", "application/json")

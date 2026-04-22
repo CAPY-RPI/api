@@ -30,8 +30,28 @@ DELETE FROM users WHERE uid = $1;
 -- name: GetOrganizationByID :one
 SELECT * FROM organizations WHERE oid = $1;
 
+-- name: GetOrganizationByGuildID :one
+SELECT
+    o.oid,
+    o.name,
+    o.date_created,
+    o.date_modified,
+    od.guild_id
+FROM organizations o
+JOIN org_discords od ON od.oid = o.oid
+WHERE od.guild_id = $1;
+
 -- name: ListOrganizations :many
-SELECT * FROM organizations ORDER BY name LIMIT $1 OFFSET $2;
+SELECT
+    o.oid,
+    o.name,
+    o.date_created,
+    o.date_modified,
+    od.guild_id
+FROM organizations o
+LEFT JOIN org_discords od ON od.oid = o.oid
+ORDER BY o.name
+LIMIT $1 OFFSET $2;
 
 -- name: CreateOrganization :one
 INSERT INTO organizations (name)
@@ -98,12 +118,11 @@ RETURNING *;
 -- name: UpdateEvent :one
 WITH updated AS (
     UPDATE events
-    SET title = COALESCE(sqlc.narg('title'), title),
-        location = COALESCE(sqlc.narg('location'), location),
-        event_time = COALESCE(sqlc.narg('event_time'), event_time),
-        description = COALESCE(sqlc.narg('description'), description)
-    WHERE eid = $1
-    RETURNING *
+    SET location = sqlc.arg(location),
+        event_time = sqlc.arg(event_time),
+        description = sqlc.arg(description)
+    WHERE events.eid = $1
+    RETURNING events.*
 )
 SELECT
     u.eid,

@@ -32,6 +32,7 @@ type Querier interface {
 	GetLinkByEndpointURL(ctx context.Context, endpointUrl string) (Link, error)
 	GetLinkByLID(ctx context.Context, lid uuid.UUID) (Link, error)
 	GetOrgMembers(ctx context.Context, oid uuid.UUID) ([]GetOrgMembersRow, error)
+	GetOrganizationByGuildID(ctx context.Context, guildID int64) (GetOrganizationByGuildIDRow, error)
 	GetOrganizationByID(ctx context.Context, oid uuid.UUID) (Organization, error)
 	GetTotalVisits(ctx context.Context, lid uuid.UUID) (int64, error)
 	GetUserByEmail(ctx context.Context, personalEmail pgtype.Text) (User, error)
@@ -44,7 +45,7 @@ type Querier interface {
 	ListEvents(ctx context.Context, arg ListEventsParams) ([]EventsWithOrgID, error)
 	ListEventsByOrg(ctx context.Context, arg ListEventsByOrgParams) ([]EventsWithOrgID, error)
 	ListLinksByOrg(ctx context.Context, oid uuid.UUID) ([]Link, error)
-	ListOrganizations(ctx context.Context, arg ListOrganizationsParams) ([]Organization, error)
+	ListOrganizations(ctx context.Context, arg ListOrganizationsParams) ([]ListOrganizationsRow, error)
 	ListUsers(ctx context.Context, arg ListUsersParams) ([]User, error)
 	LogLinkVisit(ctx context.Context, arg LogLinkVisitParams) (LinkVisit, error)
 	RegisterForEvent(ctx context.Context, arg RegisterForEventParams) error
@@ -52,7 +53,7 @@ type Querier interface {
 	RevokeBotToken(ctx context.Context, tokenID uuid.UUID) error
 	UnregisterFromEvent(ctx context.Context, arg UnregisterFromEventParams) error
 	UpdateBotTokenLastUsed(ctx context.Context, tokenID uuid.UUID) error
-	UpdateEvent(ctx context.Context, arg UpdateEventParams) (EventsWithOrgID, error)
+	UpdateEvent(ctx context.Context, arg UpdateEventParams) (UpdateEventRow, error)
 	UpdateLink(ctx context.Context, arg UpdateLinkParams) (Link, error)
 	UpdateOrganization(ctx context.Context, arg UpdateOrganizationParams) (Organization, error)
 	UpdateUser(ctx context.Context, arg UpdateUserParams) (User, error)
