@@ -965,22 +965,22 @@ func (_m *Querier) UpdateBotTokenLastUsed(ctx context.Context, tokenID uuid.UUID
 }
 
 // UpdateEvent provides a mock function with given fields: ctx, arg
-func (_m *Querier) UpdateEvent(ctx context.Context, arg database.UpdateEventParams) (database.EventsWithOrgID, error) {
+func (_m *Querier) UpdateEvent(ctx context.Context, arg database.UpdateEventParams) (database.Event, error) {
 	ret := _m.Called(ctx, arg)
 
 	if len(ret) == 0 {
 		panic("no return value specified for UpdateEvent")
 	}
 
-	var r0 database.EventsWithOrgID
+	var r0 database.Event
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, database.UpdateEventParams) (database.EventsWithOrgID, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, database.UpdateEventParams) (database.Event, error)); ok {
 		return rf(ctx, arg)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, database.UpdateEventParams) database.EventsWithOrgID); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, database.UpdateEventParams) database.Event); ok {
 		r0 = rf(ctx, arg)
 	} else {
-		r0 = ret.Get(0).(database.EventsWithOrgID)
+		r0 = ret.Get(0).(database.Event)
 	}
 
 	if rf, ok := ret.Get(1).(func(context.Context, database.UpdateEventParams) error); ok {

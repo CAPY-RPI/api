@@ -2,6 +2,7 @@ package benchmarks
 
 import (
 	"context"
+	"flag"
 	"log"
 	"net/http/httptest"
 	"os"
@@ -37,6 +38,12 @@ var (
 )
 
 func TestMain(m *testing.M) {
+	flag.Parse()
+	if testing.Short() {
+		log.Println("Skipping benchmark suite setup in -short mode")
+		os.Exit(0)
+	}
+
 	ctx := context.Background()
 
 	log.Println("Starting benchmark suite setup...")
