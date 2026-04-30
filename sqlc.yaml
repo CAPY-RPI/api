@@ -2,7 +2,13 @@ version: "2"
 sql:
   - engine: "postgresql"
     queries: "internal/database/queries.sql"
-    schema: "migrations"
+    schema:
+      - "migrations/20260316192946_initial_schema.up.sql"
+      - "migrations/20260318030206_telemetry_table.up.sql"
+      - "migrations/20260319120000_add_dev_user_role.up.sql"
+      - "migrations/20260326224918_add_links.up.sql"
+      - "migrations/20260327022209_add_event_title.up.sql"
+      - "migrations/20260327180817_add_event_view.up.sql"
     gen:
       go:
         package: "database"

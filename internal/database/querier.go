@@ -51,7 +51,7 @@ type Querier interface {
 	RevokeBotToken(ctx context.Context, tokenID uuid.UUID) error
 	UnregisterFromEvent(ctx context.Context, arg UnregisterFromEventParams) error
 	UpdateBotTokenLastUsed(ctx context.Context, tokenID uuid.UUID) error
-	UpdateEvent(ctx context.Context, arg UpdateEventParams) (EventsWithOrgID, error)
+	UpdateEvent(ctx context.Context, arg UpdateEventParams) (Event, error)
 	UpdateLink(ctx context.Context, arg UpdateLinkParams) (Link, error)
 	UpdateOrganization(ctx context.Context, arg UpdateOrganizationParams) (Organization, error)
 	UpdateUser(ctx context.Context, arg UpdateUserParams) (User, error)

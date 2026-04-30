@@ -373,11 +373,6 @@
         },
         "/events": {
             "get": {
-                "security": [
-                    {
-                        "CookieAuth": []
-                    }
-                ],
                 "description": "Returns a paginated list of all public events",
                 "consumes": [
                     "application/json"
@@ -835,13 +830,198 @@
                 }
             }
         },
-        "/organizations": {
+        "/links": {
+            "post": {
+                "security": [
+                    {
+                        "CookieAuth": []
+                    }
+                ],
+                "description": "Creates a new dynamic link for an organization. Requires org_admin role.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "links"
+                ],
+                "summary": "Create link",
+                "parameters": [
+                    {
+                        "description": "Link data",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/dto.CreateLinkRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/dto.LinkResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/links/{lid}": {
+            "put": {
+                "security": [
+                    {
+                        "CookieAuth": []
+                    }
+                ],
+                "description": "Updates a dynamic link's destination or endpoint URL. Requires org_admin role.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "links"
+                ],
+                "summary": "Update link",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Link UUID",
+                        "name": "lid",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Update data",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/dto.UpdateLinkRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/dto.LinkResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/links/{lid}/qrcode": {
+            "get": {
+                "description": "Generates and returns a QR code image for the link's destination URL",
+                "produces": [
+                    "image/png"
+                ],
+                "tags": [
+                    "links"
+                ],
+                "summary": "Get QR code",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Link UUID",
+                        "name": "lid",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "file"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/links/{lid}/visits": {
             "get": {
                 "security": [
                     {
                         "CookieAuth": []
                     }
                 ],
+                "description": "Returns the total number of visits logged for a link",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "links"
+                ],
+                "summary": "Get visit count",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Link UUID",
+                        "name": "lid",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/dto.VisitCountResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/organizations": {
+            "get": {
                 "description": "Returns a paginated list of all organizations",
                 "consumes": [
                     "application/json"
@@ -1130,6 +1310,52 @@
                 }
             }
         },
+        "/organizations/{oid}/links": {
+            "get": {
+                "security": [
+                    {
+                        "CookieAuth": []
+                    }
+                ],
+                "description": "Returns all dynamic links owned by an organization",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "links"
+                ],
+                "summary": "List org links",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Organization UUID",
+                        "name": "oid",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/dto.LinkResponse"
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/organizations/{oid}/members": {
             "get": {
                 "security": [
@@ -1284,6 +1510,35 @@
                         "schema": {
                             "$ref": "#/definitions/handler.ErrorResponse"
                         }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/r/{endpoint_url}": {
+            "get": {
+                "description": "Redirects to the destination URL and logs a visit",
+                "tags": [
+                    "links"
+                ],
+                "summary": "Resolve link",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Dynamic link endpoint URL",
+                        "name": "endpoint_url",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "302": {
+                        "description": "Found"
                     },
                     "404": {
                         "description": "Not Found",
@@ -1575,6 +1830,25 @@
                 }
             }
         },
+        "dto.CreateLinkRequest": {
+            "type": "object",
+            "required": [
+                "dest_url",
+                "endpoint_url",
+                "org_id"
+            ],
+            "properties": {
+                "dest_url": {
+                    "type": "string"
+                },
+                "endpoint_url": {
+                    "type": "string"
+                },
+                "org_id": {
+                    "type": "string"
+                }
+            }
+        },
         "dto.CreateOrganizationRequest": {
             "type": "object",
             "required": [
@@ -1636,7 +1910,33 @@
                 "location": {
                     "type": "string"
                 },
+                "oids": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
                 "title": {
+                    "type": "string"
+                }
+            }
+        },
+        "dto.LinkResponse": {
+            "type": "object",
+            "properties": {
+                "created_at": {
+                    "type": "string"
+                },
+                "dest_url": {
+                    "type": "string"
+                },
+                "endpoint_url": {
+                    "type": "string"
+                },
+                "lid": {
+                    "type": "string"
+                },
+                "org_id": {
                     "type": "string"
                 }
             }
@@ -1709,6 +2009,17 @@
                     "type": "string"
                 },
                 "title": {
+                    "type": "string"
+                }
+            }
+        },
+        "dto.UpdateLinkRequest": {
+            "type": "object",
+            "properties": {
+                "dest_url": {
+                    "type": "string"
+                },
+                "endpoint_url": {
                     "type": "string"
                 }
             }
@@ -1793,6 +2104,17 @@
                     "type": "string"
                 },
                 "uid": {
+                    "type": "string"
+                }
+            }
+        },
+        "dto.VisitCountResponse": {
+            "type": "object",
+            "properties": {
+                "count": {
+                    "type": "integer"
+                },
+                "lid": {
                     "type": "string"
                 }
             }

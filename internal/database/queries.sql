@@ -92,31 +92,13 @@ VALUES ($1, $2, $3, $4)
 RETURNING *;
 
 -- name: UpdateEvent :one
-WITH updated AS (
-    UPDATE events
-    SET title = COALESCE(sqlc.narg('title'), title),
-        location = COALESCE(sqlc.narg('location'), location),
-        event_time = COALESCE(sqlc.narg('event_time'), event_time),
-        description = COALESCE(sqlc.narg('description'), description)
-    WHERE eid = $1
-    RETURNING *
-)
-SELECT
-    u.eid,
-    u.location,
-    u.event_time,
-    u.description,
-    u.date_created,
-    u.date_modified,
-    u.title,
-    COALESCE(hosts.org_ids, ARRAY[]::uuid[]) AS org_ids
-FROM updated u
-LEFT JOIN (
-    SELECT eh.eid, ARRAY_AGG(eh.oid)::uuid[] AS org_ids
-    FROM event_hosting eh
-    WHERE eh.eid = $1
-    GROUP BY eh.eid
-) hosts ON hosts.eid = u.eid;
+UPDATE events
+SET title = COALESCE(sqlc.narg('title'), title),
+    location = COALESCE(sqlc.narg('location'), location),
+    event_time = COALESCE(sqlc.narg('event_time'), event_time),
+    description = COALESCE(sqlc.narg('description'), description)
+WHERE eid = $1
+RETURNING *;
 
 -- name: DeleteEvent :exec
 DELETE FROM events WHERE eid = $1;

@@ -3,7 +3,12 @@
     "version": "2",
     "engine": "postgresql",
     "schema": [
-      "migrations"
+      "migrations/20260316192946_initial_schema.up.sql",
+      "migrations/20260318030206_telemetry_table.up.sql",
+      "migrations/20260319120000_add_dev_user_role.up.sql",
+      "migrations/20260326224918_add_links.up.sql",
+      "migrations/20260327022209_add_event_title.up.sql",
+      "migrations/20260327180817_add_event_view.up.sql"
     ],
     "queries": [
       "internal/database/queries.sql"
@@ -71317,7 +71322,7 @@
       "insert_into_table": null
     },
     {
-      "text": "WITH updated AS (\n    INSERT INTO events (title, location, event_time, description)\n    VALUES ($1, $2, $3, $4)\n    RETURNING eid, location, event_time, description, date_created, date_modified, title\n)\nSELECT v.eid, v.location, v.event_time, v.description, v.date_created, v.date_modified, v.title, v.org_ids FROM events_with_org_ids v\nWHERE v.eid = (SELECT eid FROM updated)",
+      "text": "INSERT INTO events (title, location, event_time, description)\nVALUES ($1, $2, $3, $4)\nRETURNING eid, location, event_time, description, date_created, date_modified, title",
       "name": "CreateEvent",
       "cmd": ":one",
       "columns": [
@@ -71333,7 +71338,7 @@
           "table": {
             "catalog": "",
             "schema": "",
-            "name": "events_with_org_ids"
+            "name": "events"
           },
           "table_alias": "",
           "type": {
@@ -71359,7 +71364,7 @@
           "table": {
             "catalog": "",
             "schema": "",
-            "name": "events_with_org_ids"
+            "name": "events"
           },
           "table_alias": "",
           "type": {
@@ -71385,13 +71390,13 @@
           "table": {
             "catalog": "",
             "schema": "",
-            "name": "events_with_org_ids"
+            "name": "events"
           },
           "table_alias": "",
           "type": {
             "catalog": "",
-            "schema": "",
-            "name": "pg_catalog.timestamp"
+            "schema": "pg_catalog",
+            "name": "timestamp"
           },
           "is_sqlc_slice": false,
           "embed_table": null,
@@ -71411,7 +71416,7 @@
           "table": {
             "catalog": "",
             "schema": "",
-            "name": "events_with_org_ids"
+            "name": "events"
           },
           "table_alias": "",
           "type": {
@@ -71437,7 +71442,7 @@
           "table": {
             "catalog": "",
             "schema": "",
-            "name": "events_with_org_ids"
+            "name": "events"
           },
           "table_alias": "",
           "type": {
@@ -71463,7 +71468,7 @@
           "table": {
             "catalog": "",
             "schema": "",
-            "name": "events_with_org_ids"
+            "name": "events"
           },
           "table_alias": "",
           "type": {
@@ -71489,7 +71494,7 @@
           "table": {
             "catalog": "",
             "schema": "",
-            "name": "events_with_org_ids"
+            "name": "events"
           },
           "table_alias": "",
           "type": {
@@ -71502,32 +71507,6 @@
           "original_name": "title",
           "unsigned": false,
           "array_dims": 0
-        },
-        {
-          "name": "org_ids",
-          "not_null": true,
-          "is_array": true,
-          "comment": "",
-          "length": -1,
-          "is_named_param": false,
-          "is_func_call": false,
-          "scope": "",
-          "table": {
-            "catalog": "",
-            "schema": "",
-            "name": "events_with_org_ids"
-          },
-          "table_alias": "",
-          "type": {
-            "catalog": "",
-            "schema": "",
-            "name": "uuid"
-          },
-          "is_sqlc_slice": false,
-          "embed_table": null,
-          "original_name": "org_ids",
-          "unsigned": false,
-          "array_dims": 1
         }
       ],
       "params": [
@@ -71650,10 +71629,14 @@
       ],
       "comments": [],
       "filename": "queries.sql",
-      "insert_into_table": null
+      "insert_into_table": {
+        "catalog": "",
+        "schema": "",
+        "name": "events"
+      }
     },
     {
-      "text": "WITH updated AS (\n    UPDATE events\n    SET title = COALESCE($2, title),\n        location = COALESCE($3, location),\n        event_time = COALESCE($4, event_time),\n        description = COALESCE($5, description)\n    WHERE eid = $1\n    RETURNING eid, location, event_time, description, date_created, date_modified, title\n)\nSELECT v.eid, v.location, v.event_time, v.description, v.date_created, v.date_modified, v.title, v.org_ids FROM events_with_org_ids v\nWHERE v.eid = $1",
+      "text": "UPDATE events\nSET title = COALESCE($2, title),\n    location = COALESCE($3, location),\n    event_time = COALESCE($4, event_time),\n    description = COALESCE($5, description)\nWHERE eid = $1\nRETURNING eid, location, event_time, description, date_created, date_modified, title",
       "name": "UpdateEvent",
       "cmd": ":one",
       "columns": [
@@ -71669,7 +71652,7 @@
           "table": {
             "catalog": "",
             "schema": "",
-            "name": "events_with_org_ids"
+            "name": "events"
           },
           "table_alias": "",
           "type": {
@@ -71695,7 +71678,7 @@
           "table": {
             "catalog": "",
             "schema": "",
-            "name": "events_with_org_ids"
+            "name": "events"
           },
           "table_alias": "",
           "type": {
@@ -71721,13 +71704,13 @@
           "table": {
             "catalog": "",
             "schema": "",
-            "name": "events_with_org_ids"
+            "name": "events"
           },
           "table_alias": "",
           "type": {
             "catalog": "",
-            "schema": "",
-            "name": "pg_catalog.timestamp"
+            "schema": "pg_catalog",
+            "name": "timestamp"
           },
           "is_sqlc_slice": false,
           "embed_table": null,
@@ -71747,7 +71730,7 @@
           "table": {
             "catalog": "",
             "schema": "",
-            "name": "events_with_org_ids"
+            "name": "events"
           },
           "table_alias": "",
           "type": {
@@ -71773,7 +71756,7 @@
           "table": {
             "catalog": "",
             "schema": "",
-            "name": "events_with_org_ids"
+            "name": "events"
           },
           "table_alias": "",
           "type": {
@@ -71799,7 +71782,7 @@
           "table": {
             "catalog": "",
             "schema": "",
-            "name": "events_with_org_ids"
+            "name": "events"
           },
           "table_alias": "",
           "type": {
@@ -71825,7 +71808,7 @@
           "table": {
             "catalog": "",
             "schema": "",
-            "name": "events_with_org_ids"
+            "name": "events"
           },
           "table_alias": "",
           "type": {
@@ -71838,32 +71821,6 @@
           "original_name": "title",
           "unsigned": false,
           "array_dims": 0
-        },
-        {
-          "name": "org_ids",
-          "not_null": true,
-          "is_array": true,
-          "comment": "",
-          "length": -1,
-          "is_named_param": false,
-          "is_func_call": false,
-          "scope": "",
-          "table": {
-            "catalog": "",
-            "schema": "",
-            "name": "events_with_org_ids"
-          },
-          "table_alias": "",
-          "type": {
-            "catalog": "",
-            "schema": "",
-            "name": "uuid"
-          },
-          "is_sqlc_slice": false,
-          "embed_table": null,
-          "original_name": "org_ids",
-          "unsigned": false,
-          "array_dims": 1
         }
       ],
       "params": [
@@ -71881,7 +71838,7 @@
             "table": {
               "catalog": "",
               "schema": "",
-              "name": "events_with_org_ids"
+              "name": "events"
             },
             "table_alias": "",
             "type": {
@@ -71910,7 +71867,7 @@
             "table": {
               "catalog": "",
               "schema": "public",
-              "name": "events_with_org_ids"
+              "name": "events"
             },
             "table_alias": "",
             "type": {
@@ -71939,7 +71896,7 @@
             "table": {
               "catalog": "",
               "schema": "public",
-              "name": "events_with_org_ids"
+              "name": "events"
             },
             "table_alias": "",
             "type": {
@@ -71968,7 +71925,7 @@
             "table": {
               "catalog": "",
               "schema": "public",
-              "name": "events_with_org_ids"
+              "name": "events"
             },
             "table_alias": "",
             "type": {
@@ -71997,7 +71954,7 @@
             "table": {
               "catalog": "",
               "schema": "public",
-              "name": "events_with_org_ids"
+              "name": "events"
             },
             "table_alias": "",
             "type": {

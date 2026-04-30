@@ -159,19 +159,24 @@ func (h *Handler) UpdateEvent(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	event, err := h.queries.UpdateEvent(r.Context(), database.UpdateEventParams{
+	if _, err := h.queries.UpdateEvent(r.Context(), database.UpdateEventParams{
 		Eid:         eid,
 		Title:       toPgText(req.Title),
 		Location:    toPgText(req.Location),
 		EventTime:   toPgTimestamp(req.EventTime),
 		Description: toPgText(req.Description),
-	})
+	}); err != nil {
+		h.handleDBError(w, err)
+		return
+	}
+
+	updatedEvent, err := h.queries.GetEventByID(r.Context(), eid)
 	if err != nil {
 		h.handleDBError(w, err)
 		return
 	}
 
-	h.respondJSON(w, http.StatusOK, toEventResponse(event))
+	h.respondJSON(w, http.StatusOK, toEventResponse(updatedEvent))
 }
 
 // DeleteEvent deletes an event

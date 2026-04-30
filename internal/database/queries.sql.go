@@ -959,31 +959,13 @@ func (q *Queries) UpdateBotTokenLastUsed(ctx context.Context, tokenID uuid.UUID)
 }
 
 const updateEvent = `-- name: UpdateEvent :one
-WITH updated AS (
-    UPDATE events
-    SET title = COALESCE($2, title),
-        location = COALESCE($3, location),
-        event_time = COALESCE($4, event_time),
-        description = COALESCE($5, description)
-    WHERE eid = $1
-    RETURNING eid, location, event_time, description, date_created, date_modified, title
-)
-SELECT
-    u.eid,
-    u.location,
-    u.event_time,
-    u.description,
-    u.date_created,
-    u.date_modified,
-    u.title,
-    COALESCE(hosts.org_ids, ARRAY[]::uuid[]) AS org_ids
-FROM updated u
-LEFT JOIN (
-    SELECT eh.eid, ARRAY_AGG(eh.oid)::uuid[] AS org_ids
-    FROM event_hosting eh
-    WHERE eh.eid = $1
-    GROUP BY eh.eid
-) hosts ON hosts.eid = u.eid
+UPDATE events
+SET title = COALESCE($2, title),
+    location = COALESCE($3, location),
+    event_time = COALESCE($4, event_time),
+    description = COALESCE($5, description)
+WHERE eid = $1
+RETURNING eid, location, event_time, description, date_created, date_modified, title
 `
 
 type UpdateEventParams struct {
@@ -994,7 +976,7 @@ type UpdateEventParams struct {
 	Description pgtype.Text      `json:"description"`
 }
 
-func (q *Queries) UpdateEvent(ctx context.Context, arg UpdateEventParams) (EventsWithOrgID, error) {
+func (q *Queries) UpdateEvent(ctx context.Context, arg UpdateEventParams) (Event, error) {
 	row := q.db.QueryRow(ctx, updateEvent,
 		arg.Eid,
 		arg.Title,
@@ -1002,7 +984,7 @@ func (q *Queries) UpdateEvent(ctx context.Context, arg UpdateEventParams) (Event
 		arg.EventTime,
 		arg.Description,
 	)
-	var i EventsWithOrgID
+	var i Event
 	err := row.Scan(
 		&i.Eid,
 		&i.Location,
@@ -1011,7 +993,6 @@ func (q *Queries) UpdateEvent(ctx context.Context, arg UpdateEventParams) (Event
 		&i.DateCreated,
 		&i.DateModified,
 		&i.Title,
-		&i.OrgIds,
 	)
 	return i, err
 }
