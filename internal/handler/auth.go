@@ -5,6 +5,7 @@ import (
 	"crypto/rand"
 	"encoding/hex"
 	"encoding/json"
+	"log/slog"
 	"net/http"
 	"time"
 
@@ -107,6 +108,7 @@ func (h *Handler) GoogleCallback(w http.ResponseWriter, r *http.Request) {
 	redirectURL := h.getOAuthRedirectURL(r, h.Config.OAuth.Google.RedirectURL)
 	userInfo, err := h.googleAuth.ExchangeCode(r.Context(), code, redirectURL)
 	if err != nil {
+		slog.Error("oauth exchange failed", "err", err, "redirect_uri", redirectURL, "host", r.Host, "xfh", r.Header.Get("X-Forwarded-Host"), "xfp", r.Header.Get("X-Forwarded-Proto"))
 		h.respondError(w, http.StatusInternalServerError, "Failed to exchange code")
 		return
 	}
